@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
+    platform: linux/amd64
     environment:
       POSTGRES_DB: databot
       POSTGRES_USER: databot
@@ -17,6 +18,7 @@ services:
 
   backend:
     build: ./backend
+    platform: linux/amd64
     env_file:
       - .env.local
     environment:
@@ -37,6 +39,7 @@ services:
 
   frontend:
     build: ./frontend
+    platform: linux/amd64
     ports:
       - "3001:80"
     depends_on:
