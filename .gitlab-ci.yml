@@ -1,0 +1,100 @@
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+variables:
+  POSTGRES_DB: databot_test
+  POSTGRES_USER: test
+  POSTGRES_PASSWORD: test
+
+lint:backend:
+  stage: lint
+  image: python:3.12-slim
+  script:
+    - cd backend
+    - pip install ruff mypy
+    - ruff check app/
+    - ruff format --check app/
+  rules:
+    - changes:
+        - backend/**/*
+
+lint:frontend:
+  stage: lint
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npm run lint
+    - npm run typecheck
+  rules:
+    - changes:
+        - frontend/**/*
+
+test:backend:
+  stage: test
+  image: python:3.12-slim
+  services:
+    - postgres:16-alpine
+  variables:
+    DATABASE_URL: postgresql+asyncpg://test:test@postgres:5432/databot_test
+  script:
+    - cd backend
+    - pip install -e ".[dev]"
+    - pytest tests/ -v --cov=app --cov-report=xml
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
+  rules:
+    - changes:
+        - backend/**/*
+
+test:frontend:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npm run test -- --coverage
+  rules:
+    - changes:
+        - frontend/**/*
+
+build:backend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA ./backend
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+build:frontend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA ./frontend
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+deploy:staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploy to staging environment"
+  environment:
+    name: staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual

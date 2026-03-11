@@ -1,0 +1,218 @@
+{
+  "totalattendees": 3,
+  "pagecount": 1,
+  "currentpage": 0,
+  "attendees": [
+    {
+      "eventuserid": 90001,
+      "eventid": 10001,
+      "email": "alice.johnson@example.com",
+      "firstname": "Alice",
+      "lastname": "Johnson",
+      "company": "Acme Corp",
+      "jointime": "2025-12-15T10:02:00-08:00",
+      "leavetime": "2025-12-15T10:58:00-08:00",
+      "liveminutes": 56,
+      "archiveminutes": 0,
+      "cumulativeliveminutes": 56,
+      "cumulativearchiveminutes": 0,
+      "engagementscore": 92.3,
+      "askedquestions": 3,
+      "resourcesdownloaded": 2,
+      "answeredpolls": 4,
+      "answeredsurveys": 1,
+      "launchmode": "live",
+      "questions": [
+        {
+          "questionid": 1001,
+          "questiontext": "Will the new API support batch operations?",
+          "askedat": "2025-12-15T10:15:00-08:00"
+        },
+        {
+          "questionid": 1002,
+          "questiontext": "What is the expected latency improvement?",
+          "askedat": "2025-12-15T10:30:00-08:00"
+        },
+        {
+          "questionid": 1003,
+          "questiontext": "When will the SDK be available?",
+          "askedat": "2025-12-15T10:45:00-08:00"
+        }
+      ],
+      "polls": [
+        {
+          "pollid": 2001,
+          "pollquestion": "Which feature are you most excited about?",
+          "selectedanswer": "Batch API support",
+          "answeredat": "2025-12-15T10:20:00-08:00"
+        }
+      ],
+      "resources": [
+        {
+          "resourceid": 3001,
+          "resourcename": "API Documentation PDF",
+          "viewedat": "2025-12-15T10:35:00-08:00"
+        },
+        {
+          "resourceid": 3002,
+          "resourcename": "Integration Guide",
+          "viewedat": "2025-12-15T10:50:00-08:00"
+        }
+      ],
+      "surveys": [
+        {
+          "surveyid": 4001,
+          "surveyname": "Post-Webinar Feedback",
+          "completedat": "2025-12-15T11:02:00-08:00",
+          "responses": [
+            {
+              "questionid": 4101,
+              "questiontext": "How would you rate this webinar?",
+              "answer": "5 - Excellent"
+            }
+          ]
+        }
+      ],
+      "calltoactions": [
+        {
+          "ctaid": 5001,
+          "ctaname": "Request a Demo",
+          "clickedat": "2025-12-15T10:55:00-08:00"
+        }
+      ]
+    },
+    {
+      "eventuserid": 90002,
+      "eventid": 10001,
+      "email": "bob.smith@techstartup.io",
+      "firstname": "Bob",
+      "lastname": "Smith",
+      "company": "TechStartup Inc",
+      "jointime": "2025-12-15T10:05:00-08:00",
+      "leavetime": "2025-12-15T10:45:00-08:00",
+      "liveminutes": 40,
+      "archiveminutes": 0,
+      "cumulativeliveminutes": 40,
+      "cumulativearchiveminutes": 0,
+      "engagementscore": 65.0,
+      "askedquestions": 1,
+      "resourcesdownloaded": 1,
+      "answeredpolls": 2,
+      "answeredsurveys": 0,
+      "launchmode": "live",
+      "questions": [
+        {
+          "questionid": 1004,
+          "questiontext": "Is there a free tier for startups?",
+          "askedat": "2025-12-15T10:25:00-08:00"
+        }
+      ],
+      "polls": [
+        {
+          "pollid": 2001,
+          "pollquestion": "Which feature are you most excited about?",
+          "selectedanswer": "Real-time webhooks",
+          "answeredat": "2025-12-15T10:20:00-08:00"
+        }
+      ],
+      "resources": [
+        {
+          "resourceid": 3001,
+          "resourcename": "API Documentation PDF",
+          "viewedat": "2025-12-15T10:40:00-08:00"
+        }
+      ],
+      "surveys": [],
+      "calltoactions": []
+    },
+    {
+      "eventuserid": 90003,
+      "eventid": 10001,
+      "email": "carol.williams@enterprise.com",
+      "firstname": "Carol",
+      "lastname": "Williams",
+      "company": "Enterprise Solutions Ltd",
+      "jointime": "2025-12-15T10:00:00-08:00",
+      "leavetime": "2025-12-15T11:00:00-08:00",
+      "liveminutes": 60,
+      "archiveminutes": 15,
+      "cumulativeliveminutes": 60,
+      "cumulativearchiveminutes": 15,
+      "engagementscore": 88.7,
+      "askedquestions": 2,
+      "resourcesdownloaded": 2,
+      "answeredpolls": 4,
+      "answeredsurveys": 1,
+      "launchmode": "live",
+      "questions": [
+        {
+          "questionid": 1005,
+          "questiontext": "What SLA guarantees are available for enterprise customers?",
+          "askedat": "2025-12-15T10:12:00-08:00"
+        },
+        {
+          "questionid": 1006,
+          "questiontext": "Can we get a dedicated account manager?",
+          "askedat": "2025-12-15T10:40:00-08:00"
+        }
+      ],
+      "polls": [
+        {
+          "pollid": 2001,
+          "pollquestion": "Which feature are you most excited about?",
+          "selectedanswer": "Enterprise SSO",
+          "answeredat": "2025-12-15T10:20:00-08:00"
+        },
+        {
+          "pollid": 2002,
+          "pollquestion": "How large is your team?",
+          "selectedanswer": "100-500 employees",
+          "answeredat": "2025-12-15T10:22:00-08:00"
+        }
+      ],
+      "resources": [
+        {
+          "resourceid": 3001,
+          "resourcename": "API Documentation PDF",
+          "viewedat": "2025-12-15T10:30:00-08:00"
+        },
+        {
+          "resourceid": 3003,
+          "resourcename": "Enterprise Pricing Sheet",
+          "viewedat": "2025-12-15T10:48:00-08:00"
+        }
+      ],
+      "surveys": [
+        {
+          "surveyid": 4001,
+          "surveyname": "Post-Webinar Feedback",
+          "completedat": "2025-12-15T11:05:00-08:00",
+          "responses": [
+            {
+              "questionid": 4101,
+              "questiontext": "How would you rate this webinar?",
+              "answer": "4 - Good"
+            },
+            {
+              "questionid": 4102,
+              "questiontext": "Would you recommend this to a colleague?",
+              "answer": "Yes"
+            }
+          ]
+        }
+      ],
+      "calltoactions": [
+        {
+          "ctaid": 5001,
+          "ctaname": "Request a Demo",
+          "clickedat": "2025-12-15T10:52:00-08:00"
+        },
+        {
+          "ctaid": 5002,
+          "ctaname": "Download Whitepaper",
+          "clickedat": "2025-12-15T10:56:00-08:00"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "totalevents": 2,
+  "pagecount": 1,
+  "currentpage": 0,
+  "events": [
+    {
+      "eventid": 10001,
+      "clientid": 12345,
+      "eventname": "Q4 Product Launch Webinar",
+      "description": "Quarterly product update",
+      "eventtype": "Webcast",
+      "contenttype": "webcast",
+      "languagecd": "en",
+      "isactive": "Y",
+      "regrequired": "Y",
+      "livestart": "2025-12-15T10:00:00-08:00",
+      "liveend": "2025-12-15T11:00:00-08:00",
+      "createtimestamp": "2025-11-01T09:00:00-08:00",
+      "eventanalytics": {
+        "totalregistrants": 500,
+        "totalattendees": 320,
+        "liveattendees": 280,
+        "ondemandattendees": 40,
+        "noshowcount": 180,
+        "engagementscore": 72.5
+      },
+      "audienceurl": "https://event.on24.com/10001",
+      "tags": ["product", "quarterly"]
+    },
+    {
+      "eventid": 10002,
+      "clientid": 12345,
+      "eventname": "Technical Deep Dive: API Integration",
+      "description": "Advanced API integration patterns",
+      "eventtype": "Webcast",
+      "contenttype": "webcast",
+      "languagecd": "en",
+      "isactive": "Y",
+      "regrequired": "Y",
+      "livestart": "2025-12-20T14:00:00-08:00",
+      "liveend": "2025-12-20T15:30:00-08:00",
+      "createtimestamp": "2025-11-15T11:00:00-08:00",
+      "eventanalytics": {
+        "totalregistrants": 200,
+        "totalattendees": 150,
+        "liveattendees": 130,
+        "ondemandattendees": 20,
+        "noshowcount": 50,
+        "engagementscore": 85.0
+      },
+      "tags": ["technical", "api"]
+    }
+  ]
+}
