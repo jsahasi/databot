@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.chat import websocket_chat
 from app.api.router import api_router
 from app.config import settings
 
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+app.add_api_websocket_route("/ws/chat", websocket_chat)
 
 
 @app.get("/health")

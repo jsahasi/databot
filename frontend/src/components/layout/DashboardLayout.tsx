@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useSyncStatus, useTriggerSync } from '../../hooks/useAnalytics'
+import ChatPanel from '../chat/ChatPanel'
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '\u{1F4CA}' },
@@ -10,6 +12,7 @@ const navItems = [
 ]
 
 export default function DashboardLayout() {
+  const [chatOpen, setChatOpen] = useState(false)
   const { data: syncStatus } = useSyncStatus()
   const syncMutation = useTriggerSync()
   const latestSync = syncStatus?.[0]
@@ -52,7 +55,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main area */}
-      <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, marginLeft: 240, marginRight: chatOpen ? 380 : 0, display: 'flex', flexDirection: 'column', transition: 'margin-right 0.3s ease' }}>
         {/* Top bar */}
         <header style={{
           height: 56, background: 'var(--color-card)', borderBottom: '1px solid var(--color-border)',
@@ -85,6 +88,8 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      <ChatPanel isOpen={chatOpen} onToggle={() => setChatOpen(!chatOpen)} />
     </div>
   )
 }
