@@ -19,6 +19,13 @@ from app.agents.tools.content_tools import (
     analyze_scheduling_patterns,
     suggest_topics,
 )
+from app.agents.tools.admin_tools import (
+    create_event,
+    update_event,
+    add_registrant,
+    remove_registrant,
+    get_event_summary,
+)
 
 # Tool schemas for Anthropic API
 DATA_AGENT_TOOLS = [
@@ -163,4 +170,85 @@ CONTENT_TOOL_HANDLERS = {
     "compare_event_performance": compare_event_performance,
     "analyze_scheduling_patterns": analyze_scheduling_patterns,
     "suggest_topics": suggest_topics,
+}
+
+# Admin Agent tools — write operations against ON24 API
+ADMIN_AGENT_TOOLS = [
+    {
+        "name": "get_event_summary",
+        "description": "Fetch a summary of an ON24 event from the local database (read-only). Use this before destructive operations to show the user what will be affected.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "on24_event_id": {"type": "integer", "description": "The ON24 event ID to look up"},
+            },
+            "required": ["on24_event_id"],
+        },
+    },
+    {
+        "name": "create_event",
+        "description": "Create a new ON24 webinar/event. Requires confirmation before execution.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Event title"},
+                "event_type": {"type": "string", "description": "Event type (e.g. 'Webcast', 'SimLive')"},
+                "start_time": {"type": "string", "description": "Start time in ISO 8601 format"},
+                "end_time": {"type": "string", "description": "End time in ISO 8601 format"},
+                "description": {"type": "string", "description": "Optional event description"},
+            },
+            "required": ["title", "event_type", "start_time", "end_time"],
+        },
+    },
+    {
+        "name": "update_event",
+        "description": "Update fields on an existing ON24 event. Requires confirmation before execution.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "on24_event_id": {"type": "integer", "description": "The ON24 event ID to update"},
+                "title": {"type": "string", "description": "New event title"},
+                "description": {"type": "string", "description": "New event description"},
+                "start_time": {"type": "string", "description": "New start time in ISO 8601 format"},
+                "end_time": {"type": "string", "description": "New end time in ISO 8601 format"},
+            },
+            "required": ["on24_event_id"],
+        },
+    },
+    {
+        "name": "add_registrant",
+        "description": "Register a person for an ON24 event. Requires confirmation before execution.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "on24_event_id": {"type": "integer", "description": "The ON24 event ID"},
+                "email": {"type": "string", "description": "Registrant email address"},
+                "first_name": {"type": "string", "description": "Registrant first name"},
+                "last_name": {"type": "string", "description": "Registrant last name"},
+                "company": {"type": "string", "description": "Registrant company (optional)"},
+                "job_title": {"type": "string", "description": "Registrant job title (optional)"},
+            },
+            "required": ["on24_event_id", "email", "first_name", "last_name"],
+        },
+    },
+    {
+        "name": "remove_registrant",
+        "description": "Remove a registrant from an ON24 event. Requires confirmation before execution.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "on24_event_id": {"type": "integer", "description": "The ON24 event ID"},
+                "email": {"type": "string", "description": "Email address of the registrant to remove"},
+            },
+            "required": ["on24_event_id", "email"],
+        },
+    },
+]
+
+ADMIN_TOOL_HANDLERS = {
+    "get_event_summary": get_event_summary,
+    "create_event": create_event,
+    "update_event": update_event,
+    "add_registrant": add_registrant,
+    "remove_registrant": remove_registrant,
 }

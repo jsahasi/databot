@@ -1,5 +1,6 @@
 """Data Agent: queries database and produces analytics for user questions."""
 
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -23,7 +24,36 @@ class DataAgent:
         self.model = "claude-sonnet-4-20250514"
         self.max_tool_rounds = 5
 
-    async def run(self, user_message: str, conversation_history: list[dict] | None = None) -> dict[str, Any]:
+    async def _write_audit_log(
+        self,
+        session_id: str,
+        tool_name: str,
+        tool_input: dict,
+        tool_result: Any,
+        error: str | None = None,
+    ) -> None:
+        """Fire-and-forget audit log write — must not raise."""
+        try:
+            from app.db.session import async_session_factory
+            from app.models.agent_audit_log import AgentAuditLog
+
+            result_snippet = str(tool_result)[:2000] if tool_result is not None else None
+            log_entry = AgentAuditLog(
+                session_id=session_id,
+                agent_name="data_agent",
+                tool_name=tool_name,
+                tool_input=tool_input,
+                tool_result={"result": result_snippet} if result_snippet is not None else None,
+                confirmed=False,
+                error=error,
+            )
+            async with async_session_factory() as db:
+                db.add(log_entry)
+                await db.commit()
+        except Exception:
+            logger.exception("Failed to write agent audit log")
+
+    async def run(self, user_message: str, conversation_history: list[dict] | None = None, session_id: str = "") -> dict[str, Any]:
         """Process a user message and return a response with optional chart data.
 
         Returns:
@@ -71,6 +101,10 @@ class DataAgent:
                                 if tool_name == "generate_chart_data":
                                     chart_data = result
 
+                                asyncio.create_task(
+                                    self._write_audit_log(session_id, tool_name, tool_input, result)
+                                )
+
                                 tool_results.append({
                                     "type": "tool_result",
                                     "tool_use_id": block.id,
@@ -78,6 +112,9 @@ class DataAgent:
                                 })
                             except Exception as e:
                                 logger.error(f"Tool {tool_name} failed: {e}")
+                                asyncio.create_task(
+                                    self._write_audit_log(session_id, tool_name, tool_input, None, error=str(e))
+                                )
                                 tool_results.append({
                                     "type": "tool_result",
                                     "tool_use_id": block.id,

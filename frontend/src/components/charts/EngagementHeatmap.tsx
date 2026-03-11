@@ -1,5 +1,7 @@
-import Plot from 'react-plotly.js'
+import { lazy, Suspense } from 'react'
 import type { HeatmapPoint } from '../../services/api'
+
+const Plot = lazy(() => import('react-plotly.js'))
 
 interface EngagementHeatmapProps {
   data: HeatmapPoint[]
@@ -18,26 +20,32 @@ export default function EngagementHeatmap({ data }: EngagementHeatmapProps) {
   })
 
   return (
-    <Plot
-      data={[{
-        type: 'heatmap',
-        z: matrix,
-        x: HOURS,
-        y: DAYS,
-        colorscale: 'RdYlGn',
-        showscale: true,
-        hovertemplate: '%{y} %{x}: %{z:.1f} engagement<extra></extra>',
-      }]}
-      layout={{
-        margin: { t: 10, r: 10, b: 40, l: 50 },
-        height: 220,
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-        font: { size: 11 },
-        xaxis: { tickangle: -45 },
-      }}
-      config={{ displayModeBar: false, responsive: true }}
-      style={{ width: '100%' }}
-    />
+    <Suspense fallback={
+      <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        Loading chart...
+      </div>
+    }>
+      <Plot
+        data={[{
+          type: 'heatmap',
+          z: matrix,
+          x: HOURS,
+          y: DAYS,
+          colorscale: 'RdYlGn',
+          showscale: true,
+          hovertemplate: '%{y} %{x}: %{z:.1f} engagement<extra></extra>',
+        }]}
+        layout={{
+          margin: { t: 10, r: 10, b: 40, l: 50 },
+          height: 220,
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent',
+          font: { size: 11 },
+          xaxis: { tickangle: -45 },
+        }}
+        config={{ displayModeBar: false, responsive: true }}
+        style={{ width: '100%' }}
+      />
+    </Suspense>
   )
 }

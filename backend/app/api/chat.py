@@ -46,6 +46,7 @@ async def websocket_chat(websocket: WebSocket):
             if data.get("type") == "message":
                 content = data.get("content", "").strip()
                 session_id = data.get("session_id", "default")
+                confirmed = bool(data.get("confirmed", False))
 
                 if not content:
                     await websocket.send_json({"type": "error", "message": "Empty message"})
@@ -57,7 +58,7 @@ async def websocket_chat(websocket: WebSocket):
                 await websocket.send_json({"type": "agent_start", "agent": "orchestrator"})
 
                 try:
-                    result = await agent.process_message(content)
+                    result = await agent.process_message(content, confirmed=confirmed)
 
                     # Send agent routing info
                     if result.get("agent_used"):
@@ -79,10 +80,18 @@ async def websocket_chat(websocket: WebSocket):
                             "data": result["chart_data"],
                         })
 
+                    # Send confirmation request if a destructive operation is pending
+                    if result.get("requires_confirmation"):
+                        await websocket.send_json({
+                            "type": "confirmation_required",
+                            "confirmation_summary": result.get("confirmation_summary"),
+                        })
+
                     # Signal completion
                     await websocket.send_json({
                         "type": "message_complete",
                         "agent_used": result.get("agent_used"),
+                        "requires_confirmation": result.get("requires_confirmation", False),
                     })
 
                 except Exception as e:

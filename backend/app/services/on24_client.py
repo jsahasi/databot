@@ -326,6 +326,76 @@ class ON24Client:
         """Get presenters for an event."""
         return await self.get(f"event/{event_id}/presenter")
 
+    # ── Write Operations ──
+
+    async def create_event(
+        self,
+        title: str,
+        event_type: str,
+        start_time: str,
+        end_time: str,
+        description: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new ON24 event."""
+        body: dict[str, Any] = {
+            "eventType": event_type,
+            "title": title,
+            "startTime": start_time,
+            "endTime": end_time,
+        }
+        if description is not None:
+            body["description"] = description
+        return await self.post("event", json_body=body)
+
+    async def update_event(
+        self,
+        event_id: int,
+        title: str | None = None,
+        description: str | None = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
+    ) -> dict[str, Any]:
+        """Update an existing ON24 event."""
+        body: dict[str, Any] = {}
+        if title is not None:
+            body["title"] = title
+        if description is not None:
+            body["description"] = description
+        if start_time is not None:
+            body["startTime"] = start_time
+        if end_time is not None:
+            body["endTime"] = end_time
+        return await self.patch(f"event/{event_id}", json_body=body)
+
+    async def register_attendee(
+        self,
+        event_id: int,
+        email: str,
+        first_name: str,
+        last_name: str,
+        company: str | None = None,
+        job_title: str | None = None,
+    ) -> dict[str, Any]:
+        """Register a person for an ON24 event."""
+        body: dict[str, Any] = {
+            "email": email,
+            "firstName": first_name,
+            "lastName": last_name,
+        }
+        if company is not None:
+            body["company"] = company
+        if job_title is not None:
+            body["jobTitle"] = job_title
+        return await self.post(f"event/{event_id}/registrant", json_body=body)
+
+    async def remove_registration(
+        self,
+        event_id: int,
+        email: str,
+    ) -> dict[str, Any]:
+        """Remove a registrant from an ON24 event by email."""
+        return await self.delete(f"event/{event_id}/registrant/{email}")
+
     # ── Pagination Helper ──
 
     async def paginate(

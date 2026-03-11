@@ -6,6 +6,7 @@ from app.models.poll import PollResponse
 from app.models.survey import SurveyResponse
 from app.models.engagement import CTAClick, EngagementProfile, ResourceViewed, ViewingSession
 from app.models.sync_log import SyncLog
+from app.models.agent_audit_log import AgentAuditLog
 
 __all__ = [
     "Base",
@@ -19,4 +20,5 @@ __all__ = [
     "ViewingSession",
     "EngagementProfile",
     "SyncLog",
+    "AgentAuditLog",
 ]

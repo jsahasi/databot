@@ -22,11 +22,11 @@
 - [ ] Frontend chat panel component with agent routing indicator
 - [ ] Agent system prompts (orchestrator.md, data_agent.md)
 
-## Phase 4: Full Data + Content Agent
-- [ ] ETL for remaining entities (polls, surveys, CTAs, resources, PEP, viewing sessions)
-- [ ] Content Agent with topic analysis + performance comparison tools
-- [ ] Advanced visualizations (Plotly heatmaps, funnel charts, audience segmentation)
-- [ ] Audience cross-event analysis page
+## Phase 4: Full Data + Content Agent — COMPLETE (commit 8cd467a)
+- [x] ETL for remaining entities (polls, surveys, CTAs, resources, PEP, viewing sessions)
+- [x] Content Agent with topic analysis + performance comparison tools
+- [x] Advanced visualizations (Plotly heatmaps, Audiences page, ContentInsights page)
+- [x] Audience cross-event analysis page
 
 ## Phase 5: Admin Agent + Polish
 - [ ] Admin Agent with ON24 write tools (create event, manage registrations, upload slides)

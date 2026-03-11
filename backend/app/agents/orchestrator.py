@@ -7,6 +7,7 @@ from typing import Any, AsyncIterator
 
 import anthropic
 
+from app.agents.admin_agent import AdminAgent
 from app.agents.data_agent import DataAgent
 from app.agents.content_agent import ContentAgent
 from app.config import settings
@@ -24,6 +25,7 @@ class OrchestratorAgent:
         self.model = "claude-sonnet-4-20250514"
         self.data_agent = DataAgent()
         self.content_agent = ContentAgent()
+        self.admin_agent = AdminAgent()
         self.conversation_history: list[dict] = []
 
     # Tool for routing to sub-agents
@@ -63,14 +65,20 @@ class OrchestratorAgent:
         },
     ]
 
-    async def process_message(self, user_message: str) -> dict[str, Any]:
+    async def process_message(self, user_message: str, confirmed: bool = False) -> dict[str, Any]:
         """Process a user message through the orchestrator.
+
+        Args:
+            user_message: The message from the user.
+            confirmed: Set to True when the user has confirmed a pending admin operation.
 
         Returns:
             {
                 "text": str,
                 "agent_used": str | None,
                 "chart_data": dict | None,
+                "requires_confirmation": bool,
+                "confirmation_summary": str | None,
             }
         """
         self.conversation_history.append({"role": "user", "content": user_message})
@@ -130,6 +138,8 @@ class OrchestratorAgent:
                             "text": text,
                             "agent_used": "data_agent",
                             "chart_data": result.get("chart_data"),
+                            "requires_confirmation": False,
+                            "confirmation_summary": None,
                         }
 
                     elif tool_name == "route_to_content_agent":
@@ -161,10 +171,18 @@ class OrchestratorAgent:
                             "text": text,
                             "agent_used": "content_agent",
                             "chart_data": None,
+                            "requires_confirmation": False,
+                            "confirmation_summary": None,
                         }
 
                     elif tool_name == "route_to_admin_agent":
-                        # Admin agent not yet implemented
+                        logger.info(f"Routing to Admin Agent: {query} (confirmed={confirmed})")
+                        result = await self.admin_agent.run(
+                            message=query,
+                            session_id="orchestrator",
+                            confirmed=confirmed,
+                        )
+
                         self.conversation_history.append({
                             "role": "user",
                             "content": [{
@@ -172,14 +190,15 @@ class OrchestratorAgent:
                                 "tool_use_id": block.id,
                                 "content": json.dumps({
                                     "agent": "admin_agent",
-                                    "response": "Admin Agent is not yet available. Event management features are coming soon.",
-                                }),
+                                    "response": result["text"],
+                                    "requires_confirmation": result.get("requires_confirmation", False),
+                                }, default=str),
                             }],
                         })
 
                         synthesis = await self.client.messages.create(
                             model=self.model,
-                            max_tokens=1024,
+                            max_tokens=2048,
                             system=SYSTEM_PROMPT,
                             messages=self.conversation_history,
                         )
@@ -190,6 +209,8 @@ class OrchestratorAgent:
                             "text": text,
                             "agent_used": "admin_agent",
                             "chart_data": None,
+                            "requires_confirmation": result.get("requires_confirmation", False),
+                            "confirmation_summary": result.get("confirmation_summary"),
                         }
 
         # Direct response (no routing needed)
@@ -200,6 +221,8 @@ class OrchestratorAgent:
             "text": text,
             "agent_used": None,
             "chart_data": None,
+            "requires_confirmation": False,
+            "confirmation_summary": None,
         }
 
     def reset(self):
