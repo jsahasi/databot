@@ -5,13 +5,17 @@ Each tool is defined as:
 2. An async handler function (for execution)
 """
 
-from app.agents.tools.query_tools import (
+from app.agents.tools.on24_query_tools import (
     query_events,
+    get_event_detail,
     query_attendees,
-    query_registrants,
-    compute_kpis,
-    generate_chart_data,
-    run_analytics_query,
+    compute_event_kpis,
+    compute_client_kpis,
+    query_polls,
+    query_top_events,
+    query_attendance_trends,
+    query_audience_companies,
+    query_resources,
 )
 from app.agents.tools.content_tools import (
     analyze_topic_performance,
@@ -30,98 +34,169 @@ from app.agents.tools.admin_tools import (
 # Tool schemas for Anthropic API
 DATA_AGENT_TOOLS = [
     {
-        "name": "query_events",
-        "description": "Search and filter events from the database. Returns event list with metadata and analytics.",
+        "name": "list_events",
+        "description": (
+            "List and search events for the current client directly from the ON24 database. "
+            "Supports filtering by event type, active status, and name search. "
+            "Returns event metadata including dates, type, and active status."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "search": {"type": "string", "description": "Search term for event title"},
-                "event_type": {"type": "string", "description": "Filter by event type (e.g. 'Webcast')"},
-                "date_from": {"type": "string", "description": "Start date filter (YYYY-MM-DD)"},
-                "date_to": {"type": "string", "description": "End date filter (YYYY-MM-DD)"},
-                "sort_by": {"type": "string", "enum": ["live_start", "total_attendees", "engagement_score", "title"], "description": "Sort field"},
-                "sort_order": {"type": "string", "enum": ["asc", "desc"], "description": "Sort direction"},
-                "limit": {"type": "integer", "description": "Max results (default 20)"},
+                "search": {"type": "string", "description": "Search term matched against event name (case-insensitive)"},
+                "event_type": {"type": "string", "description": "Filter by event type (e.g. 'Webcast', 'SimLive')"},
+                "is_active": {"type": "string", "enum": ["Y", "N"], "description": "Filter by active status"},
+                "limit": {"type": "integer", "description": "Max results to return (default 20)"},
+                "offset": {"type": "integer", "description": "Pagination offset (default 0)"},
             },
         },
     },
     {
-        "name": "query_attendees",
-        "description": "Query attendees with optional filters. Returns attendee details with engagement metrics.",
+        "name": "get_event_detail",
+        "description": (
+            "Fetch full details for a single ON24 event by its event_id. "
+            "Automatically verifies the event belongs to the current client."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "event_id": {"type": "integer", "description": "Filter by ON24 event ID"},
-                "email": {"type": "string", "description": "Search by email address"},
-                "company": {"type": "string", "description": "Filter by company name"},
-                "min_engagement": {"type": "number", "description": "Minimum engagement score filter"},
-                "sort_by": {"type": "string", "enum": ["engagement_score", "live_minutes", "email"], "description": "Sort field"},
+                "event_id": {"type": "integer", "description": "ON24 event ID to look up"},
+            },
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_attendees",
+        "description": (
+            "Retrieve attendees for a specific ON24 event, including engagement scores, "
+            "live minutes, archive minutes, company, and job title. "
+            "Automatically verifies the event belongs to the current client."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "ON24 event ID"},
+                "limit": {"type": "integer", "description": "Max results (default 100)"},
+                "offset": {"type": "integer", "description": "Pagination offset (default 0)"},
+            },
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_event_kpis",
+        "description": (
+            "Compute KPIs for a single ON24 event: total registrants, total attendees, "
+            "average engagement score, average live minutes, and conversion rate. "
+            "Automatically verifies the event belongs to the current client."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "ON24 event ID"},
+            },
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_client_kpis",
+        "description": (
+            "Compute platform-wide KPIs across all events for the current client: "
+            "total events, total registrants, total attendees, and average engagement score."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
+        "name": "get_polls",
+        "description": (
+            "Retrieve poll questions and answer distributions for a specific ON24 event. "
+            "Returns each poll question with its answer options and response counts. "
+            "Automatically verifies the event belongs to the current client."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "ON24 event ID"},
+            },
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_top_events",
+        "description": (
+            "Retrieve the top-performing events for the current client, ranked by attendees, "
+            "engagement score, or registrants."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Number of top events to return (default 10)"},
+                "sort_by": {
+                    "type": "string",
+                    "enum": ["attendees", "engagement", "registrants"],
+                    "description": "Metric to rank events by (default: attendees)",
+                },
+            },
+        },
+    },
+    {
+        "name": "get_attendance_trends",
+        "description": (
+            "Return monthly attendance and registration trend data for the current client "
+            "over the past N months. Useful for time-series charts."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "months": {"type": "integer", "description": "Number of past months to include (default 12)"},
+            },
+        },
+    },
+    {
+        "name": "get_audience_companies",
+        "description": (
+            "Return the top companies attending the current client's events, ranked by total attendance. "
+            "Includes event count, registrant count, attendee count, and average engagement per company."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Number of top companies to return (default 20)"},
+            },
+        },
+    },
+    {
+        "name": "get_resources",
+        "description": (
+            "Retrieve resource download/hit activity for a specific ON24 event. "
+            "Returns resource names, types, and hit timestamps. "
+            "Automatically verifies the event belongs to the current client."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "ON24 event ID"},
                 "limit": {"type": "integer", "description": "Max results (default 50)"},
             },
-        },
-    },
-    {
-        "name": "query_registrants",
-        "description": "Query registrants with optional filters. Returns registration details.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "event_id": {"type": "integer", "description": "Filter by ON24 event ID"},
-                "company": {"type": "string", "description": "Filter by company name"},
-                "limit": {"type": "integer", "description": "Max results (default 50)"},
-            },
-        },
-    },
-    {
-        "name": "compute_kpis",
-        "description": "Compute analytics KPIs like total events, avg engagement, conversion rate. Can scope to an event or date range.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "event_id": {"type": "integer", "description": "Scope to a specific event ID"},
-                "date_from": {"type": "string", "description": "Start date (YYYY-MM-DD)"},
-                "date_to": {"type": "string", "description": "End date (YYYY-MM-DD)"},
-            },
-        },
-    },
-    {
-        "name": "generate_chart_data",
-        "description": "Generate data formatted for chart rendering. Specify chart type, metric, and grouping.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "chart_type": {"type": "string", "enum": ["line", "bar", "pie"], "description": "Chart type"},
-                "metric": {"type": "string", "enum": ["attendees", "registrants", "engagement", "events"], "description": "Metric to chart"},
-                "group_by": {"type": "string", "enum": ["month", "week", "event_type", "company"], "description": "Grouping dimension"},
-                "date_from": {"type": "string", "description": "Start date (YYYY-MM-DD)"},
-                "date_to": {"type": "string", "description": "End date (YYYY-MM-DD)"},
-                "limit": {"type": "integer", "description": "Max data points (default 12)"},
-            },
-            "required": ["chart_type"],
-        },
-    },
-    {
-        "name": "run_analytics_query",
-        "description": "Run a predefined analytics query. Options: 'top_companies', 'registration_sources', 'no_show_analysis'",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "description": {"type": "string", "enum": ["top_companies", "registration_sources", "no_show_analysis"], "description": "Query to run"},
-                "event_id": {"type": "integer", "description": "Optional event ID to scope the query"},
-            },
-            "required": ["description"],
+            "required": ["event_id"],
         },
     },
 ]
 
 # Map tool names to handler functions
 TOOL_HANDLERS = {
-    "query_events": query_events,
-    "query_attendees": query_attendees,
-    "query_registrants": query_registrants,
-    "compute_kpis": compute_kpis,
-    "generate_chart_data": generate_chart_data,
-    "run_analytics_query": run_analytics_query,
+    "list_events": query_events,
+    "get_event_detail": get_event_detail,
+    "get_attendees": query_attendees,
+    "get_event_kpis": compute_event_kpis,
+    "get_client_kpis": compute_client_kpis,
+    "get_polls": query_polls,
+    "get_top_events": query_top_events,
+    "get_attendance_trends": query_attendance_trends,
+    "get_audience_companies": query_audience_companies,
+    "get_resources": query_resources,
 }
 
 CONTENT_AGENT_TOOLS = [

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.chat import websocket_chat
 from app.api.router import api_router
 from app.config import settings
+from app.db.on24_db import close_pool
 
 
 @asynccontextmanager
@@ -13,6 +14,7 @@ async def lifespan(app: FastAPI):
     # Startup
     yield
     # Shutdown
+    await close_pool()
 
 
 app = FastAPI(

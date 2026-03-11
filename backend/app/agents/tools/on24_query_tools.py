@@ -1,0 +1,404 @@
+"""Query tools that read directly from the ON24 master PostgreSQL database.
+
+SECURITY: Every function calls get_client_id() internally to scope all queries
+to the current tenant. client_id is NEVER accepted as a function parameter.
+All queries use parameterised $N placeholders — never string interpolation.
+"""
+
+import logging
+from typing import Any
+
+from app.db.on24_db import get_client_id, get_pool
+
+logger = logging.getLogger(__name__)
+
+
+async def query_events(
+    limit: int = 20,
+    offset: int = 0,
+    event_type: str | None = None,
+    is_active: str | None = None,  # 'Y' or 'N'
+    search: str | None = None,     # searches event_name with ILIKE
+) -> list[dict]:
+    """List events for the current client."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT
+            event_id,
+            event_name,
+            event_type,
+            goodafter,
+            goodtill,
+            is_active,
+            description,
+            create_timestamp,
+            last_modified
+        FROM on24master.event
+        WHERE client_id = $1
+          AND ($2::text IS NULL OR event_type = $2)
+          AND ($3::text IS NULL OR is_active = $3)
+          AND ($4::text IS NULL OR event_name ILIKE '%' || $4 || '%')
+        ORDER BY goodafter DESC NULLS LAST
+        LIMIT $5 OFFSET $6
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, cid, event_type, is_active, search, limit, offset)
+    return [dict(row) for row in rows]
+
+
+async def get_event_detail(event_id: int) -> dict | None:
+    """Get a single event — verifies it belongs to the current client."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT *
+        FROM on24master.event
+        WHERE event_id = $1
+          AND client_id = $2
+    """
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(sql, event_id, cid)
+    return dict(row) if row else None
+
+
+async def query_attendees(
+    event_id: int,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[dict]:
+    """Get attendees for an event — verifies the event belongs to the current client."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT
+            eu.event_user_id,
+            eu.firstname,
+            eu.lastname,
+            eu.email,
+            eu.company,
+            eu.job_title,
+            eu.country,
+            eu.utm_source,
+            eu.create_timestamp,
+            da.engagement_score,
+            da.live_minutes,
+            da.archive_minutes
+        FROM on24master.event_user eu
+        JOIN on24master.event e
+          ON eu.event_id = e.event_id
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_user_id = eu.event_user_id
+         AND da.event_id = eu.event_id
+        WHERE eu.event_id = $1
+          AND e.client_id = $2
+        LIMIT $3 OFFSET $4
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, event_id, cid, limit, offset)
+    return [dict(row) for row in rows]
+
+
+async def compute_event_kpis(event_id: int) -> dict:
+    """Compute KPIs for one event — verifies client ownership."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT
+            COUNT(eu.event_user_id)                                               AS total_registrants,
+            COUNT(da.event_user_id)                                               AS total_attendees,
+            AVG(da.engagement_score)                                              AS avg_engagement,
+            AVG(da.live_minutes)                                                  AS avg_live_minutes,
+            SUM(CASE WHEN da.live_minutes > 0 THEN 1 ELSE 0 END)::float
+              / NULLIF(COUNT(eu.event_user_id), 0) * 100                          AS conversion_rate
+        FROM on24master.event_user eu
+        JOIN on24master.event e
+          ON eu.event_id = e.event_id
+         AND e.client_id = $2
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_user_id = eu.event_user_id
+         AND da.event_id = eu.event_id
+        WHERE eu.event_id = $1
+    """
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(sql, event_id, cid)
+
+    if row is None:
+        return {
+            "event_id": event_id,
+            "total_registrants": 0,
+            "total_attendees": 0,
+            "avg_engagement": None,
+            "avg_live_minutes": None,
+            "conversion_rate": None,
+        }
+
+    result = dict(row)
+    result["event_id"] = event_id
+    # Round float fields for cleaner output
+    for field in ("avg_engagement", "avg_live_minutes", "conversion_rate"):
+        if result.get(field) is not None:
+            result[field] = round(float(result[field]), 2)
+    return result
+
+
+async def compute_client_kpis() -> dict:
+    """Compute platform-wide KPIs across all events for the current client."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT
+            COUNT(DISTINCT e.event_id)   AS total_events,
+            COUNT(eu.event_user_id)      AS total_registrants,
+            COUNT(da.event_user_id)      AS total_attendees,
+            AVG(da.engagement_score)     AS avg_engagement
+        FROM on24master.event e
+        LEFT JOIN on24master.event_user eu
+          ON eu.event_id = e.event_id
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_id = e.event_id
+         AND da.event_user_id = eu.event_user_id
+        WHERE e.client_id = $1
+    """
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(sql, cid)
+
+    if row is None:
+        return {
+            "total_events": 0,
+            "total_registrants": 0,
+            "total_attendees": 0,
+            "avg_engagement": None,
+        }
+
+    result = dict(row)
+    if result.get("avg_engagement") is not None:
+        result["avg_engagement"] = round(float(result["avg_engagement"]), 2)
+    return result
+
+
+async def query_polls(event_id: int) -> list[dict]:
+    """Get poll questions and answer distributions for an event."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    # Fetch poll questions, verifying client ownership via the event join
+    questions_sql = """
+        SELECT q.question_id, q.question_text, q.question_type_cd, q.create_timestamp
+        FROM on24master.question q
+        JOIN on24master.event e
+          ON q.event_id = e.event_id
+         AND e.client_id = $2
+        WHERE q.event_id = $1
+          AND q.question_type_cd = 'POLL'
+        ORDER BY q.question_id
+    """
+
+    # Fetch answers for those poll questions
+    answers_sql = """
+        SELECT
+            qa.question_id,
+            qa.answer_id,
+            qa.answer_text,
+            COUNT(eua.event_user_id) AS response_count
+        FROM on24master.question_x_answer qa
+        JOIN on24master.question q
+          ON qa.question_id = q.question_id
+        JOIN on24master.event e
+          ON q.event_id = e.event_id
+         AND e.client_id = $2
+        LEFT JOIN on24master.event_user_x_answer eua
+          ON eua.answer_id = qa.answer_id
+         AND eua.question_id = qa.question_id
+        WHERE q.event_id = $1
+          AND q.question_type_cd = 'POLL'
+        GROUP BY qa.question_id, qa.answer_id, qa.answer_text
+        ORDER BY qa.question_id, qa.answer_id
+    """
+
+    async with pool.acquire() as conn:
+        q_rows = await conn.fetch(questions_sql, event_id, cid)
+        a_rows = await conn.fetch(answers_sql, event_id, cid)
+
+    # Group answers by question_id
+    answers_by_question: dict[int, list[dict[str, Any]]] = {}
+    for a in a_rows:
+        qid = a["question_id"]
+        answers_by_question.setdefault(qid, []).append({
+            "answer_id": a["answer_id"],
+            "answer_text": a["answer_text"],
+            "response_count": a["response_count"],
+        })
+
+    results = []
+    for q in q_rows:
+        qid = q["question_id"]
+        results.append({
+            "question_id": qid,
+            "question_text": q["question_text"],
+            "question_type_cd": q["question_type_cd"],
+            "create_timestamp": q["create_timestamp"],
+            "answers": answers_by_question.get(qid, []),
+        })
+
+    return results
+
+
+async def query_top_events(
+    limit: int = 10,
+    sort_by: str = "attendees",  # "attendees" | "engagement" | "registrants"
+) -> list[dict]:
+    """Top events for the current client by chosen metric."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    # Build ORDER BY clause from allow-listed values only — never interpolate user input
+    _sort_map = {
+        "attendees": "total_attendees",
+        "engagement": "avg_engagement",
+        "registrants": "total_registrants",
+    }
+    order_col = _sort_map.get(sort_by, "total_attendees")
+
+    sql = f"""
+        SELECT
+            e.event_id,
+            e.event_name,
+            e.event_type,
+            e.goodafter,
+            e.is_active,
+            COUNT(eu.event_user_id)  AS total_registrants,
+            COUNT(da.event_user_id)  AS total_attendees,
+            AVG(da.engagement_score) AS avg_engagement
+        FROM on24master.event e
+        LEFT JOIN on24master.event_user eu
+          ON eu.event_id = e.event_id
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_id = e.event_id
+         AND da.event_user_id = eu.event_user_id
+        WHERE e.client_id = $1
+        GROUP BY e.event_id, e.event_name, e.event_type, e.goodafter, e.is_active
+        ORDER BY {order_col} DESC NULLS LAST
+        LIMIT $2
+    """  # order_col comes from the allow-list above, not from external input
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, cid, limit)
+
+    results = []
+    for row in rows:
+        r = dict(row)
+        if r.get("avg_engagement") is not None:
+            r["avg_engagement"] = round(float(r["avg_engagement"]), 2)
+        results.append(r)
+    return results
+
+
+async def query_attendance_trends(months: int = 12) -> list[dict]:
+    """Monthly attendance and registration trends for the current client."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    # months is validated as an integer by Python typing — safe to use in INTERVAL
+    # but we clamp it to a sane range to be defensive
+    months = max(1, min(months, 120))
+
+    sql = """
+        SELECT
+            DATE_TRUNC('month', e.goodafter)   AS period,
+            COUNT(DISTINCT e.event_id)          AS event_count,
+            COUNT(eu.event_user_id)             AS total_registrants,
+            COUNT(da.event_user_id)             AS total_attendees,
+            AVG(da.engagement_score)            AS avg_engagement
+        FROM on24master.event e
+        LEFT JOIN on24master.event_user eu
+          ON eu.event_id = e.event_id
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_id = e.event_id
+         AND da.event_user_id = eu.event_user_id
+        WHERE e.client_id = $1
+          AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
+        GROUP BY DATE_TRUNC('month', e.goodafter)
+        ORDER BY period ASC
+    """
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, cid, str(months))
+
+    results = []
+    for row in rows:
+        r = dict(row)
+        if r.get("avg_engagement") is not None:
+            r["avg_engagement"] = round(float(r["avg_engagement"]), 2)
+        results.append(r)
+    return results
+
+
+async def query_audience_companies(limit: int = 20) -> list[dict]:
+    """Top companies attending the current client's events (cross-event)."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT
+            eu.company,
+            COUNT(DISTINCT e.event_id)          AS events_attended,
+            COUNT(eu.event_user_id)             AS total_registrants,
+            COUNT(da.event_user_id)             AS total_attendees,
+            AVG(da.engagement_score)            AS avg_engagement
+        FROM on24master.event_user eu
+        JOIN on24master.event e
+          ON eu.event_id = e.event_id
+         AND e.client_id = $1
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_user_id = eu.event_user_id
+         AND da.event_id = eu.event_id
+        WHERE eu.company IS NOT NULL
+          AND eu.company <> ''
+        GROUP BY eu.company
+        ORDER BY total_attendees DESC NULLS LAST
+        LIMIT $2
+    """
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, cid, limit)
+
+    results = []
+    for row in rows:
+        r = dict(row)
+        if r.get("avg_engagement") is not None:
+            r["avg_engagement"] = round(float(r["avg_engagement"]), 2)
+        results.append(r)
+    return results
+
+
+async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
+    """Resource download activity for an event — verifies client ownership."""
+    cid = get_client_id()
+    pool = await get_pool()
+
+    sql = """
+        SELECT
+            rht.resource_hit_track_id,
+            rht.resource_id,
+            rht.resource_name,
+            rht.event_user_id,
+            rht.hit_timestamp,
+            rht.resource_type
+        FROM on24master.resource_hit_track rht
+        JOIN on24master.event e
+          ON rht.event_id = e.event_id
+         AND e.client_id = $2
+        WHERE rht.event_id = $1
+        ORDER BY rht.hit_timestamp DESC NULLS LAST
+        LIMIT $3
+    """
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, event_id, cid, limit)
+    return [dict(row) for row in rows]
