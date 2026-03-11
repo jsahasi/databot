@@ -17,12 +17,10 @@ services:
 
   backend:
     build: ./backend
+    env_file:
+      - .env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://databot:${POSTGRES_PASSWORD:-databot_dev}@postgres:5432/databot
-      ON24_CLIENT_ID: ${ON24_CLIENT_ID}
-      ON24_ACCESS_TOKEN_KEY: ${ON24_ACCESS_TOKEN_KEY}
-      ON24_ACCESS_TOKEN_SECRET: ${ON24_ACCESS_TOKEN_SECRET}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     ports:
       - "8000:8000"
     depends_on:

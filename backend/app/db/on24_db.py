@@ -65,10 +65,13 @@ async def get_pool() -> asyncpg.Pool:
     """Return (or lazily create) the shared asyncpg connection pool."""
     global _pool
     if _pool is None:
+        if not settings.on24_db_url:
+            raise RuntimeError("ON24_DB_URL is not configured")
+
         ssl_ctx = _build_ssl_context()
 
-        # Parse DATABASE_URL: postgresql+asyncpg://user:pass@host:port/db
-        url = settings.database_url.replace("postgresql+asyncpg://", "")
+        # Parse ON24_DB_URL: postgresql+asyncpg://user:pass@host:port/db
+        url = settings.on24_db_url.replace("postgresql+asyncpg://", "")
         userpass, hostdb = url.split("@", 1)
         user, password = userpass.split(":", 1)
         hostport, database = hostdb.split("/", 1)

@@ -2,8 +2,11 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # Database
+    # App database (local PostgreSQL in Docker)
     database_url: str = "postgresql+asyncpg://databot:databot@localhost:5432/databot"
+
+    # ON24 master database (direct read-only access)
+    on24_db_url: str = ""
 
     # PostgreSQL SSL (Google Cloud SQL)
     db_pg_ssl_root_cert_content: str = ""
@@ -22,13 +25,20 @@ class Settings(BaseSettings):
     # App
     app_name: str = "DataBot"
     debug: bool = False
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ]
 
     # Sync
     sync_interval_hours: int = 4
     active_event_sync_minutes: int = 15
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": [".env", ".env.local"],
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 settings = Settings()
