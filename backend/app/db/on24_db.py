@@ -86,7 +86,7 @@ async def get_pool() -> asyncpg.Pool:
             ssl=ssl_ctx,
             min_size=2,
             max_size=10,
-            command_timeout=30,
+            command_timeout=60,
         )
     return _pool
 
