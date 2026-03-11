@@ -5,8 +5,13 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://databot:databot@localhost:5432/databot"
 
+    # PostgreSQL SSL (Google Cloud SQL)
+    db_pg_ssl_root_cert_content: str = ""
+    db_pg_ssl_cert_content: str = ""
+    db_pg_ssl_key_content: str = ""
+
     # ON24 API
-    on24_base_url: str = "https://api.on24.com"
+    on24_base_url: str = "https://apiqa.on24.com"
     on24_client_id: str = ""
     on24_access_token_key: str = ""
     on24_access_token_secret: str = ""

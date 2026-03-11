@@ -22,7 +22,7 @@ class OrchestratorAgent:
 
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        self.model = "claude-sonnet-4-20250514"
+        self.model = "claude-haiku-4-5-20251001"
         self.data_agent = DataAgent()
         self.content_agent = ContentAgent()
         self.admin_agent = AdminAgent()
@@ -104,7 +104,7 @@ class OrchestratorAgent:
                         logger.info(f"Routing to Data Agent: {query}")
                         result = await self.data_agent.run(query)
 
-                        # Feed result back to orchestrator for synthesis
+                        # Feed result back into conversation history for context
                         self.conversation_history.append({
                             "role": "user",
                             "content": [{
@@ -118,17 +118,7 @@ class OrchestratorAgent:
                             }],
                         })
 
-                        # Get orchestrator's synthesis
-                        synthesis = await self.client.messages.create(
-                            model=self.model,
-                            max_tokens=2048,
-                            system=SYSTEM_PROMPT,
-                            messages=self.conversation_history,
-                        )
-
-                        text = "\n".join(
-                            b.text for b in synthesis.content if hasattr(b, "text")
-                        )
+                        text = result["text"]
                         self.conversation_history.append({
                             "role": "assistant",
                             "content": text,
@@ -158,13 +148,7 @@ class OrchestratorAgent:
                             }],
                         })
 
-                        synthesis = await self.client.messages.create(
-                            model=self.model,
-                            max_tokens=2048,
-                            system=SYSTEM_PROMPT,
-                            messages=self.conversation_history,
-                        )
-                        text = "\n".join(b.text for b in synthesis.content if hasattr(b, "text"))
+                        text = result["text"]
                         self.conversation_history.append({"role": "assistant", "content": text})
 
                         return {
@@ -196,13 +180,7 @@ class OrchestratorAgent:
                             }],
                         })
 
-                        synthesis = await self.client.messages.create(
-                            model=self.model,
-                            max_tokens=2048,
-                            system=SYSTEM_PROMPT,
-                            messages=self.conversation_history,
-                        )
-                        text = "\n".join(b.text for b in synthesis.content if hasattr(b, "text"))
+                        text = result["text"]
                         self.conversation_history.append({"role": "assistant", "content": text})
 
                         return {

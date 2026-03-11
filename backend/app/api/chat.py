@@ -1,9 +1,11 @@
 """Chat endpoint: WebSocket-based agent conversation."""
 
+import asyncio
 import json
 import logging
 from typing import Any
 
+import anthropic
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
@@ -15,6 +17,24 @@ router = APIRouter()
 
 # Store active sessions (in production, use Redis or similar)
 _sessions: dict[str, OrchestratorAgent] = {}
+
+
+async def generate_suggestions(response_text: str, agent_used: str | None) -> list[str]:
+    """Generate 4 short follow-up question suggestions using Haiku."""
+    client = anthropic.AsyncAnthropic()
+    response = await client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=256,
+        system=(
+            "You generate follow-up question suggestions for a webinar analytics chatbot. "
+            "Given the assistant's response, return exactly 4 short follow-up questions the user "
+            "might ask next. Return only a JSON array of strings, nothing else."
+        ),
+        messages=[{"role": "user", "content": response_text}],
+    )
+    text = "".join(b.text for b in response.content if hasattr(b, "text"))
+    suggestions: list[str] = json.loads(text)
+    return suggestions[:4]
 
 
 def _get_or_create_agent(session_id: str) -> OrchestratorAgent:
@@ -93,6 +113,22 @@ async def websocket_chat(websocket: WebSocket):
                         "agent_used": result.get("agent_used"),
                         "requires_confirmation": result.get("requires_confirmation", False),
                     })
+
+                    # Fire suggestions asynchronously — non-blocking, skip on timeout/error
+                    async def _send_suggestions(ws: WebSocket, text: str, agent: str | None) -> None:
+                        try:
+                            suggestions = await asyncio.wait_for(
+                                generate_suggestions(text, agent), timeout=5.0
+                            )
+                            await ws.send_json({"type": "suggestions", "suggestions": suggestions})
+                        except Exception:
+                            pass  # Suggestions are best-effort; never block the user
+
+                    asyncio.create_task(_send_suggestions(
+                        websocket,
+                        result.get("text", ""),
+                        result.get("agent_used"),
+                    ))
 
                 except Exception as e:
                     logger.error(f"Agent error: {e}", exc_info=True)

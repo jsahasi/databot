@@ -6,6 +6,7 @@ export interface ChatMessage {
   content: string
   agentUsed?: string | null
   chartData?: any | null
+  suggestions?: string[]
   isLoading?: boolean
   timestamp: Date
 }
@@ -101,6 +102,20 @@ export function useChat(options: UseChatOptions = {}) {
                 ...prev.slice(0, -1),
                 { ...last, agentUsed: data.agent_used, isLoading: false },
               ]
+            }
+            return prev
+          })
+          break
+
+        case 'suggestions':
+          setMessages(prev => {
+            // Find the last assistant message and attach suggestions to it
+            for (let i = prev.length - 1; i >= 0; i--) {
+              if (prev[i].role === 'assistant') {
+                const updated = [...prev]
+                updated[i] = { ...updated[i], suggestions: data.suggestions }
+                return updated
+              }
             }
             return prev
           })

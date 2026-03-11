@@ -118,7 +118,23 @@ export default function ChatPanel({ isOpen, onToggle }: ChatPanelProps) {
           </div>
         )}
         {messages.map(msg => (
-          <ChatMessage key={msg.id} message={msg} />
+          <React.Fragment key={msg.id}>
+            <ChatMessage message={msg} />
+            {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.75rem' }}>
+                {msg.suggestions.map((s, i) => (
+                  <button key={i} onClick={() => { sendMessage(s); setInput('') }} style={{
+                    padding: '0.25rem 0.625rem', fontSize: '0.72rem',
+                    background: 'var(--color-bg)', border: '1px solid var(--color-primary)',
+                    borderRadius: '1rem', color: 'var(--color-primary)',
+                    cursor: 'pointer', lineHeight: 1.4,
+                  }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </React.Fragment>
         ))}
         {isProcessing && <AgentIndicator agent={activeAgent} isProcessing={isProcessing} />}
         <div ref={messagesEndRef} />
