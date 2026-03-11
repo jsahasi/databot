@@ -1,14 +1,15 @@
 """Query tools that read directly from the ON24 master PostgreSQL database.
 
-SECURITY: Every function calls get_client_id() internally to scope all queries
-to the current tenant. client_id is NEVER accepted as a function parameter.
+SECURITY: Every function calls get_tenant_client_ids() internally to scope all
+queries to the current tenant (including sub-clients). client_id is NEVER
+accepted as a function parameter.
 All queries use parameterised $N placeholders — never string interpolation.
 """
 
 import logging
 from typing import Any
 
-from app.db.on24_db import get_client_id, get_pool
+from app.db.on24_db import get_pool, get_tenant_client_ids
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ async def query_events(
     search: str | None = None,     # searches event_name with ILIKE
 ) -> list[dict]:
     """List events for the current client."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
@@ -36,7 +37,7 @@ async def query_events(
             create_timestamp,
             last_modified
         FROM on24master.event
-        WHERE client_id = $1
+        WHERE client_id = ANY($1::bigint[])
           AND ($2::text IS NULL OR event_type = $2)
           AND ($3::text IS NULL OR is_active = $3)
           AND ($4::text IS NULL OR event_name ILIKE '%' || $4 || '%')
@@ -44,23 +45,23 @@ async def query_events(
         LIMIT $5 OFFSET $6
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, cid, event_type, is_active, search, limit, offset)
+        rows = await conn.fetch(sql, client_ids, event_type, is_active, search, limit, offset)
     return [dict(row) for row in rows]
 
 
 async def get_event_detail(event_id: int) -> dict | None:
     """Get a single event — verifies it belongs to the current client."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
         SELECT *
         FROM on24master.event
         WHERE event_id = $1
-          AND client_id = $2
+          AND client_id = ANY($2::bigint[])
     """
     async with pool.acquire() as conn:
-        row = await conn.fetchrow(sql, event_id, cid)
+        row = await conn.fetchrow(sql, event_id, client_ids)
     return dict(row) if row else None
 
 
@@ -70,7 +71,7 @@ async def query_attendees(
     offset: int = 0,
 ) -> list[dict]:
     """Get attendees for an event — verifies the event belongs to the current client."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
@@ -94,17 +95,17 @@ async def query_attendees(
           ON da.event_user_id = eu.event_user_id
          AND da.event_id = eu.event_id
         WHERE eu.event_id = $1
-          AND e.client_id = $2
+          AND e.client_id = ANY($2::bigint[])
         LIMIT $3 OFFSET $4
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, event_id, cid, limit, offset)
+        rows = await conn.fetch(sql, event_id, client_ids, limit, offset)
     return [dict(row) for row in rows]
 
 
 async def compute_event_kpis(event_id: int) -> dict:
     """Compute KPIs for one event — verifies client ownership."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
@@ -118,14 +119,14 @@ async def compute_event_kpis(event_id: int) -> dict:
         FROM on24master.event_user eu
         JOIN on24master.event e
           ON eu.event_id = e.event_id
-         AND e.client_id = $2
+         AND e.client_id = ANY($2::bigint[])
         LEFT JOIN on24master.dw_attendee da
           ON da.event_user_id = eu.event_user_id
          AND da.event_id = eu.event_id
         WHERE eu.event_id = $1
     """
     async with pool.acquire() as conn:
-        row = await conn.fetchrow(sql, event_id, cid)
+        row = await conn.fetchrow(sql, event_id, client_ids)
 
     if row is None:
         return {
@@ -148,7 +149,7 @@ async def compute_event_kpis(event_id: int) -> dict:
 
 async def compute_client_kpis() -> dict:
     """Compute platform-wide KPIs across all events for the current client."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
@@ -163,10 +164,10 @@ async def compute_client_kpis() -> dict:
         LEFT JOIN on24master.dw_attendee da
           ON da.event_id = e.event_id
          AND da.event_user_id = eu.event_user_id
-        WHERE e.client_id = $1
+        WHERE e.client_id = ANY($1::bigint[])
     """
     async with pool.acquire() as conn:
-        row = await conn.fetchrow(sql, cid)
+        row = await conn.fetchrow(sql, client_ids)
 
     if row is None:
         return {
@@ -184,7 +185,7 @@ async def compute_client_kpis() -> dict:
 
 async def query_polls(event_id: int) -> list[dict]:
     """Get poll questions and answer distributions for an event."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     # Fetch poll questions, verifying client ownership via the event join
@@ -193,7 +194,7 @@ async def query_polls(event_id: int) -> list[dict]:
         FROM on24master.question q
         JOIN on24master.event e
           ON q.event_id = e.event_id
-         AND e.client_id = $2
+         AND e.client_id = ANY($2::bigint[])
         WHERE q.event_id = $1
           AND q.question_type_cd = 'POLL'
         ORDER BY q.question_id
@@ -211,7 +212,7 @@ async def query_polls(event_id: int) -> list[dict]:
           ON qa.question_id = q.question_id
         JOIN on24master.event e
           ON q.event_id = e.event_id
-         AND e.client_id = $2
+         AND e.client_id = ANY($2::bigint[])
         LEFT JOIN on24master.event_user_x_answer eua
           ON eua.answer_id = qa.answer_id
          AND eua.question_id = qa.question_id
@@ -222,8 +223,8 @@ async def query_polls(event_id: int) -> list[dict]:
     """
 
     async with pool.acquire() as conn:
-        q_rows = await conn.fetch(questions_sql, event_id, cid)
-        a_rows = await conn.fetch(answers_sql, event_id, cid)
+        q_rows = await conn.fetch(questions_sql, event_id, client_ids)
+        a_rows = await conn.fetch(answers_sql, event_id, client_ids)
 
     # Group answers by question_id
     answers_by_question: dict[int, list[dict[str, Any]]] = {}
@@ -254,7 +255,7 @@ async def query_top_events(
     sort_by: str = "attendees",  # "attendees" | "engagement" | "registrants"
 ) -> list[dict]:
     """Top events for the current client by chosen metric."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     # Build ORDER BY clause from allow-listed values only — never interpolate user input
@@ -281,14 +282,14 @@ async def query_top_events(
         LEFT JOIN on24master.dw_attendee da
           ON da.event_id = e.event_id
          AND da.event_user_id = eu.event_user_id
-        WHERE e.client_id = $1
+        WHERE e.client_id = ANY($1::bigint[])
         GROUP BY e.event_id, e.event_name, e.event_type, e.goodafter, e.is_active
         ORDER BY {order_col} DESC NULLS LAST
         LIMIT $2
     """  # order_col comes from the allow-list above, not from external input
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, cid, limit)
+        rows = await conn.fetch(sql, client_ids, limit)
 
     results = []
     for row in rows:
@@ -301,7 +302,7 @@ async def query_top_events(
 
 async def query_attendance_trends(months: int = 12) -> list[dict]:
     """Monthly attendance and registration trends for the current client."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     # months is validated as an integer by Python typing — safe to use in INTERVAL
@@ -321,14 +322,14 @@ async def query_attendance_trends(months: int = 12) -> list[dict]:
         LEFT JOIN on24master.dw_attendee da
           ON da.event_id = e.event_id
          AND da.event_user_id = eu.event_user_id
-        WHERE e.client_id = $1
+        WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
         GROUP BY DATE_TRUNC('month', e.goodafter)
         ORDER BY period ASC
     """
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, cid, str(months))
+        rows = await conn.fetch(sql, client_ids, str(months))
 
     results = []
     for row in rows:
@@ -341,7 +342,7 @@ async def query_attendance_trends(months: int = 12) -> list[dict]:
 
 async def query_audience_companies(limit: int = 20) -> list[dict]:
     """Top companies attending the current client's events (cross-event)."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
@@ -354,7 +355,7 @@ async def query_audience_companies(limit: int = 20) -> list[dict]:
         FROM on24master.event_user eu
         JOIN on24master.event e
           ON eu.event_id = e.event_id
-         AND e.client_id = $1
+         AND e.client_id = ANY($1::bigint[])
         LEFT JOIN on24master.dw_attendee da
           ON da.event_user_id = eu.event_user_id
          AND da.event_id = eu.event_id
@@ -366,7 +367,7 @@ async def query_audience_companies(limit: int = 20) -> list[dict]:
     """
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, cid, limit)
+        rows = await conn.fetch(sql, client_ids, limit)
 
     results = []
     for row in rows:
@@ -379,7 +380,7 @@ async def query_audience_companies(limit: int = 20) -> list[dict]:
 
 async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
     """Resource download activity for an event — verifies client ownership."""
-    cid = get_client_id()
+    client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
@@ -393,12 +394,12 @@ async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
         FROM on24master.resource_hit_track rht
         JOIN on24master.event e
           ON rht.event_id = e.event_id
-         AND e.client_id = $2
+         AND e.client_id = ANY($2::bigint[])
         WHERE rht.event_id = $1
         ORDER BY rht.hit_timestamp DESC NULLS LAST
         LIMIT $3
     """
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, event_id, cid, limit)
+        rows = await conn.fetch(sql, event_id, client_ids, limit)
     return [dict(row) for row in rows]
