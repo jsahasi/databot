@@ -41,10 +41,16 @@
 - [x] Chat speed: routing → haiku, synthesis call removed (3 LLM calls → 2)
 - [x] Follow-up suggestion chips after every bot response
 
+## Phase 7: Smoke Test + Stabilization — IN PROGRESS (commit 616963f)
+- [x] Add ANTHROPIC_API_KEY to .env.local
+- [x] Fix ON24_DB_URL (was reusing DATABASE_URL — now separate setting)
+- [x] Fix env loading: config.py loads both .env and .env.local; compose uses env_file
+- [x] Fix CORS: cors_origins includes localhost:3001
+- [x] Fix Dockerfile: alembic upgrade head runs before uvicorn
+- [ ] Run end-to-end smoke test: docker compose up --build (awaiting Docker Desktop)
+- [ ] Verify ON24 REST API credentials (may need IP allowlist on apiqa.on24.com)
+
 ## Backlog / Next Steps
-- [ ] Verify ON24 REST API credentials (still 401 on apiqa.on24.com — may need IP allowlist)
-- [ ] Add ANTHROPIC_API_KEY to .env.local to enable agent chat
-- [ ] Run end-to-end smoke test: docker compose up --build
 - [ ] Explore dw_event_attendee, dw_event_session tables (more DW aggregates)
 - [ ] Explore property table — look up epid labels for event_info
 - [ ] Add query tools for dw_lead (lead/prospect analytics)

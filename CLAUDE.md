@@ -1,7 +1,7 @@
 # DataBot — ON24 Analytics Platform
 
 ## What Is This
-Multi-agent application for exploring ON24 client webinar data (events, audiences, engagement) with data visualizations and AI-powered conversational analytics. All 5 development phases are complete.
+Multi-agent application for exploring ON24 client webinar data (events, audiences, engagement) with data visualizations and AI-powered conversational analytics. All 6 development phases are complete.
 
 ## Tech Stack
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy (async), Alembic, httpx
@@ -36,12 +36,13 @@ frontend/
 
 ## Commands
 ```bash
-# First-time setup
-cp .env.local .env          # or copy .env.example and fill in values
+# First-time setup — .env.local is the source of truth for secrets (gitignored)
+# docker compose reads it via env_file; config.py loads both .env and .env.local
 
 # Docker (recommended)
-docker compose up --build   # Start all services
-docker compose exec backend alembic upgrade head  # Apply DB migration
+docker compose up --build   # Starts all services; runs alembic upgrade head before uvicorn
+# App:      http://localhost:3001
+# API docs: http://localhost:8000/docs
 
 # Backend (local dev)
 cd backend && pip install -e ".[dev]"
@@ -55,11 +56,6 @@ npm run dev          # Dev server (port 5173, proxies /api and /ws to backend)
 npm run build
 npm run typecheck    # npx tsc --noEmit
 npm run lint
-
-# Services
-# App:      http://localhost:5173
-# API docs: http://localhost:8000/docs
-# Backend:  http://localhost:8000
 ```
 
 ## Key Conventions
@@ -71,11 +67,25 @@ npm run lint
 - **Frontend State**: TanStack Query for server-state. No Redux/Zustand.
 - **Frontend Paths**: `@/` alias resolves to `src/` (vite.config.ts + tsconfig paths).
 
-## ON24 API
-- Base: `https://api.on24.com/v2/client/{clientId}`
-- Auth headers: `accessTokenKey`, `accessTokenSecret`
-- Client wrapper: `backend/app/services/on24_client.py` (async httpx, all endpoints + write ops)
-- All ON24 dates parsed through `_parse_datetime()` → normalized UTC
+## ON24 Data Access
+**Two data sources — always prefer direct DB for reads:**
+
+| Source | Used for | Location |
+|--------|----------|----------|
+| ON24 master DB (on24master) | All analytics reads | `backend/app/db/on24_db.py` + `on24_query_tools.py` |
+| ON24 REST API (apiqa.on24.com) | Write ops only (create event, registrations) | `backend/app/services/on24_client.py` |
+
+**Tenant isolation (critical):**
+- `get_client_id()` reads root from `settings.on24_client_id` (config only, never from agents/users)
+- `get_tenant_client_ids()` returns root + all sub-clients via cycle-safe recursive CTE (cached)
+- All 10 query functions use `WHERE client_id = ANY($N::bigint[])` — never a single-ID filter
+- Root client 10710 has 9 sub-clients: 22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909
+
+**Key on24master tables:**
+- `dw_attendee` — preferred for engagement aggregates (engagement_score, live/archive minutes)
+- `dw_lead` — lead/prospect data with direct client_id
+- `event` — join point for tenant scoping on event_user (which has no client_id)
+- `event_info.epid` — internal config flags only; not useful for analytics
 
 ## Agent Architecture
 4 agents, each a Python class with multi-round Anthropic tool_use loop (max 5 rounds):
@@ -97,12 +107,21 @@ Server sends message types: `agent_start`, `agent_routing`, `text`, `chart_data`
 
 ## Environment Variables
 ```
-# .env.local / .env
+# .env.local (gitignored — single source of truth for all secrets)
+# Docker compose loads via env_file: .env.local; environment: block overrides DATABASE_URL
+
+DATABASE_URL=postgresql+asyncpg://databot:<password>@postgres:5432/databot  # overridden in compose
+ON24_DB_URL=postgresql+asyncpg://ON24_RO:<pass>@10.3.7.233:5459/on24master  # ON24 master (read-only)
+DB_PG_SSL_ROOT_CERT_CONTENT=<ca pem content>
+DB_PG_SSL_CERT_CONTENT=<client cert content>
+DB_PG_SSL_KEY_CONTENT=<client key content>
+
 ON24_CLIENT_ID=10710
+ON24_BASE_URL=https://apiqa.on24.com
 ON24_ACCESS_TOKEN_KEY=<key>
 ON24_ACCESS_TOKEN_SECRET=<secret>
+
 ANTHROPIC_API_KEY=<key>
 POSTGRES_PASSWORD=databot_dev
-DATABASE_URL=postgresql+asyncpg://databot:<password>@postgres:5432/databot
 DEBUG=true
 ```
