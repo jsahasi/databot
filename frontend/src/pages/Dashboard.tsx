@@ -2,16 +2,18 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import { useDashboard, useTrends, useTopEvents } from '../hooks/useAnalytics'
+import { useDashboard, useTrends, useTopEvents, useEngagementHeatmap } from '../hooks/useAnalytics'
 import KPICard from '../components/common/KPICard'
 import ChartCard from '../components/charts/ChartCard'
 import LoadingState from '../components/common/LoadingState'
 import ErrorState from '../components/common/ErrorState'
+import EngagementHeatmap from '../components/charts/EngagementHeatmap'
 
 export default function Dashboard() {
   const dashboard = useDashboard()
   const trends = useTrends()
   const topEvents = useTopEvents(10)
+  const { data: heatmapData } = useEngagementHeatmap()
 
   if (dashboard.isLoading) return <LoadingState message="Loading dashboard..." />
   if (dashboard.isError) return <ErrorState message="Failed to load dashboard data." onRetry={() => dashboard.refetch()} />
@@ -58,6 +60,7 @@ export default function Dashboard() {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '1rem',
+        marginBottom: '1rem',
       }}>
         {/* Attendance Trend */}
         <ChartCard title="Attendance Trend">
@@ -135,6 +138,15 @@ export default function Dashboard() {
           )}
         </ChartCard>
       </div>
+
+      {/* Engagement Heatmap — full width */}
+      {heatmapData && heatmapData.length > 0 && (
+        <div style={{ gridColumn: '1 / -1' }}>
+          <ChartCard title="Engagement by Day & Time" subtitle="Average engagement score by scheduling slot">
+            <EngagementHeatmap data={heatmapData} />
+          </ChartCard>
+        </div>
+      )}
     </div>
   )
 }

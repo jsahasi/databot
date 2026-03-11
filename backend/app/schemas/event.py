@@ -128,6 +128,7 @@ class PollResponseSchema(BaseModel):
 
     id: int
     on24_event_id: int
+    poll_id: Optional[int] = None
     attendee_email: str
     question: Optional[str] = None
     answer: Optional[str] = None
@@ -139,6 +140,7 @@ class SurveyResponseSchema(BaseModel):
 
     id: int
     on24_event_id: int
+    survey_id: Optional[int] = None
     attendee_email: str
     question: Optional[str] = None
     answer: Optional[str] = None
@@ -194,6 +196,51 @@ class TopEvent(BaseModel):
     total_attendees: int = 0
     engagement_score: Optional[float] = None
     live_start: Optional[datetime] = None
+
+
+# ---------------------------------------------------------------------------
+# Audience analytics schemas
+# ---------------------------------------------------------------------------
+
+class CompanyAudience(BaseModel):
+    company: str
+    events_attended: int
+    total_attendances: int
+    avg_engagement: Optional[float] = None
+
+
+class AudienceAnalytics(BaseModel):
+    top_companies: list[CompanyAudience]
+    registration_sources: list[dict]
+    country_distribution: list[dict]
+
+
+# ---------------------------------------------------------------------------
+# Content performance schemas
+# ---------------------------------------------------------------------------
+
+class ContentTypePerformance(BaseModel):
+    event_type: str
+    event_count: int
+    avg_attendees: float
+    avg_engagement: Optional[float] = None
+    avg_conversion_rate: Optional[float] = None
+
+
+class ContentPerformance(BaseModel):
+    by_type: list[ContentTypePerformance]
+    top_events: list[TopEvent]
+
+
+# ---------------------------------------------------------------------------
+# Heatmap schema
+# ---------------------------------------------------------------------------
+
+class HeatmapPoint(BaseModel):
+    day: int   # 0 = Monday … 6 = Sunday (ISO dow - 1)
+    hour: int  # 0-23
+    avg_engagement: float
+    event_count: int
 
 
 # ---------------------------------------------------------------------------

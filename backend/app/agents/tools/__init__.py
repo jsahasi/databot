@@ -13,6 +13,12 @@ from app.agents.tools.query_tools import (
     generate_chart_data,
     run_analytics_query,
 )
+from app.agents.tools.content_tools import (
+    analyze_topic_performance,
+    compare_event_performance,
+    analyze_scheduling_patterns,
+    suggest_topics,
+)
 
 # Tool schemas for Anthropic API
 DATA_AGENT_TOOLS = [
@@ -109,4 +115,52 @@ TOOL_HANDLERS = {
     "compute_kpis": compute_kpis,
     "generate_chart_data": generate_chart_data,
     "run_analytics_query": run_analytics_query,
+}
+
+CONTENT_AGENT_TOOLS = [
+    {
+        "name": "analyze_topic_performance",
+        "description": "Analyze which event types/topics drive the highest engagement and attendance rates.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "min_events": {"type": "integer", "description": "Minimum events per type to include (default 3)"},
+                "limit": {"type": "integer", "description": "Max results (default 20)"},
+            },
+        },
+    },
+    {
+        "name": "compare_event_performance",
+        "description": "Side-by-side performance comparison of specific events by their ON24 event IDs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_ids": {"type": "array", "items": {"type": "integer"}, "description": "List of ON24 event IDs to compare"},
+            },
+            "required": ["event_ids"],
+        },
+    },
+    {
+        "name": "analyze_scheduling_patterns",
+        "description": "Find the best day of week and time of day for scheduling events based on historical performance.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "suggest_topics",
+        "description": "Generate topic/content suggestions based on top-performing past events.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "based_on": {"type": "string", "enum": ["engagement", "attendance"], "description": "Metric to base suggestions on"},
+                "limit": {"type": "integer", "description": "Number of suggestions (default 5)"},
+            },
+        },
+    },
+]
+
+CONTENT_TOOL_HANDLERS = {
+    "analyze_topic_performance": analyze_topic_performance,
+    "compare_event_performance": compare_event_performance,
+    "analyze_scheduling_patterns": analyze_scheduling_patterns,
+    "suggest_topics": suggest_topics,
 }

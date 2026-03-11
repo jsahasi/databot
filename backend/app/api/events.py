@@ -201,77 +201,137 @@ async def list_event_registrants(
 # GET /events/{event_id}/polls
 # ---------------------------------------------------------------------------
 
-@router.get("/{event_id}/polls", response_model=list[PollResponseSchema])
+@router.get("/{event_id}/polls", response_model=PaginatedResponse[PollResponseSchema])
 async def list_event_polls(
     event_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return all poll responses for an event."""
+    """Return all poll responses for an event with pagination."""
     await _get_event_or_404(event_id, db)
 
-    result = await db.execute(
-        select(PollResponse)
-        .where(PollResponse.on24_event_id == event_id)
+    query = select(PollResponse).where(PollResponse.on24_event_id == event_id)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = (
+        query
         .order_by(PollResponse.responded_at.desc().nullslast())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
     )
-    return [PollResponseSchema.model_validate(p) for p in result.scalars().all()]
+    result = await db.execute(query)
+
+    return PaginatedResponse[PollResponseSchema](
+        items=[PollResponseSchema.model_validate(p) for p in result.scalars().all()],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 
 
 # ---------------------------------------------------------------------------
 # GET /events/{event_id}/surveys
 # ---------------------------------------------------------------------------
 
-@router.get("/{event_id}/surveys", response_model=list[SurveyResponseSchema])
+@router.get("/{event_id}/surveys", response_model=PaginatedResponse[SurveyResponseSchema])
 async def list_event_surveys(
     event_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return all survey responses for an event."""
+    """Return all survey responses for an event with pagination."""
     await _get_event_or_404(event_id, db)
 
-    result = await db.execute(
-        select(SurveyResponse)
-        .where(SurveyResponse.on24_event_id == event_id)
+    query = select(SurveyResponse).where(SurveyResponse.on24_event_id == event_id)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = (
+        query
         .order_by(SurveyResponse.responded_at.desc().nullslast())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
     )
-    return [SurveyResponseSchema.model_validate(s) for s in result.scalars().all()]
+    result = await db.execute(query)
+
+    return PaginatedResponse[SurveyResponseSchema](
+        items=[SurveyResponseSchema.model_validate(s) for s in result.scalars().all()],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 
 
 # ---------------------------------------------------------------------------
 # GET /events/{event_id}/resources
 # ---------------------------------------------------------------------------
 
-@router.get("/{event_id}/resources", response_model=list[ResourceViewedSchema])
+@router.get("/{event_id}/resources", response_model=PaginatedResponse[ResourceViewedSchema])
 async def list_event_resources(
     event_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return all resources viewed for an event."""
+    """Return all resources viewed for an event with pagination."""
     await _get_event_or_404(event_id, db)
 
-    result = await db.execute(
-        select(ResourceViewed)
-        .where(ResourceViewed.on24_event_id == event_id)
+    query = select(ResourceViewed).where(ResourceViewed.on24_event_id == event_id)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = (
+        query
         .order_by(ResourceViewed.viewed_at.desc().nullslast())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
     )
-    return [ResourceViewedSchema.model_validate(r) for r in result.scalars().all()]
+    result = await db.execute(query)
+
+    return PaginatedResponse[ResourceViewedSchema](
+        items=[ResourceViewedSchema.model_validate(r) for r in result.scalars().all()],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 
 
 # ---------------------------------------------------------------------------
 # GET /events/{event_id}/ctas
 # ---------------------------------------------------------------------------
 
-@router.get("/{event_id}/ctas", response_model=list[CTAClickSchema])
+@router.get("/{event_id}/ctas", response_model=PaginatedResponse[CTAClickSchema])
 async def list_event_ctas(
     event_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=200, description="Items per page"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return all CTA clicks for an event."""
+    """Return all CTA clicks for an event with pagination."""
     await _get_event_or_404(event_id, db)
 
-    result = await db.execute(
-        select(CTAClick)
-        .where(CTAClick.on24_event_id == event_id)
+    query = select(CTAClick).where(CTAClick.on24_event_id == event_id)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = (
+        query
         .order_by(CTAClick.clicked_at.desc().nullslast())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
     )
-    return [CTAClickSchema.model_validate(c) for c in result.scalars().all()]
+    result = await db.execute(query)
+
+    return PaginatedResponse[CTAClickSchema](
+        items=[CTAClickSchema.model_validate(c) for c in result.scalars().all()],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )

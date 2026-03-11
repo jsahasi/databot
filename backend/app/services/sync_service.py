@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import async_session_factory
-from app.models import Attendee, Event, Registrant, SyncLog
+from app.models import Attendee, CTAClick, EngagementProfile, Event, PollResponse, Registrant, ResourceViewed, SurveyResponse, SyncLog
 from app.services.on24_client import ON24APIError, ON24Client
 
 logger = logging.getLogger(__name__)
@@ -371,18 +371,333 @@ class SyncService:
                 )
                 raise
 
+    # ── Poll responses ───────────────────────────────────────────────
+
+    async def sync_event_polls(self, event_id: int) -> int:
+        """Sync poll responses for a specific event from ON24 to the database.
+
+        Flattens the ON24 poll structure (poll -> answers list) into individual
+        PollResponse rows, one per email+question+answer combination.
+
+        Args:
+            event_id: The ON24 event ID.
+
+        Returns:
+            Number of poll response records inserted.
+        """
+        async with async_session_factory() as session:
+            sync_log = await self._create_sync_log(session, "polls", event_id)
+            try:
+                response = await self.client.get_event_polls(event_id)
+                polls_data = response.get("polls", [])
+
+                count = 0
+                now = datetime.now(timezone.utc)
+                for poll in polls_data:
+                    poll_id = poll.get("pollid")
+                    question = poll.get("question")
+                    answers = poll.get("answers") or []
+                    for answer_item in answers:
+                        values = {
+                            "on24_event_id": event_id,
+                            "poll_id": poll_id,
+                            "attendee_email": answer_item.get("email", ""),
+                            "question": question,
+                            "answer": answer_item.get("answer"),
+                            "responded_at": _parse_datetime(answer_item.get("timestamp")),
+                            "raw_json": answer_item,
+                            "synced_at": now,
+                        }
+                        stmt = (
+                            pg_insert(PollResponse)
+                            .values(**values)
+                            .on_conflict_do_nothing()
+                        )
+                        await session.execute(stmt)
+                        count += 1
+
+                await self._complete_sync_log(session, sync_log, count)
+                await session.commit()
+                logger.info("Synced %d poll responses for event %d", count, event_id)
+                return count
+
+            except ON24APIError as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Failed to sync polls for event %d: %s", event_id, exc
+                )
+                raise
+            except Exception as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Unexpected error syncing polls for event %d: %s", event_id, exc
+                )
+                raise
+
+    # ── Survey responses ─────────────────────────────────────────────
+
+    async def sync_event_surveys(self, event_id: int) -> int:
+        """Sync survey responses for a specific event from ON24 to the database.
+
+        Flattens the ON24 survey structure (survey -> answers list) into individual
+        SurveyResponse rows, one per email+question+answer combination.
+
+        Args:
+            event_id: The ON24 event ID.
+
+        Returns:
+            Number of survey response records inserted.
+        """
+        async with async_session_factory() as session:
+            sync_log = await self._create_sync_log(session, "surveys", event_id)
+            try:
+                response = await self.client.get_event_surveys(event_id)
+                surveys_data = response.get("surveys", [])
+
+                count = 0
+                now = datetime.now(timezone.utc)
+                for survey in surveys_data:
+                    survey_id = survey.get("survey_id")
+                    question = survey.get("question")
+                    answers = survey.get("answers") or []
+                    for answer_item in answers:
+                        values = {
+                            "on24_event_id": event_id,
+                            "survey_id": survey_id,
+                            "attendee_email": answer_item.get("email", ""),
+                            "question": question,
+                            "answer": answer_item.get("answer"),
+                            "responded_at": _parse_datetime(answer_item.get("timestamp")),
+                            "raw_json": answer_item,
+                            "synced_at": now,
+                        }
+                        stmt = (
+                            pg_insert(SurveyResponse)
+                            .values(**values)
+                            .on_conflict_do_nothing()
+                        )
+                        await session.execute(stmt)
+                        count += 1
+
+                await self._complete_sync_log(session, sync_log, count)
+                await session.commit()
+                logger.info("Synced %d survey responses for event %d", count, event_id)
+                return count
+
+            except ON24APIError as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Failed to sync surveys for event %d: %s", event_id, exc
+                )
+                raise
+            except Exception as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Unexpected error syncing surveys for event %d: %s", event_id, exc
+                )
+                raise
+
+    # ── Resources viewed ─────────────────────────────────────────────
+
+    async def sync_event_resources(self, event_id: int) -> int:
+        """Sync resource view records for a specific event from ON24 to the database.
+
+        Args:
+            event_id: The ON24 event ID.
+
+        Returns:
+            Number of resource viewed records inserted.
+        """
+        async with async_session_factory() as session:
+            sync_log = await self._create_sync_log(session, "resources", event_id)
+            try:
+                response = await self.client.get_event_resources(event_id)
+                resources_data = response.get("resources", [])
+
+                count = 0
+                now = datetime.now(timezone.utc)
+                for resource in resources_data:
+                    values = {
+                        "on24_event_id": event_id,
+                        "attendee_email": resource.get("email", ""),
+                        "resource_name": resource.get("resourcename"),
+                        "resource_type": resource.get("resourcetype"),
+                        "viewed_at": _parse_datetime(resource.get("viewtime")),
+                        "raw_json": resource,
+                        "synced_at": now,
+                    }
+                    stmt = (
+                        pg_insert(ResourceViewed)
+                        .values(**values)
+                        .on_conflict_do_nothing()
+                    )
+                    await session.execute(stmt)
+                    count += 1
+
+                await self._complete_sync_log(session, sync_log, count)
+                await session.commit()
+                logger.info("Synced %d resource views for event %d", count, event_id)
+                return count
+
+            except ON24APIError as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Failed to sync resources for event %d: %s", event_id, exc
+                )
+                raise
+            except Exception as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Unexpected error syncing resources for event %d: %s", event_id, exc
+                )
+                raise
+
+    # ── CTA clicks ───────────────────────────────────────────────────
+
+    async def sync_event_ctas(self, event_id: int) -> int:
+        """Sync CTA click records for a specific event from ON24 to the database.
+
+        Accepts either a "ctas" or "calltoactions" key in the ON24 response.
+
+        Args:
+            event_id: The ON24 event ID.
+
+        Returns:
+            Number of CTA click records inserted.
+        """
+        async with async_session_factory() as session:
+            sync_log = await self._create_sync_log(session, "ctas", event_id)
+            try:
+                response = await self.client.get_event_ctas(event_id)
+                ctas_data = response.get("ctas") or response.get("calltoactions", [])
+
+                count = 0
+                now = datetime.now(timezone.utc)
+                for cta in ctas_data:
+                    values = {
+                        "on24_event_id": event_id,
+                        "attendee_email": cta.get("email", ""),
+                        "cta_name": cta.get("ctaname"),
+                        "cta_url": cta.get("url"),
+                        "clicked_at": _parse_datetime(cta.get("clicktime")),
+                        "raw_json": cta,
+                        "synced_at": now,
+                    }
+                    stmt = (
+                        pg_insert(CTAClick)
+                        .values(**values)
+                        .on_conflict_do_nothing()
+                    )
+                    await session.execute(stmt)
+                    count += 1
+
+                await self._complete_sync_log(session, sync_log, count)
+                await session.commit()
+                logger.info("Synced %d CTA clicks for event %d", count, event_id)
+                return count
+
+            except ON24APIError as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Failed to sync CTAs for event %d: %s", event_id, exc
+                )
+                raise
+            except Exception as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Unexpected error syncing CTAs for event %d: %s", event_id, exc
+                )
+                raise
+
+    # ── Engagement profile (PEP) ─────────────────────────────────────
+
+    async def sync_engagement_profile(self, email: str) -> bool:
+        """Fetch and upsert a PEP engagement profile for a single email address.
+
+        Args:
+            email: The attendee email address to look up in ON24 PEP.
+
+        Returns:
+            True if the profile was successfully synced, False otherwise.
+        """
+        async with async_session_factory() as session:
+            sync_log = await self._create_sync_log(session, "engagement_profile")
+            try:
+                pep_data = await self.client.get_pep(email)
+
+                now = datetime.now(timezone.utc)
+                values = {
+                    "email": email,
+                    "company": pep_data.get("company"),
+                    "total_events_attended": _safe_int(
+                        pep_data.get("totaleventsattended"), 0
+                    ),
+                    "total_engagement_score": pep_data.get("totalengagementscore"),
+                    "last_event_date": _parse_datetime(pep_data.get("lasteventdate")),
+                    "pep_data": pep_data,
+                    "synced_at": now,
+                }
+
+                update_values = {k: v for k, v in values.items() if k != "email"}
+
+                stmt = (
+                    pg_insert(EngagementProfile)
+                    .values(**values)
+                    .on_conflict_do_update(
+                        index_elements=["email"],
+                        set_=update_values,
+                    )
+                )
+                await session.execute(stmt)
+                await self._complete_sync_log(session, sync_log, 1)
+                await session.commit()
+                logger.info("Synced engagement profile for %s", email)
+                return True
+
+            except ON24APIError as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Failed to sync engagement profile for %s: %s", email, exc
+                )
+                return False
+            except Exception as exc:
+                await self._complete_sync_log(session, sync_log, 0, str(exc))
+                await session.commit()
+                logger.error(
+                    "Unexpected error syncing engagement profile for %s: %s", email, exc
+                )
+                return False
+
     # ── Full sync orchestrator ───────────────────────────────────────
 
     async def sync_all(self) -> dict[str, int]:
-        """Run a full sync: events first, then attendees and registrants per event.
+        """Run a full sync: events first, then attendees, registrants, polls,
+        surveys, resources, and CTAs per event.
 
         Errors on individual events are logged and skipped so that one
         failing event does not block the rest of the sync run.
 
         Returns:
-            Dict with counts ``{"events": N, "attendees": N, "registrants": N}``.
+            Dict with counts for each synced entity type.
         """
-        results: dict[str, int] = {"events": 0, "attendees": 0, "registrants": 0}
+        results: dict[str, int] = {
+            "events": 0,
+            "attendees": 0,
+            "registrants": 0,
+            "polls": 0,
+            "surveys": 0,
+            "resources": 0,
+            "ctas": 0,
+        }
 
         # 1. Sync events
         results["events"] = await self.sync_events()
@@ -394,7 +709,7 @@ class SyncService:
             )
             event_ids: list[int] = [row[0] for row in result.fetchall()]
 
-        # 3. Sync attendees and registrants for each event
+        # 3. Sync per-event data for each active event
         for eid in event_ids:
             try:
                 att_count = await self.sync_event_attendees(eid)
@@ -407,6 +722,30 @@ class SyncService:
                 results["registrants"] += reg_count
             except Exception as exc:
                 logger.error("Failed to sync registrants for event %d: %s", eid, exc)
+
+            try:
+                poll_count = await self.sync_event_polls(eid)
+                results["polls"] += poll_count
+            except Exception as exc:
+                logger.error("Failed to sync polls for event %d: %s", eid, exc)
+
+            try:
+                survey_count = await self.sync_event_surveys(eid)
+                results["surveys"] += survey_count
+            except Exception as exc:
+                logger.error("Failed to sync surveys for event %d: %s", eid, exc)
+
+            try:
+                resource_count = await self.sync_event_resources(eid)
+                results["resources"] += resource_count
+            except Exception as exc:
+                logger.error("Failed to sync resources for event %d: %s", eid, exc)
+
+            try:
+                cta_count = await self.sync_event_ctas(eid)
+                results["ctas"] += cta_count
+            except Exception as exc:
+                logger.error("Failed to sync CTAs for event %d: %s", eid, exc)
 
         logger.info("Full sync complete: %s", results)
         return results

@@ -8,6 +8,7 @@ from typing import Any, AsyncIterator
 import anthropic
 
 from app.agents.data_agent import DataAgent
+from app.agents.content_agent import ContentAgent
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class OrchestratorAgent:
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         self.model = "claude-sonnet-4-20250514"
         self.data_agent = DataAgent()
+        self.content_agent = ContentAgent()
         self.conversation_history: list[dict] = []
 
     # Tool for routing to sub-agents
@@ -131,9 +133,8 @@ class OrchestratorAgent:
                         }
 
                     elif tool_name == "route_to_content_agent":
-                        # Content agent not yet implemented - use data agent as fallback
-                        logger.info(f"Content Agent requested (using Data Agent fallback): {query}")
-                        result = await self.data_agent.run(query)
+                        logger.info(f"Routing to Content Agent: {query}")
+                        result = await self.content_agent.run(query)
 
                         self.conversation_history.append({
                             "role": "user",
@@ -159,7 +160,7 @@ class OrchestratorAgent:
                         return {
                             "text": text,
                             "agent_used": "content_agent",
-                            "chart_data": result.get("chart_data"),
+                            "chart_data": None,
                         }
 
                     elif tool_name == "route_to_admin_agent":

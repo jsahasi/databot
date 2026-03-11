@@ -99,6 +99,39 @@ export interface SyncStatus {
   error_message: string | null
 }
 
+export interface CompanyAudience {
+  company: string
+  events_attended: number
+  total_attendances: number
+  avg_engagement: number | null
+}
+
+export interface AudienceAnalytics {
+  top_companies: CompanyAudience[]
+  registration_sources: Array<{ source: string; count: number }>
+  country_distribution: Array<{ country: string; count: number }>
+}
+
+export interface ContentTypePerformance {
+  event_type: string
+  event_count: number
+  avg_attendees: number
+  avg_engagement: number | null
+  avg_conversion_rate: number | null
+}
+
+export interface ContentPerformance {
+  by_type: ContentTypePerformance[]
+  top_events: TopEvent[]
+}
+
+export interface HeatmapPoint {
+  day: number
+  hour: number
+  avg_engagement: number
+  event_count: number
+}
+
 // API functions
 export const eventsApi = {
   list: (params?: { page?: number; per_page?: number; search?: string; sort_by?: string; sort_order?: string }) =>
@@ -119,6 +152,9 @@ export const analyticsApi = {
   trends: (months?: number) => api.get<TrendPoint[]>('/analytics/trends', { params: { months } }).then(r => r.data),
   topEvents: (limit?: number, sort_by?: string) =>
     api.get<TopEvent[]>('/analytics/top-events', { params: { limit, sort_by } }).then(r => r.data),
+  audiences: () => api.get<AudienceAnalytics>('/analytics/audiences').then(r => r.data),
+  contentPerformance: () => api.get<ContentPerformance>('/analytics/content-performance').then(r => r.data),
+  engagementHeatmap: () => api.get<HeatmapPoint[]>('/analytics/engagement-heatmap').then(r => r.data),
 }
 
 export const syncApi = {

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
+import { analyticsApi } from '../services/api'
 
 export interface SyncStatus {
   id: number
@@ -80,5 +81,26 @@ export function useTopEvents(limit = 10) {
       const { data } = await api.get('/analytics/top-events', { params: { limit } })
       return data
     },
+  })
+}
+
+export function useAudienceAnalytics() {
+  return useQuery({
+    queryKey: ['audience-analytics'],
+    queryFn: analyticsApi.audiences,
+  })
+}
+
+export function useContentPerformance() {
+  return useQuery({
+    queryKey: ['content-performance'],
+    queryFn: analyticsApi.contentPerformance,
+  })
+}
+
+export function useEngagementHeatmap() {
+  return useQuery({
+    queryKey: ['engagement-heatmap'],
+    queryFn: analyticsApi.engagementHeatmap,
   })
 }
