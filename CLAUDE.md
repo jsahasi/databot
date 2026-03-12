@@ -77,17 +77,27 @@ npm run lint
 - **Frontend Paths**: `@/` alias resolves to `src/` (vite.config.ts + tsconfig paths).
 
 ## ON24 Analytics Platform — Existing Reporting Sections
-The ON24 platform has these built-in analytics sections (reference when suggesting new tools or features):
+The ON24 platform has these built-in analytics sections. Use these URLs when redirecting users to more appropriate tools:
 
-| Section | Sub-sections |
-|---------|-------------|
-| Dashboard | — |
-| Smart Tips | — |
-| Products | Webcast Elite, Engagement Hub, Target, Go Live |
-| Leads | Power Leads, Segments, Funnel, Accounts |
-| Content | Documents, Videos, Webpages |
-| Interactions | Polls & Surveys, Buying Signals, Presenters |
-| Benchmarking | — |
+| Section | Sub-section | URL |
+|---------|-------------|-----|
+| Dashboard | — | https://wcc.on24.com/webcast/dashboard |
+| Smart Tips | — | https://wcc.on24.com/webcast/keyinsightssummary |
+| **Products** | Webcast Elite | https://wcc.on24.com/webcast/reportsdashboard |
+| | Engagement Hub | https://wcc.on24.com/webcast/portalsummaryreports |
+| | Target | https://wcc.on24.com/webcast/targetAnalytics |
+| | Go Live | https://wcc.on24.com/webcast/virtualeventsummary |
+| **Leads** | Power Leads | https://wcc.on24.com/webcast/leadsreports |
+| | Segments | https://wcc.on24.com/webcast/segmentationsummary |
+| | Funnel | https://wcc.on24.com/webcast/funnelaudience |
+| | Accounts | https://wcc.on24.com/webcast/accountengagement |
+| **Content** | Documents | https://wcc.on24.com/webcast/documentsanalytics |
+| | Videos | https://wcc.on24.com/webcast/videolibraryanalytics |
+| | Webpages | https://wcc.on24.com/webcast/webpagessummary |
+| **Interactions** | Polls & Surveys | https://wcc.on24.com/webcast/pollsreport |
+| | Buying Signals | https://wcc.on24.com/webcast/buyingsignals |
+| | Presenters | https://wcc.on24.com/webcast/funnelpresenters |
+| **Benchmarking** | — | https://wcc.on24.com/webcast/benchmarking |
 
 ## ON24 Data Access
 **Two data sources — always prefer direct DB for reads:**

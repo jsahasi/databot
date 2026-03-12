@@ -145,15 +145,25 @@
 - [x] Resource downloads fix: switched from `resource_hit_track` (zero rows) to `content_hit_track_details` (action='TotalHits') with display_profile/display_element filter for resource-list widgets; also updates calendar event detail
 - [x] `resources_last_event` removed from KNOWN_DATA_GAPS (now expected to have data)
 
-## ON24 Platform Analytics Sections (Reference)
-Built-in ON24 reporting for context on what data exists and what users expect:
-- **Dashboard** — overview
-- **Smart Tips** — AI-generated insights
-- **Products** — Webcast Elite, Engagement Hub, Target, Go Live
-- **Leads** — Power Leads, Segments, Funnel, Accounts
-- **Content** — Documents, Videos, Webpages
-- **Interactions** — Polls & Surveys, Buying Signals, Presenters
-- **Benchmarking** — industry comparison
+## ON24 Platform Analytics Links (Reference)
+Built-in ON24 reporting — agent directs users to these as jumping-off points:
+- **Dashboard**: wcc.on24.com/webcast/dashboard
+- **Smart Tips**: wcc.on24.com/webcast/keyinsightssummary
+- **Webcast Elite**: wcc.on24.com/webcast/reportsdashboard
+- **Engagement Hub**: wcc.on24.com/webcast/portalsummaryreports
+- **Target**: wcc.on24.com/webcast/targetAnalytics
+- **Go Live**: wcc.on24.com/webcast/virtualeventsummary
+- **Power Leads**: wcc.on24.com/webcast/leadsreports
+- **Segments**: wcc.on24.com/webcast/segmentationsummary
+- **Funnel**: wcc.on24.com/webcast/funnelaudience
+- **Accounts**: wcc.on24.com/webcast/accountengagement
+- **Documents**: wcc.on24.com/webcast/documentsanalytics
+- **Videos**: wcc.on24.com/webcast/videolibraryanalytics
+- **Webpages**: wcc.on24.com/webcast/webpagessummary
+- **Polls & Surveys**: wcc.on24.com/webcast/pollsreport
+- **Buying Signals**: wcc.on24.com/webcast/buyingsignals
+- **Presenters**: wcc.on24.com/webcast/funnelpresenters
+- **Benchmarking**: wcc.on24.com/webcast/benchmarking
 
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
