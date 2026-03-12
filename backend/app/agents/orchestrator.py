@@ -108,7 +108,7 @@ class OrchestratorAgent:
 
                     if tool_name == "route_to_data_agent":
                         logger.info(f"Routing to Data Agent: {query}")
-                        result = await self.data_agent.run(query)
+                        result = await self.data_agent.run(query, conversation_history=self.conversation_history)
 
                         # Feed result back into conversation history for context
                         self.conversation_history.append({
