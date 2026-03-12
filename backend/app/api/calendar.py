@@ -66,13 +66,13 @@ async def get_calendar(
     sql = """
         SELECT
             e.event_id,
-            e.description            AS title,
-            e.seo_abstract           AS abstract,
-            e.goodafter              AS start_time,
-            e.goodtill               AS end_time,
-            e.event_type             AS event_type,
-            s.registrant_count,
-            s.attendee_count
+            e.description                     AS title,
+            e.seo_abstract                    AS abstract,
+            e.goodafter                       AS start_time,
+            e.goodtill                        AS end_time,
+            e.event_type                      AS event_type,
+            SUM(s.registrant_count)           AS registrant_count,
+            SUM(s.attendee_count)             AS attendee_count
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session s
                ON s.event_id = e.event_id
@@ -80,6 +80,8 @@ async def get_calendar(
           AND e.goodafter >= $2
           AND e.goodafter <  $3
           AND LOWER(e.description) NOT LIKE '%test%'
+        GROUP BY e.event_id, e.description, e.seo_abstract,
+                 e.goodafter, e.goodtill, e.event_type
         ORDER BY e.goodafter
     """
 
@@ -100,18 +102,20 @@ async def get_calendar_event(event_id: int):
     sql = """
         SELECT
             e.event_id,
-            e.description            AS title,
-            e.seo_abstract           AS abstract,
-            e.goodafter              AS start_time,
-            e.goodtill               AS end_time,
-            e.event_type             AS event_type,
-            s.registrant_count,
-            s.attendee_count
+            e.description                     AS title,
+            e.seo_abstract                    AS abstract,
+            e.goodafter                       AS start_time,
+            e.goodtill                        AS end_time,
+            e.event_type                      AS event_type,
+            SUM(s.registrant_count)           AS registrant_count,
+            SUM(s.attendee_count)             AS attendee_count
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session s
                ON s.event_id = e.event_id
         WHERE e.event_id = $1
           AND e.client_id = ANY($2::bigint[])
+        GROUP BY e.event_id, e.description, e.seo_abstract,
+                 e.goodafter, e.goodtill, e.event_type
         LIMIT 1
     """
 

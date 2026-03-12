@@ -195,6 +195,13 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Empty poll handling: data agent responds "No poll results for [event title]." instead of generic "None found." when get_polls returns empty for a specific event
 - [x] Guaranteed poll chip: when response contains "no poll results for", inject "Show polls for the most recent event that had polls" as first suggestion
 
+## Phase 8 Addendum 10: Q&A, Company Query, Calendar KPIs — COMPLETE (2026-03-12)
+- [x] get_audience_companies: event_id param for per-event scoping; email domain fallback when company blank; exclude param for filtering internal orgs
+- [x] Calendar KPI aggregation: dw_event_session JOIN now uses SUM(registrant_count)/SUM(attendee_count) grouped by event — was returning NULL for multi-session events
+- [x] Event card on get_event_detail: triggers event_card rendering in chat (was only on compute_event_kpis)
+- [x] Rename TopNav to "ON24 Nexus"
+- [x] Poll chart suppresses poll cards (chart takes precedence over card rendering)
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
