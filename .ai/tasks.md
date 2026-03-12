@@ -118,6 +118,16 @@
 - **ON24 DB**: requires VPN or ON24 internal network (10.3.7.233 not reachable externally)
 - **Active ON24 DB**: PROD — 10.3.7.233:5458/on24master (not QA port 5459)
 
+## Phase 8 Addendum 5: Feedback Loop + Company Dedup — COMPLETE (2026-03-12)
+- [x] Thumbs up/down hover buttons on each bot assistant message
+- [x] Thumbs-down opens inline popup: "Tell me what I got wrong"
+- [x] POST /api/feedback — backend/app/api/feedback.py
+- [x] Negative feedback written to data/improvement-inbox-MM-DD-YYYY.txt
+      as structured LLM-ready prompt with timestamp, agent, user question, bot response
+- [x] data/ folder mounted as Docker volume (persists outside container)
+- [x] Company dedup in get_audience_companies: GROUP BY LOWER(TRIM(company)),
+      display most common casing via MODE()
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Explore question_x_answer + event_user_x_answer for poll response counts

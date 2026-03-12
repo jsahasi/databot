@@ -56,6 +56,33 @@ POSTGRES_PASSWORD    # Password for the local app database
 
 See `.env.example` for the full list with descriptions.
 
+## Agents
+
+| Agent | Role | Tools |
+|-------|------|-------|
+| Orchestrator | Routes queries to the right agent | route_to_data/content/admin_agent |
+| Data Agent | Queries ON24 DB, returns analytics + charts | list_events, get_event_kpis, get_top_events, get_attendance_trends, get_audience_companies, get_polls, get_top_events_by_polls, get_poll_overview, get_resources, generate_chart_data |
+| Content Agent | Topic analysis, scheduling patterns, suggestions | analyze_topic_performance, compare_event_performance, suggest_topics |
+| Admin Agent | ON24 API write operations (with confirmation) | create_event, update_event, add_registrant, remove_registrant |
+
+All Data Agent queries are tenant-scoped to client 10710 + 9 sub-clients via `client_id = ANY(get_tenant_client_ids())`.
+
+## Feedback Loop
+
+Each bot response shows a thumbs up / thumbs down on hover.
+
+- **Thumbs down** opens an inline popup: "Tell me what I got wrong"
+- Feedback is saved to `data/improvement-inbox-MM-DD-YYYY.txt` as a structured LLM-ready improvement prompt including timestamp, agent used, user question, and bot response
+- The `data/` folder is mounted as a Docker volume and persists outside the container
+
+## Regression Tests
+
+```bash
+python -m pytest tests/test_chat_prompts.py -q
+```
+
+26 prompt tests — 22 pass, 4 skipped (known data gaps: no poll responses or resource clicks for client 10710 since 2023).
+
 ## Development
 
 ```bash
@@ -70,3 +97,5 @@ npm run dev        # Dev server at localhost:5173 (proxies /api and /ws to backe
 npm run typecheck
 npm run lint
 ```
+
+> **Frontend note**: The deployed frontend is a nginx production build — run `docker compose up --build -d frontend` after any frontend change. No hot-reload in Docker.
