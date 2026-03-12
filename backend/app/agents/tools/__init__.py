@@ -13,6 +13,7 @@ from app.agents.tools.on24_query_tools import (
     compute_client_kpis,
     query_polls,
     query_top_events,
+    query_top_events_by_polls,
     query_attendance_trends,
     query_audience_companies,
     query_resources,
@@ -143,6 +144,19 @@ DATA_AGENT_TOOLS = [
         },
     },
     {
+        "name": "get_top_events_by_polls",
+        "description": (
+            "Return the top events ranked by number of poll questions asked. "
+            "Use when the user asks which events had the most polls, or wants to find poll-heavy events."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Number of top events to return (default 10)"},
+            },
+        },
+    },
+    {
         "name": "get_attendance_trends",
         "description": (
             "Return monthly attendance and registration trend data for the current client "
@@ -195,6 +209,7 @@ TOOL_HANDLERS = {
     "get_client_kpis": compute_client_kpis,
     "get_polls": query_polls,
     "get_top_events": query_top_events,
+    "get_top_events_by_polls": query_top_events_by_polls,
     "get_attendance_trends": query_attendance_trends,
     "get_audience_companies": query_audience_companies,
     "get_resources": query_resources,

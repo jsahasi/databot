@@ -73,6 +73,14 @@
 - [x] Alternative view suggestion chips ("Show as bar chart", "Show as table") based on response type
 - [x] generate_suggestions() updated to accept has_chart and has_table params
 
+## Phase 8 Addendum 2: Poll Fix + Typing UX + Polls Ranking Tool — COMPLETE (2026-03-11)
+- [x] Poll query fix: qa.answer_text → qa.answer (correct column name in question_x_answer)
+- [x] Poll query fix: Python dict maps a["answer"] → "answer_text" key (API compat)
+- [x] New tool: get_top_events_by_polls — ranks events by poll question count via question table
+- [x] Chat input: removed disabled={isProcessing} so user can type while agent is processing
+- [x] OWASP security hardening: message length limit (4000), session ID sanitization, generic error messages
+- [x] Data quality filters: _EXCL_TEST (no "test" in name) + _MIN_REGS_SUBQ (>5 registrants); single-event queries use _EXCL_TEST only to avoid correlated subquery timeout
+
 ## Local Setup Notes
 - **App URL**: http://localhost:3001 (via `docker compose up --build`)
 - **Postgres host port**: 5433 (internal container port remains 5432; only host mapping changed)

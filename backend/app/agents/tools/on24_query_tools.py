@@ -25,6 +25,18 @@ logger = logging.getLogger(__name__)
 
 _QUERY_TIMEOUT = 8.0
 
+# Data quality filters applied globally to all event-returning queries.
+# Excludes: (1) test/staging events — description contains "test" (case-insensitive)
+#           (2) low-signal events — 5 or fewer registrants
+# These are hardcoded SQL fragments (no user input) so f-string inclusion is safe.
+_EXCL_TEST = "AND e.description NOT ILIKE '%test%'"
+_MIN_REGS_SUBQ = """
+    AND COALESCE((
+        SELECT SUM(r.registrant_count)
+        FROM on24master.dw_event_session r
+        WHERE r.event_id = e.event_id
+    ), 0) > 5"""
+
 
 def _clamp_months(months: int, max_months: int = 24) -> int:
     return max(1, min(months, min(max_months, 24)))
@@ -46,7 +58,7 @@ async def query_events(
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    sql = """
+    sql = f"""
         SELECT
             event_id,
             description,
@@ -54,16 +66,17 @@ async def query_events(
             goodafter,
             goodtill,
             is_active,
-            description,
             create_timestamp,
             last_modified
-        FROM on24master.event
-        WHERE client_id = ANY($1::bigint[])
-          AND ($2::text IS NULL OR event_type = $2)
-          AND ($3::text IS NULL OR is_active = $3)
-          AND ($4::text IS NULL OR description ILIKE '%' || $4 || '%')
-          AND ($5 = false OR goodafter <= NOW())
-        ORDER BY goodafter DESC NULLS LAST
+        FROM on24master.event e
+        WHERE e.client_id = ANY($1::bigint[])
+          AND ($2::text IS NULL OR e.event_type = $2)
+          AND ($3::text IS NULL OR e.is_active = $3)
+          AND ($4::text IS NULL OR e.description ILIKE '%' || $4 || '%')
+          AND ($5 = false OR e.goodafter <= NOW())
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
+        ORDER BY e.goodafter DESC NULLS LAST
         LIMIT $6 OFFSET $7
     """
     async with pool.acquire() as conn:
@@ -77,11 +90,13 @@ async def get_event_detail(event_id: int) -> dict | None:
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    sql = """
+    sql = f"""
         SELECT *
-        FROM on24master.event
-        WHERE event_id = $1
-          AND client_id = ANY($2::bigint[])
+        FROM on24master.event e
+        WHERE e.event_id = $1
+          AND e.client_id = ANY($2::bigint[])
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
@@ -97,7 +112,7 @@ async def query_attendees(
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    sql = """
+    sql = f"""
         SELECT
             da.event_user_id,
             da.engagement_score,
@@ -111,6 +126,7 @@ async def query_attendees(
           ON da.event_id = e.event_id
          AND e.client_id = ANY($2::bigint[])
         WHERE da.event_id = $1
+          {_EXCL_TEST}
         ORDER BY da.engagement_score DESC NULLS LAST
         LIMIT $3 OFFSET $4
     """
@@ -129,7 +145,7 @@ async def compute_event_kpis(event_id: int) -> dict:
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    sql = """
+    sql = f"""
         SELECT
             SUM(des.registrant_count)                    AS total_registrants,
             SUM(des.attendee_count)                      AS total_attendees,
@@ -144,6 +160,7 @@ async def compute_event_kpis(event_id: int) -> dict:
           ON des.event_id = e.event_id
          AND e.client_id = ANY($2::bigint[])
         WHERE des.event_id = $1
+          {_EXCL_TEST}
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
@@ -175,9 +192,9 @@ async def compute_client_kpis(months: int = 1) -> dict:
     pool = await get_pool()
     months = _clamp_months(months)
 
-    sql = """
+    sql = f"""
         SELECT
-            COUNT(DISTINCT e.event_id)           AS total_events,
+            COUNT(DISTINCT e.event_id)             AS total_events,
             COALESCE(SUM(des.registrant_count), 0) AS total_registrants,
             COALESCE(SUM(des.attendee_count), 0)   AS total_attendees,
             AVG(des.engagement_score_avg)          AS avg_engagement
@@ -187,6 +204,8 @@ async def compute_client_kpis(months: int = 1) -> dict:
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
           AND e.goodafter <= NOW()
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
@@ -209,7 +228,8 @@ async def query_polls(event_id: int) -> list[dict]:
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    questions_sql = """
+    # Single-event query: _MIN_REGS_SUBQ omitted (redundant for explicit event_id lookup)
+    questions_sql = f"""
         SELECT q.question_id, q.description AS question_text, q.question_type_cd, q.create_timestamp
         FROM on24master.question q
         JOIN on24master.event e
@@ -217,14 +237,15 @@ async def query_polls(event_id: int) -> list[dict]:
          AND e.client_id = ANY($2::bigint[])
         WHERE q.event_id = $1
           AND q.question_type_cd IN ('singleoption', 'multioption')
+          {_EXCL_TEST}
         ORDER BY q.question_id
     """
 
-    answers_sql = """
+    answers_sql = f"""
         SELECT
             qa.question_id,
-            qa.answer_id,
-            qa.answer_text,
+            qa.answer_cd,
+            qa.answer,
             COUNT(eua.event_user_id) AS response_count
         FROM on24master.question_x_answer qa
         JOIN on24master.question q
@@ -233,12 +254,13 @@ async def query_polls(event_id: int) -> list[dict]:
           ON q.event_id = e.event_id
          AND e.client_id = ANY($2::bigint[])
         LEFT JOIN on24master.event_user_x_answer eua
-          ON eua.answer_id = qa.answer_id
+          ON eua.answer_cd = qa.answer_cd
          AND eua.question_id = qa.question_id
         WHERE q.event_id = $1
           AND q.question_type_cd IN ('singleoption', 'multioption')
-        GROUP BY qa.question_id, qa.answer_id, qa.answer_text
-        ORDER BY qa.question_id, qa.answer_id
+          {_EXCL_TEST}
+        GROUP BY qa.question_id, qa.answer_cd, qa.answer
+        ORDER BY qa.question_id, qa.answer_cd
     """
 
     async with pool.acquire() as conn:
@@ -249,8 +271,8 @@ async def query_polls(event_id: int) -> list[dict]:
     for a in a_rows:
         qid = a["question_id"]
         answers_by_question.setdefault(qid, []).append({
-            "answer_id": a["answer_id"],
-            "answer_text": a["answer_text"],
+            "answer_cd": a["answer_cd"],
+            "answer_text": a["answer"],
             "response_count": a["response_count"],
         })
 
@@ -266,6 +288,34 @@ async def query_polls(event_id: int) -> list[dict]:
         })
 
     return results
+
+
+async def query_top_events_by_polls(limit: int = 10) -> list[dict]:
+    """Top events ranked by number of poll questions asked."""
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    limit = max(1, min(limit, 50))
+
+    sql = f"""
+        SELECT
+            e.event_id,
+            e.description,
+            e.goodafter,
+            COUNT(DISTINCT q.question_id) AS poll_count
+        FROM on24master.event e
+        JOIN on24master.question q
+          ON q.event_id = e.event_id
+         AND q.question_type_cd IN ('singleoption', 'multioption')
+        WHERE e.client_id = ANY($1::bigint[])
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
+        GROUP BY e.event_id, e.description, e.goodafter
+        ORDER BY poll_count DESC NULLS LAST
+        LIMIT $2
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, client_ids, limit, timeout=_QUERY_TIMEOUT)
+    return [dict(row) for row in rows]
 
 
 async def query_top_events(
@@ -288,7 +338,6 @@ async def query_top_events(
     }
     order_col = _sort_map.get(sort_by, "total_attendees")
     # Hard assert: order_col must be one of the two known safe column aliases.
-    # This prevents any future code path from injecting an arbitrary string (A03).
     assert order_col in ("total_attendees", "avg_engagement"), f"Unexpected order_col: {order_col}"
 
     sql = f"""
@@ -299,6 +348,7 @@ async def query_top_events(
             e.goodafter,
             e.is_active,
             COALESCE(SUM(des.attendee_count), 0)   AS total_attendees,
+            COALESCE(SUM(des.registrant_count), 0) AS total_registrants,
             AVG(des.engagement_score_avg)           AS avg_engagement
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session des
@@ -306,10 +356,12 @@ async def query_top_events(
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
           AND e.goodafter <= NOW()
+          {_EXCL_TEST}
         GROUP BY e.event_id, e.description, e.event_type, e.goodafter, e.is_active
+        HAVING COALESCE(SUM(des.registrant_count), 0) > 5
         ORDER BY {order_col} DESC NULLS LAST
         LIMIT $3
-    """  # order_col sourced from allowlist + asserted above; $2 is clamped integer cast to interval
+    """  # order_col sourced from allowlist + asserted above
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, str(months), limit, timeout=_QUERY_TIMEOUT)
@@ -327,12 +379,13 @@ async def query_attendance_trends(months: int = 1) -> list[dict]:
     """Monthly attendance and registration trends. Default: last 1 month, max 24.
 
     Uses dw_event_session registrant_count / attendee_count per event.
+    Only includes events that pass the test-exclusion and min-registrant filters.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
     months = _clamp_months(months)
 
-    sql = """
+    sql = f"""
         SELECT
             DATE_TRUNC('month', e.goodafter)             AS period,
             COUNT(DISTINCT e.event_id)                   AS event_count,
@@ -345,6 +398,8 @@ async def query_attendance_trends(months: int = 1) -> list[dict]:
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
           AND e.goodafter <= NOW()
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
         GROUP BY DATE_TRUNC('month', e.goodafter)
         ORDER BY period ASC
     """
@@ -374,7 +429,7 @@ async def query_audience_companies(
     pool = await get_pool()
     months = _clamp_months(months)
 
-    sql = """
+    sql = f"""
         SELECT
             eu.company,
             COUNT(DISTINCT eu.event_id)         AS events_attended,
@@ -391,6 +446,8 @@ async def query_audience_companies(
          AND da.event_id = eu.event_id
         WHERE eu.company IS NOT NULL
           AND eu.company <> ''
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
         GROUP BY eu.company
         ORDER BY total_attendees DESC NULLS LAST
         LIMIT $2
@@ -416,7 +473,7 @@ async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    sql = """
+    sql = f"""
         SELECT
             rht.resource_id,
             rht.event_user_id,
@@ -427,6 +484,7 @@ async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
           ON rht.event_id = e.event_id
          AND e.client_id = ANY($2::bigint[])
         WHERE rht.event_id = $1
+          {_EXCL_TEST}
         ORDER BY rht.timestamp DESC NULLS LAST
         LIMIT $3
     """

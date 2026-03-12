@@ -226,7 +226,6 @@ export default function ChatPanel() {
             onKeyDown={handleKeyDown}
             placeholder="Or type your message to chat here..."
             aria-label="Chat message input"
-            disabled={isProcessing}
             autoFocus
             rows={1}
             style={{

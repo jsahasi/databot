@@ -80,6 +80,14 @@ Implementation:
 **Decision:** Changed the Docker Compose host port mapping for the postgres container from `5432:5432` to `5433:5432`.
 **Rationale:** The host machine had another project's postgres container (agentic-video-db-1) already bound to host port 5432, causing a bind conflict on `docker compose up`. The internal container port remains 5432; backend connects via Docker network using the service name `postgres:5432` — unaffected by this change. Connection tools and local psql clients must use port 5433.
 
+## 2026-03-11: Poll Query Column Name Corrections
+**Decision:** `question_x_answer` uses `answer` (not `answer_text`) and `answer_cd` (not `answer_id`). `event_user_x_answer` uses `answer_cd` (not `answer_id`). Poll type codes are `singleoption`/`multioption` (not `POLL`).
+**Rationale:** Schema discovered via information_schema query — ON24 column names differ from intuitive names.
+
+## 2026-03-11: Poll Ranking via question Table
+**Decision:** `get_top_events_by_polls` counts `DISTINCT question_id` from the `question` table filtered by `question_type_cd IN ('singleoption', 'multioption')`. Does NOT use `dw_event_session.answered_polls` (that's per-attendee in `dw_attendee`, not a per-event poll count).
+**Rationale:** `dw_event_session` has no poll count column. Counting distinct questions per event from the `question` table is the correct approach.
+
 ## 2026-03-11: react-markdown for Chat Rendering
 **Decision:** Use `react-markdown` + `remark-gfm` for rendering agent responses in ChatMessage, replacing the custom pipe-table regex parser.
 **Rationale:** Custom parser only handled tables; agent responses now include bold text, lists, and inline code. react-markdown handles the full CommonMark + GFM spec (tables, strikethrough, task lists) with minimal bundle impact. All markdown elements are styled via CSS variables to support dark mode.
