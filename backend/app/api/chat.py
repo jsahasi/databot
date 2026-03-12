@@ -26,6 +26,7 @@ async def generate_suggestions(
     agent_used: str | None,
     has_chart: bool = False,
     has_table: bool = False,
+    chart_type: str | None = None,
 ) -> list[str]:
     """Generate 5 short follow-up question suggestions using Haiku."""
     client = anthropic.AsyncAnthropic()
@@ -33,14 +34,29 @@ async def generate_suggestions(
 
     view_rule = ""
     if has_chart:
-        view_rule = (
-            "The response included a chart. Include 1 suggestion offering an alternative view "
-            "such as 'Show as table' or 'Show as pie chart'. "
-        )
+        # Offer views that are NOT the current chart type
+        if chart_type == "bar":
+            view_rule = (
+                "The response already shows a BAR chart. "
+                "Include 1 suggestion for an alternative view — use 'Show as line chart' or 'Show as table'. "
+                "Do NOT suggest 'Show as bar chart'."
+            )
+        elif chart_type == "line":
+            view_rule = (
+                "The response already shows a LINE chart. "
+                "Include 1 suggestion for an alternative view — use 'Show as bar chart' or 'Show as table'. "
+                "Do NOT suggest 'Show as line chart'."
+            )
+        else:
+            view_rule = (
+                "The response included a chart. Include 1 suggestion for an alternative view "
+                "such as 'Show as table' or 'Show as bar chart'. "
+            )
     elif has_table:
         view_rule = (
-            "The response included a data table. Include 1-2 suggestions offering alternative "
-            "chart views such as 'Show as bar chart', 'Show as line chart', or 'Show as pie chart'. "
+            "The response already shows a DATA TABLE. "
+            "Include 1-2 suggestions offering chart views: 'Show as bar chart' or 'Show as line chart'. "
+            "Do NOT suggest 'Show as table'."
         )
 
     response = await client.messages.create(
@@ -156,17 +172,19 @@ async def websocket_chat(websocket: WebSocket):
                     })
 
                     # Fire suggestions asynchronously — non-blocking, skip on timeout/error
-                    _has_chart = bool(result.get("chart_data"))
+                    _chart_data = result.get("chart_data")
+                    _has_chart = bool(_chart_data)
+                    _chart_type = _chart_data.get("type") if _chart_data else None
                     _response_text = result.get("text", "")
                     _has_table = "|" in _response_text and "---" in _response_text
 
                     async def _send_suggestions(
                         ws: WebSocket, user_msg: str, text: str, agent: str | None,
-                        has_chart: bool, has_table: bool,
+                        has_chart: bool, has_table: bool, chart_type: str | None,
                     ) -> None:
                         try:
                             suggestions = await asyncio.wait_for(
-                                generate_suggestions(user_msg, text, agent, has_chart, has_table),
+                                generate_suggestions(user_msg, text, agent, has_chart, has_table, chart_type),
                                 timeout=8.0,
                             )
                             await ws.send_json({"type": "suggestions", "suggestions": suggestions})
@@ -180,6 +198,7 @@ async def websocket_chat(websocket: WebSocket):
                         result.get("agent_used"),
                         _has_chart,
                         _has_table,
+                        _chart_type,
                     ))
 
                 except Exception as e:
