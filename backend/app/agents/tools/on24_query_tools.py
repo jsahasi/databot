@@ -482,7 +482,7 @@ async def query_audience_companies(
 
     sql = f"""
         SELECT
-            eu.company,
+            MODE() WITHIN GROUP (ORDER BY eu.company) AS company,
             COUNT(DISTINCT eu.event_id)         AS events_attended,
             COUNT(eu.event_user_id)             AS total_registrants,
             COUNT(da.event_user_id)             AS total_attendees,
@@ -499,7 +499,7 @@ async def query_audience_companies(
           AND eu.company <> ''
           {_EXCL_TEST}
           {_MIN_REGS_SUBQ}
-        GROUP BY eu.company
+        GROUP BY LOWER(TRIM(eu.company))
         ORDER BY total_attendees DESC NULLS LAST
         LIMIT $2
     """
