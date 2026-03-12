@@ -116,11 +116,11 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
       .finally(() => setLoadingDetail(false))
   }, [initial.event_id])
 
-  // KPI tiles — only show non-zero, non-null values for past events
+  // KPI tiles — always show registrants + attendees for past events (even if 0)
   const kpis: { label: string; value: string; icon: string }[] = []
   if (!event.is_future) {
-    if (event.registrant_count) kpis.push({ label: 'Registrants', value: event.registrant_count.toLocaleString(), icon: '👥' })
-    if (event.attendee_count) kpis.push({ label: 'Attendees', value: event.attendee_count.toLocaleString(), icon: '✅' })
+    kpis.push({ label: 'Registrants', value: (event.registrant_count ?? 0).toLocaleString(), icon: '👥' })
+    kpis.push({ label: 'Attendees', value: (event.attendee_count ?? 0).toLocaleString(), icon: '✅' })
     if (event.conversion_rate) kpis.push({ label: 'Conversion', value: `${event.conversion_rate}%`, icon: '📈' })
     if (event.poll_response_count) kpis.push({ label: 'Poll Responses', value: event.poll_response_count.toLocaleString(), icon: '📊' })
     if (event.survey_response_count) kpis.push({ label: 'Survey Responses', value: event.survey_response_count.toLocaleString(), icon: '📋' })

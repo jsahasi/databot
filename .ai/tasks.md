@@ -198,6 +198,8 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 ## Phase 8 Addendum 10: Q&A, Company Query, Calendar KPIs — COMPLETE (2026-03-12)
 - [x] get_audience_companies: event_id param for per-event scoping; email domain fallback when company blank; exclude param for filtering internal orgs
 - [x] Calendar KPI aggregation: dw_event_session JOIN now uses SUM(registrant_count)/SUM(attendee_count) grouped by event — was returning NULL for multi-session events
+- [x] Calendar: always show Registrants/Attendees KPIs for past events (even if 0) — removed truthy-only guard
+- [x] Calendar: filter out events with <6 registrants (same rule as agent queries); future events always shown regardless
 - [x] Event card on get_event_detail: triggers event_card rendering in chat (was only on compute_event_kpis)
 - [x] Rename TopNav to "ON24 Nexus"
 - [x] Poll chart suppresses poll cards (chart takes precedence over card rendering)

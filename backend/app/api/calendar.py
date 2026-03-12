@@ -82,6 +82,8 @@ async def get_calendar(
           AND LOWER(e.description) NOT LIKE '%test%'
         GROUP BY e.event_id, e.description, e.seo_abstract,
                  e.goodafter, e.goodtill, e.event_type
+        HAVING COALESCE(SUM(s.registrant_count), 0) >= 6
+            OR e.goodafter > NOW()
         ORDER BY e.goodafter
     """
 
