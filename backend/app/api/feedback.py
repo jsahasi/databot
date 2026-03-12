@@ -1,0 +1,90 @@
+"""Feedback endpoint: stores user thumbs-up/down ratings on bot responses."""
+
+import logging
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+DATA_DIR = Path("/app/data")
+
+
+class FeedbackRequest(BaseModel):
+    feedback_type: str          # "positive" or "negative"
+    feedback_text: str = ""     # user's explanation (thumbs-down only)
+    message_content: str        # bot response text
+    user_question: str = ""     # the question that triggered this response
+    agent_used: str = ""        # e.g. "data_agent"
+    message_timestamp: str = "" # ISO timestamp of the original message
+
+
+def _build_improvement_prompt(req: FeedbackRequest, logged_at: datetime) -> str:
+    """Build a structured LLM-ready prompt from the feedback context."""
+    ts = logged_at.strftime("%Y-%m-%d %H:%M:%S UTC")
+    agent = req.agent_used or "unknown"
+
+    lines = [
+        "=== IMPROVEMENT FEEDBACK ===",
+        f"Logged: {ts}",
+        f"Agent: {agent}",
+        "",
+        "USER QUESTION:",
+        f'"{req.user_question}"' if req.user_question else "(not captured)",
+        "",
+        "BOT RESPONSE:",
+        req.message_content.strip(),
+        "",
+        "USER FEEDBACK:",
+        req.feedback_text.strip() if req.feedback_text else "(no details provided)",
+        "",
+        "--- IMPROVEMENT PROMPT ---",
+        "The following bot response was flagged as incorrect by a user.",
+        "Review the response and the user's complaint. Identify the most likely root cause",
+        "and suggest a targeted fix — either to the agent prompt, query logic, or tool behavior.",
+        "",
+        f"User asked: {req.user_question!r}",
+        f"Agent ({agent}) responded:",
+        req.message_content.strip(),
+        "",
+        f"User says it's wrong because: {req.feedback_text.strip()!r}",
+        "",
+        "Investigate and suggest specific improvements to:",
+        f"  1. backend/app/agents/prompts/{agent.replace('_agent', '')}_agent.md  (prompt rules)",
+        f"  2. backend/app/agents/tools/on24_query_tools.py  (query logic, if data issue)",
+        "  3. Any other relevant file based on the root cause",
+        "",
+        "Proposed fix:",
+        "(LLM to complete)",
+        "=" * 60,
+        "",
+    ]
+    return "\n".join(lines)
+
+
+@router.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    """Record a thumbs-up or thumbs-down on a bot response.
+
+    Thumbs-down entries are written to data/improvement-inbox-MM-DD-YYYY.txt
+    as a structured LLM-ready prompt for later review.
+    """
+    now = datetime.now(timezone.utc)
+
+    if req.feedback_type == "negative":
+        try:
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            filename = DATA_DIR / f"improvement-inbox-{now.strftime('%m-%d-%Y')}.txt"
+            entry = _build_improvement_prompt(req, now)
+            with open(filename, "a", encoding="utf-8") as f:
+                f.write(entry)
+            logger.info(f"Feedback written to {filename}")
+        except Exception:
+            logger.exception("Failed to write feedback")
+
+    return {"status": "ok"}

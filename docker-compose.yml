@@ -30,6 +30,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/app:/app/app
+      - ./data:/app/data
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 15s

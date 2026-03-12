@@ -145,9 +145,17 @@ export default function ChatPanel() {
         ) : (
           /* Chat messages */
           <div role="log" aria-live="polite" aria-label="Chat messages" style={{ padding: '1.5rem 2rem', display: 'flex', flexDirection: 'column' }}>
-            {messages.map(msg => (
+            {messages.map((msg, idx) => {
+              // Find the most recent user question before this assistant message
+              let userQuestion = ''
+              if (msg.role === 'assistant') {
+                for (let i = idx - 1; i >= 0; i--) {
+                  if (messages[i].role === 'user') { userQuestion = messages[i].content; break }
+                }
+              }
+              return (
               <React.Fragment key={msg.id}>
-                <ChatMessage message={msg} />
+                <ChatMessage message={msg} userQuestion={userQuestion} />
                 {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (
                   <div style={{
                     display: 'flex',
@@ -179,7 +187,8 @@ export default function ChatPanel() {
                   </div>
                 )}
               </React.Fragment>
-            ))}
+              )
+            })}
             {isProcessing && <AgentIndicator agent={activeAgent} isProcessing={isProcessing} />}
             <div ref={messagesEndRef} />
           </div>

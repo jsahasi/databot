@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -46,6 +47,7 @@ function ChatChart({ data }: { data: any }) {
 
 interface ChatMessageProps {
   message: ChatMessageType
+  userQuestion?: string
 }
 
 const mdComponents = {
@@ -87,15 +89,74 @@ const mdComponents = {
   tr: ({ children }: any) => <tr>{children}</tr>,
 }
 
-export default function ChatMessage({ message }: ChatMessageProps) {
+type FeedbackState = null | 'thumbs_up' | 'form' | 'submitted'
+
+async function postFeedback(payload: {
+  feedback_type: string
+  feedback_text: string
+  message_content: string
+  user_question: string
+  agent_used: string
+  message_timestamp: string
+}) {
+  await fetch('/api/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export default function ChatMessage({ message, userQuestion = '' }: ChatMessageProps) {
   const isUser = message.role === 'user'
+  const [hovered, setHovered] = useState(false)
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>(null)
+  const [feedbackText, setFeedbackText] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleThumbsUp = async () => {
+    setFeedbackState('thumbs_up')
+    await postFeedback({
+      feedback_type: 'positive',
+      feedback_text: '',
+      message_content: message.content,
+      user_question: userQuestion,
+      agent_used: message.agentUsed || '',
+      message_timestamp: message.timestamp.toISOString(),
+    })
+  }
+
+  const handleThumbsDown = () => {
+    setFeedbackState('form')
+    setTimeout(() => textareaRef.current?.focus(), 50)
+  }
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackText.trim()) return
+    await postFeedback({
+      feedback_type: 'negative',
+      feedback_text: feedbackText.trim(),
+      message_content: message.content,
+      user_question: userQuestion,
+      agent_used: message.agentUsed || '',
+      message_timestamp: message.timestamp.toISOString(),
+    })
+    setFeedbackState('submitted')
+    setFeedbackText('')
+  }
+
+  const showButtons = hovered && !message.isLoading && feedbackState === null
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      alignItems: isUser ? 'flex-end' : 'flex-start',
-      marginBottom: '0.75rem',
-    }}>
+    <div
+      style={{
+        display: 'flex', flexDirection: 'column',
+        alignItems: isUser ? 'flex-end' : 'flex-start',
+        marginBottom: '0.75rem',
+        position: 'relative',
+      }}
+      onMouseEnter={() => !isUser && setHovered(true)}
+      onMouseLeave={() => !isUser && setHovered(false)}
+    >
       {/* Agent badge */}
       {!isUser && message.agentUsed && (
         <span
@@ -109,34 +170,185 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         </span>
       )}
 
-      {/* Message bubble */}
-      <div style={{
-        maxWidth: isUser ? '75%' : '90%',
-        padding: '0.625rem 0.875rem',
-        borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
-        background: isUser ? 'var(--color-primary)' : 'var(--color-card)',
-        color: isUser ? '#fff' : 'var(--color-text)',
-        fontSize: '0.85rem', lineHeight: 1.5,
-        wordBreak: 'break-word',
-      }}>
-        {message.isLoading ? (
-          <span role="status" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
-            <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0s' }}>.</span>
-            <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.2s' }}>.</span>
-            <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.4s' }}>.</span>
-            <style>{`@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }`}</style>
-          </span>
-        ) : isUser ? (
-          <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
-        ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-            {message.content}
-          </ReactMarkdown>
+      {/* Message bubble + hover buttons row */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.375rem', maxWidth: '90%' }}>
+        {/* Message bubble */}
+        <div style={{
+          padding: '0.625rem 0.875rem',
+          borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
+          background: isUser ? 'var(--color-primary)' : 'var(--color-card)',
+          color: isUser ? '#fff' : 'var(--color-text)',
+          fontSize: '0.85rem', lineHeight: 1.5,
+          wordBreak: 'break-word',
+          minWidth: 0,
+          flex: 1,
+        }}>
+          {message.isLoading ? (
+            <span role="status" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
+              <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0s' }}>.</span>
+              <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.2s' }}>.</span>
+              <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.4s' }}>.</span>
+              <style>{`@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }`}</style>
+            </span>
+          ) : isUser ? (
+            <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+              {message.content}
+            </ReactMarkdown>
+          )}
+        </div>
+
+        {/* Thumbs up/down — visible on hover for assistant messages */}
+        {!isUser && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.25rem',
+            paddingTop: '0.25rem',
+            opacity: showButtons ? 1 : 0,
+            transition: 'opacity 0.15s',
+            pointerEvents: showButtons ? 'auto' : 'none',
+            flexShrink: 0,
+          }}>
+            <button
+              aria-label="Thumbs up — good response"
+              title="Good response"
+              onClick={handleThumbsUp}
+              style={{
+                width: 26, height: 26,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--color-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'var(--color-text-secondary)',
+                fontSize: '0.8rem',
+                padding: 0,
+                transition: 'color 0.12s, border-color 0.12s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#10b981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10b981' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
+            >
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
+                <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+              </svg>
+            </button>
+            <button
+              aria-label="Thumbs down — bad response"
+              title="Something's wrong"
+              onClick={handleThumbsDown}
+              style={{
+                width: 26, height: 26,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--color-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'var(--color-text-secondary)',
+                fontSize: '0.8rem',
+                padding: 0,
+                transition: 'color 0.12s, border-color 0.12s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#ef4444' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
+            >
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/>
+                <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
       {/* Chart */}
       {message.chartData && <ChatChart data={message.chartData} />}
+
+      {/* Thumbs-up confirmation */}
+      {!isUser && feedbackState === 'thumbs_up' && (
+        <span style={{ fontSize: '0.65rem', color: '#10b981', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>
+          Thanks for the feedback!
+        </span>
+      )}
+
+      {/* Submitted confirmation */}
+      {!isUser && feedbackState === 'submitted' && (
+        <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>
+          Feedback recorded — thanks.
+        </span>
+      )}
+
+      {/* Thumbs-down feedback form */}
+      {!isUser && feedbackState === 'form' && (
+        <div style={{
+          marginTop: '0.5rem',
+          background: 'var(--color-card)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '0.75rem',
+          padding: '0.75rem',
+          maxWidth: 380,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        }}>
+          <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.5rem' }}>
+            Tell me what I got wrong
+          </p>
+          <textarea
+            ref={textareaRef}
+            value={feedbackText}
+            onChange={e => setFeedbackText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitFeedback() } }}
+            placeholder="Describe the issue..."
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              fontSize: '0.8rem',
+              border: '1px solid var(--color-border)',
+              borderRadius: '0.5rem',
+              background: 'var(--color-bg)',
+              color: 'var(--color-text)',
+              resize: 'vertical',
+              fontFamily: 'inherit',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => { setFeedbackState(null); setFeedbackText('') }}
+              style={{
+                padding: '0.3rem 0.75rem',
+                fontSize: '0.75rem',
+                background: 'transparent',
+                border: '1px solid var(--color-border)',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmitFeedback}
+              disabled={!feedbackText.trim()}
+              style={{
+                padding: '0.3rem 0.75rem',
+                fontSize: '0.75rem',
+                background: feedbackText.trim() ? 'var(--color-primary)' : '#e5e7eb',
+                border: 'none',
+                borderRadius: 6,
+                cursor: feedbackText.trim() ? 'pointer' : 'not-allowed',
+                color: '#fff',
+                fontWeight: 500,
+              }}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Timestamp */}
       <span style={{
