@@ -36,8 +36,13 @@ async def query_events(
     event_type: str | None = None,
     is_active: str | None = None,
     search: str | None = None,
+    past_only: bool = False,  # True to restrict to events with goodafter <= NOW()
 ) -> list[dict]:
-    """List events for the current client."""
+    """List events for the current client.
+
+    Set past_only=True when the user asks for 'last event' or 'most recent event'
+    to exclude future-dated events.
+    """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
@@ -57,11 +62,12 @@ async def query_events(
           AND ($2::text IS NULL OR event_type = $2)
           AND ($3::text IS NULL OR is_active = $3)
           AND ($4::text IS NULL OR event_name ILIKE '%' || $4 || '%')
+          AND ($5 = false OR goodafter <= NOW())
         ORDER BY goodafter DESC NULLS LAST
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, event_type, is_active, search, limit, offset,
+        rows = await conn.fetch(sql, client_ids, event_type, is_active, search, past_only, limit, offset,
                                 timeout=_QUERY_TIMEOUT)
     return [dict(row) for row in rows]
 

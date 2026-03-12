@@ -36,9 +36,9 @@ DATA_AGENT_TOOLS = [
     {
         "name": "list_events",
         "description": (
-            "List and search events for the current client directly from the ON24 database. "
-            "Supports filtering by event type, active status, and name search. "
-            "Returns event metadata including dates, type, and active status."
+            "List and search events for the current client. "
+            "Use past_only=true when the user asks for their 'last' or 'most recent' event "
+            "to exclude future-dated events. Returns event_id, event_name, goodafter (date), type, status."
         ),
         "input_schema": {
             "type": "object",
@@ -48,6 +48,7 @@ DATA_AGENT_TOOLS = [
                 "is_active": {"type": "string", "enum": ["Y", "N"], "description": "Filter by active status"},
                 "limit": {"type": "integer", "description": "Max results to return (default 20)"},
                 "offset": {"type": "integer", "description": "Pagination offset (default 0)"},
+                "past_only": {"type": "boolean", "description": "If true, only return events with a date in the past (goodafter <= now). Use for 'last event' queries."},
             },
         },
     },
