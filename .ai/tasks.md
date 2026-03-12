@@ -74,7 +74,7 @@
 ### Key Tables
 | Table | Rows | Notes |
 |-------|------|-------|
-| event | ~7.4M | Filter by client_id; goodafter = event date |
+| event | ~7.4M | Filter by client_id; goodafter = event date; title is in `description` column (not event_name) |
 | event_user | 585M / 404GB | Registrants — avoid for aggregates; join through event |
 | dw_attendee | 262M | Per-attendee: event_user_id, engagement_score, live_minutes, archive_minutes |
 | dw_event_session | — | Per-event aggregate: registrant_count, attendee_count, engagement_score_avg, live_attendee_mins, conversion_percent |
