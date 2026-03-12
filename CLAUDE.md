@@ -76,6 +76,19 @@ npm run lint
 - **Frontend State**: TanStack Query for server-state. No Redux/Zustand.
 - **Frontend Paths**: `@/` alias resolves to `src/` (vite.config.ts + tsconfig paths).
 
+## ON24 Analytics Platform — Existing Reporting Sections
+The ON24 platform has these built-in analytics sections (reference when suggesting new tools or features):
+
+| Section | Sub-sections |
+|---------|-------------|
+| Dashboard | — |
+| Smart Tips | — |
+| Products | Webcast Elite, Engagement Hub, Target, Go Live |
+| Leads | Power Leads, Segments, Funnel, Accounts |
+| Content | Documents, Videos, Webpages |
+| Interactions | Polls & Surveys, Buying Signals, Presenters |
+| Benchmarking | — |
+
 ## ON24 Data Access
 **Two data sources — always prefer direct DB for reads:**
 
@@ -102,13 +115,35 @@ npm run lint
 | Agent | File | Tools | Purpose |
 |-------|------|-------|---------|
 | Orchestrator | `orchestrator.py` | route_to_* | Classifies intent, delegates, synthesizes |
-| Data Agent | `data_agent.py` | query_events, query_attendees, compute_kpis, generate_chart_data, run_analytics_query | DB queries + KPI computation |
+| Data Agent | `data_agent.py` | list_events, get_event_kpis, get_top_events, get_attendance_trends, get_audience_companies, get_audience_sources, get_polls, get_top_events_by_polls, get_poll_overview, get_resources, generate_chart_data | DB queries + KPI computation + charts |
 | Content Agent | `content_agent.py` | analyze_topic_performance, compare_event_performance, analyze_scheduling_patterns, suggest_topics | Content insights |
 | Admin Agent | `admin_agent.py` | create_event, update_event, add_registrant, remove_registrant, get_event_summary | ON24 write operations |
 
 **Admin confirmation flow**: Admin agent returns `requires_confirmation=True` with summary. Frontend shows confirmation dialog. User resends with `{"confirmed": true}`.
 
 **Audit logging**: Every tool call in every agent is fire-and-forget written to `agent_audit_logs` table via `asyncio.create_task`.
+
+**Orchestrator history safety**: On agent exception after tool_use is appended, the dangling messages are popped before re-raising to prevent corrupt conversation history.
+
+## API Endpoints
+- `POST /api/chat` — HTTP fallback for agent conversations
+- `WS /ws/chat` — WebSocket streaming chat
+- `POST /api/feedback` — Save thumbs-down feedback to `data/improvement-inbox-MM-DD-YYYY.txt`
+- `GET /api/calendar?year=&month=` — Events for a month (KPIs for past events)
+- `GET /api/calendar/event/{id}` — Single event summary with poll/survey/resource counts
+
+## Charts
+- **Bar / Line**: Recharts `BarChart`/`LineChart`; `generate_chart_data` returns `{type, data, title, x_key, y_keys}`
+- **Pie**: Recharts `PieChart/Pie/Cell`; `generate_chart_data` with `chart_type="pie"` returns `{type: "pie", data: [{name, value}]}`
+- Suggestion chips are context-aware: never suggest the currently displayed view type
+
+## Event Calendar
+- Outlook-style modal at `frontend/src/components/calendar/EventCalendar.tsx`
+- Month view (6×7 grid) + Week view (hourly 7am–9pm timeline)
+- Click any event → side panel with full summary (title, abstract, KPIs, poll/survey/resource counts)
+- Past events show performance KPIs; future events show "Performance data available after the event concludes."
+- Opened from: TopNav calendar icon, "Show event calendar" suggestion tile, or chat
+- `event.goodafter` = start time, `event.goodtill` = end time (no starttime/endtime columns on ON24 event table)
 
 ## WebSocket Protocol (`/ws/chat`)
 Client sends: `{"type": "message", "content": "...", "confirmed": false}`

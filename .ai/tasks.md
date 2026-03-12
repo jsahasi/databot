@@ -128,13 +128,38 @@
 - [x] Company dedup in get_audience_companies: GROUP BY LOWER(TRIM(company)),
       display most common casing via MODE()
 
+## Phase 8 Addendum 6: Calendar + Pie Charts + Poll Fix — COMPLETE (2026-03-11)
+- [x] Pie chart support: backend `generate_chart_data` with chart_type="pie" → {name, value} pairs; frontend Recharts PieChart/Pie/Cell renderer
+- [x] Audience sources: `query_audience_sources` tool using `event_user.partnerref`; pie chart; empty list → "None found."
+- [x] Context-aware suggestion chips: never suggest current view (bar/line/pie/table); haiku prompt told explicit view type
+- [x] Feedback enhancements: client_id in each report; diagnostic questions about data discovery; appends same day, new file on date change
+- [x] Event Calendar: Outlook-style modal (EventCalendar.tsx); month/week view toggle; prev/next navigation; event detail side panel
+- [x] Calendar API: GET /api/calendar?year=&month=, GET /api/calendar/event/{id}; goodafter/goodtill as start/end; KPIs for past events only
+- [x] Calendar event detail: event_id, title, abstract, date/time, registrants, attendees, conversion rate, poll responses, survey responses, resource downloads (nonzero only); card layout
+- [x] Poll response dedup: COUNT DISTINCT event_user_id (users may re-submit same poll)
+- [x] "Show event calendar" suggestion tile on home page → opens modal (not chat)
+- [x] Calendar icon in TopNav → opens calendar modal
+- [x] Poll query rewrite: proper join chain event_x_media_url → media_url → media_url_x_question → question → question_x_answer → event_user_x_answer; EXMU.SESSION_ID=1; excludes test/survey URLs; supports open-text questions with sample answers
+- [x] Orchestrator history rollback: if agent call fails after tool_use is appended, pop dangling entries to prevent corrupt history on subsequent calls
+- [x] Per-test session IDs in regression tests: each test uses `test-{prompt_id}` to isolate conversation history
+
+## ON24 Platform Analytics Sections (Reference)
+Built-in ON24 reporting for context on what data exists and what users expect:
+- **Dashboard** — overview
+- **Smart Tips** — AI-generated insights
+- **Products** — Webcast Elite, Engagement Hub, Target, Go Live
+- **Leads** — Power Leads, Segments, Funnel, Accounts
+- **Content** — Documents, Videos, Webpages
+- **Interactions** — Polls & Surveys, Buying Signals, Presenters
+- **Benchmarking** — industry comparison
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
-- [ ] Explore question_x_answer + event_user_x_answer for poll response counts
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
 - [ ] Frontend Vitest component tests + Playwright E2E
 - [ ] Multi-client: implement per-request context var for tenant ID
 - [ ] Recent Chats: persist chat history in localStorage
+- [ ] Marketer + director regression test prompts (300 total in marketer_prompts.json + director_prompts.json)
 
 ## Verified ON24 Schema (on24master)
 

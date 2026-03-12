@@ -96,6 +96,23 @@ Implementation:
 **Decision:** Dark mode is toggled by setting `data-theme="dark"` on the `<html>` element. CSS variables for both themes are declared in `global.css` under `:root` (light) and `[data-theme="dark"]` selectors. Preference is persisted to `localStorage`.
 **Rationale:** Attribute-based theming is zero-JS at render time, works with SSR, and avoids flash-of-wrong-theme if applied before paint. Storing in localStorage ensures the toggle survives page reloads. All components use CSS variables (`var(--color-*)`) so no component-level JS is needed to respond to theme changes.
 
+## 2026-03-11: Event Calendar API — goodafter/goodtill columns
+**Decision:** Calendar API uses `event.goodafter` as start time and `event.goodtill` as end time.
+**Rationale:** ON24 DB has no `starttime`/`endtime` columns on the `event` table. `goodafter` = earliest time event is accessible; `goodtill` = expiry. These are the correct start/end columns confirmed via information_schema.
+
+## 2026-03-11: Poll Query Join Chain
+**Decision:** `query_polls` uses the full join chain: `event_x_media_url (EXMU)` → `media_url (MU)` → `media_url_x_question (MUQ)` → `question (Q)` → `question_x_answer (QA)` → `event_user_x_answer (EUA)` → `event_user (EU)` → `event (E)`.
+**Key constraints:** `EXMU.SESSION_ID = 1`, `MU.MEDIA_URL_CD = 'poll'`, join condition: `EUA.ANSWER_CD = QA.ANSWER_CD OR Q.QUESTION_TYPE_CD = 'npsrating'`.
+**Rationale:** Previous implementation joined directly through `question.event_id` (skipping EXMU/MU/MUQ), which was the wrong schema path. The correct path goes through `event_x_media_url` to scope to the live session and properly link poll definitions to answers.
+
+## 2026-03-11: Orchestrator History Rollback
+**Decision:** Wrap agent calls in orchestrator try/except; on failure, pop the dangling tool_use assistant message and user message from conversation history before re-raising.
+**Rationale:** If an agent throws after the tool_use block is appended to history but before the tool_result is appended, the history becomes corrupt (tool_use without matching tool_result). Subsequent API calls fail with "400 tool_use ids found without tool_result blocks". Rolling back prevents cascade failures.
+
+## 2026-03-11: Pie Chart Support
+**Decision:** Added `chart_type="pie"` support to `generate_chart_data`. Returns `{type: "pie", data: [{name, value}]}`. Frontend renders with Recharts `PieChart/Pie/Cell`.
+**Rationale:** User requested pie charts for audience source distributions (partnerref). The existing bar/line renderer was extended rather than replaced.
+
 ## 2026-03-11: ON24 Client Hierarchy
 **Decision:** Queries must scope to full sub-client tree, not just root client_id.
 **Finding:** client 10710 has 9 sub-clients (22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909). Using only client_id=10710 misses ~13% of events (1,776 of 13,293 total).

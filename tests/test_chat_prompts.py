@@ -25,6 +25,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import time
+
 import pytest
 import requests
 
@@ -35,7 +37,9 @@ import requests
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 CHAT_ENDPOINT = f"{BACKEND_URL}/api/chat"
 SESSION_ID = "test-regression"
-REQUEST_TIMEOUT = 30  # seconds — some queries are slow
+REQUEST_TIMEOUT = 45  # seconds — some queries are slow
+# Delay between tests to avoid saturating the ON24 DB connection pool
+INTER_TEST_DELAY = float(os.environ.get("TEST_DELAY", "2"))
 RESULTS_DIR = Path(__file__).parent / "results"
 RESULTS_FILE = RESULTS_DIR / "prompt_test_results.json"
 
@@ -335,9 +339,9 @@ _session_results: list[dict] = []
 # Core HTTP helper
 # ---------------------------------------------------------------------------
 
-def _chat(prompt: str) -> dict[str, Any]:
+def _chat(prompt: str, session_id: str = SESSION_ID) -> dict[str, Any]:
     """POST to the chat endpoint and return the parsed JSON body."""
-    payload = {"message": prompt, "session_id": SESSION_ID}
+    payload = {"message": prompt, "session_id": session_id}
     response = requests.post(CHAT_ENDPOINT, json=payload, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
     return response.json()
@@ -437,8 +441,13 @@ def test_prompt(entry: dict[str, Any]) -> None:
         "has_chart": False,
     }
 
+    # Throttle: give the DB a brief breather between tests
+    time.sleep(INTER_TEST_DELAY)
+
+    # Use a per-test session ID so each test gets an isolated conversation history.
+    test_session_id = f"test-{prompt_id}"
     try:
-        response = _chat(prompt)
+        response = _chat(prompt, session_id=test_session_id)
     except requests.exceptions.Timeout:
         record["failure_reason"] = f"Request timed out after {REQUEST_TIMEOUT}s"
         _session_results.append(record)

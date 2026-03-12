@@ -237,72 +237,123 @@ async def compute_client_kpis(months: int = 1) -> dict:
 async def query_polls(event_id: int) -> list[dict]:
     """Get poll questions and answer distributions for an event.
 
-    Tenant isolation: all rows traced back to client_id via
-      event_user_x_answer → question → event → client_id = ANY(client_ids)
-    eua.answer holds the answer text directly; question_x_answer not needed.
+    Uses the correct join chain:
+      event_x_media_url (EXMU) → media_url (MU) → media_url_x_question (MUQ)
+      → question (Q) → question_x_answer (QA) → event_user_x_answer (EUA)
+      → event_user (EU) → event (E) for tenant scoping
+
+    Deduplicates re-submissions via COUNT DISTINCT event_user_id.
+    EXMU.SESSION_ID = 1 scopes to the live event session.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    # Fetch poll questions scoped to this client
-    questions_sql = f"""
-        SELECT q.question_id, q.description AS question_text, q.question_type_cd, q.create_timestamp
-        FROM on24master.question q
-        JOIN on24master.event e
-          ON e.event_id = q.event_id
-         AND e.client_id = ANY($2::bigint[])
-        WHERE q.event_id = $1
-          AND q.question_type_cd IN ('singleoption', 'multioption')
-          {_EXCL_TEST}
-        ORDER BY q.question_id
+    # Multiple-choice / rated questions: aggregate answer option counts
+    mc_sql = """
+        SELECT
+            MU.MEDIA_URL_ID                           AS poll_id,
+            Q.QUESTION_ID                             AS question_id,
+            Q.DESCRIPTION                             AS question_text,
+            Q.QUESTION_TYPE_CD                        AS question_type_cd,
+            QA.ANSWER_CD                              AS answer_cd,
+            QA.DESCRIPTION                            AS answer_text,
+            COUNT(DISTINCT EUA.EVENT_USER_ID)         AS response_count
+        FROM on24master.event_x_media_url EXMU
+        JOIN on24master.media_url MU
+          ON MU.MEDIA_URL_ID = EXMU.MEDIA_URL_ID
+        JOIN on24master.media_url_x_question MUQ
+          ON MUQ.MEDIA_URL_ID = MU.MEDIA_URL_ID
+        JOIN on24master.question Q
+          ON Q.QUESTION_ID = MUQ.QUESTION_ID
+        JOIN on24master.question_x_answer QA
+          ON QA.QUESTION_ID = Q.QUESTION_ID
+        JOIN on24master.event_user_x_answer EUA
+          ON EUA.MEDIA_URL_ID = EXMU.MEDIA_URL_ID
+         AND EUA.QUESTION_ID  = QA.QUESTION_ID
+         AND (EUA.ANSWER_CD = QA.ANSWER_CD OR Q.QUESTION_TYPE_CD = 'npsrating')
+        JOIN on24master.event_user EU
+          ON EU.EVENT_USER_ID = EUA.EVENT_USER_ID
+        JOIN on24master.event E
+          ON E.EVENT_ID = EU.EVENT_ID
+         AND E.CLIENT_ID = ANY($2::bigint[])
+        WHERE EU.EVENT_ID = $1
+          AND EXMU.SESSION_ID = 1
+          AND MU.MEDIA_URL_CD = 'poll'
+          AND MU.MEDIA_URL_NAME NOT LIKE '%<!--##test##-->%'
+          AND MU.MEDIA_URL_NAME NOT LIKE '%<!--##survey##-->%'
+        GROUP BY MU.MEDIA_URL_ID, Q.QUESTION_ID, Q.DESCRIPTION,
+                 Q.QUESTION_TYPE_CD, QA.ANSWER_CD, QA.DESCRIPTION
+        ORDER BY Q.QUESTION_ID, response_count DESC
     """
 
-    # Fetch responses: eua → question → event → client scoping ensures tenant isolation
-    # eua.answer contains the answer text directly (no need for question_x_answer)
-    answers_sql = f"""
+    # Open-text questions (singletext): return respondent count + up to 5 sample answers
+    text_sql = """
         SELECT
-            eua.question_id,
-            eua.answer_cd,
-            eua.answer                    AS answer_text,
-            COUNT(eua.event_user_id)      AS response_count
-        FROM on24master.event_user_x_answer eua
-        JOIN on24master.question q
-          ON q.question_id = eua.question_id
-         AND q.question_type_cd IN ('singleoption', 'multioption')
-        JOIN on24master.event e
-          ON e.event_id = q.event_id
-         AND e.client_id = ANY($2::bigint[])
-        WHERE q.event_id = $1
-          {_EXCL_TEST}
-        GROUP BY eua.question_id, eua.answer_cd, eua.answer
-        ORDER BY eua.question_id, response_count DESC
+            Q.QUESTION_ID                             AS question_id,
+            Q.DESCRIPTION                             AS question_text,
+            Q.QUESTION_TYPE_CD                        AS question_type_cd,
+            COUNT(DISTINCT EUA.EVENT_USER_ID)         AS response_count,
+            ARRAY_AGG(DISTINCT EUA.ANSWER ORDER BY EUA.ANSWER)[1:5] AS sample_answers
+        FROM on24master.event_x_media_url EXMU
+        JOIN on24master.media_url MU
+          ON MU.MEDIA_URL_ID = EXMU.MEDIA_URL_ID
+        JOIN on24master.media_url_x_question MUQ
+          ON MUQ.MEDIA_URL_ID = MU.MEDIA_URL_ID
+        JOIN on24master.question Q
+          ON Q.QUESTION_ID = MUQ.QUESTION_ID
+        JOIN on24master.event_user_x_answer EUA
+          ON EUA.MEDIA_URL_ID = EXMU.MEDIA_URL_ID
+         AND EUA.QUESTION_ID  = Q.QUESTION_ID
+         AND EUA.ANSWER IS NOT NULL
+         AND TRIM(EUA.ANSWER) <> ''
+        JOIN on24master.event_user EU
+          ON EU.EVENT_USER_ID = EUA.EVENT_USER_ID
+        JOIN on24master.event E
+          ON E.EVENT_ID = EU.EVENT_ID
+         AND E.CLIENT_ID = ANY($2::bigint[])
+        WHERE EU.EVENT_ID = $1
+          AND EXMU.SESSION_ID = 1
+          AND MU.MEDIA_URL_CD = 'poll'
+          AND MU.MEDIA_URL_NAME NOT LIKE '%<!--##test##-->%'
+          AND MU.MEDIA_URL_NAME NOT LIKE '%<!--##survey##-->%'
+          AND Q.QUESTION_TYPE_CD IN ('singletext', 'singleanswer')
+        GROUP BY Q.QUESTION_ID, Q.DESCRIPTION, Q.QUESTION_TYPE_CD
+        ORDER BY Q.QUESTION_ID
     """
 
     async with pool.acquire() as conn:
-        q_rows = await conn.fetch(questions_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
-        a_rows = await conn.fetch(answers_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
+        mc_rows = await conn.fetch(mc_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
+        text_rows = await conn.fetch(text_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
 
-    answers_by_question: dict[int, list[dict[str, Any]]] = {}
-    for a in a_rows:
-        qid = a["question_id"]
-        answers_by_question.setdefault(qid, []).append({
-            "answer_cd": a["answer_cd"],
-            "answer_text": a["answer_text"],
-            "response_count": a["response_count"],
+    # Group multiple-choice answers by question_id
+    questions: dict[int, dict] = {}
+    for r in mc_rows:
+        qid = r["question_id"]
+        if qid not in questions:
+            questions[qid] = {
+                "question_id": qid,
+                "question_text": r["question_text"],
+                "question_type_cd": r["question_type_cd"],
+                "answers": [],
+            }
+        questions[qid]["answers"].append({
+            "answer_cd": r["answer_cd"],
+            "answer_text": r["answer_text"],
+            "response_count": int(r["response_count"]),
         })
 
-    results = []
-    for q in q_rows:
-        qid = q["question_id"]
-        results.append(_serialize({
+    # Open-text questions
+    for r in text_rows:
+        qid = r["question_id"]
+        questions[qid] = {
             "question_id": qid,
-            "question_text": q["question_text"],
-            "question_type_cd": q["question_type_cd"],
-            "create_timestamp": q["create_timestamp"],
-            "answers": answers_by_question.get(qid, []),
-        }))
+            "question_text": r["question_text"],
+            "question_type_cd": r["question_type_cd"],
+            "response_count": int(r["response_count"]),
+            "sample_answers": list(r["sample_answers"] or []),
+        }
 
-    return results
+    return _serialize(list(questions.values()))
 
 
 async def query_top_events_by_polls(limit: int = 10) -> list[dict]:

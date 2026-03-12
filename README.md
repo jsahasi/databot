@@ -61,19 +61,34 @@ See `.env.example` for the full list with descriptions.
 | Agent | Role | Tools |
 |-------|------|-------|
 | Orchestrator | Routes queries to the right agent | route_to_data/content/admin_agent |
-| Data Agent | Queries ON24 DB, returns analytics + charts | list_events, get_event_kpis, get_top_events, get_attendance_trends, get_audience_companies, get_polls, get_top_events_by_polls, get_poll_overview, get_resources, generate_chart_data |
+| Data Agent | Queries ON24 DB, returns analytics + charts | list_events, get_event_kpis, get_top_events, get_attendance_trends, get_audience_companies, get_audience_sources, get_polls, get_top_events_by_polls, get_poll_overview, get_resources, generate_chart_data |
 | Content Agent | Topic analysis, scheduling patterns, suggestions | analyze_topic_performance, compare_event_performance, suggest_topics |
 | Admin Agent | ON24 API write operations (with confirmation) | create_event, update_event, add_registrant, remove_registrant |
 
 All Data Agent queries are tenant-scoped to client 10710 + 9 sub-clients via `client_id = ANY(get_tenant_client_ids())`.
+
+## Charts
+
+- **Bar / Line charts**: default for multi-event comparisons and trend data
+- **Pie charts**: for audience source distributions (`event_user.partnerref`); only shown when data exists
+- Suggestion chips are context-aware — never suggest the currently displayed view type
+
+## Event Calendar
+
+Click the calendar icon in the top nav (or "Show event calendar" on the home screen) to open an Outlook-style calendar modal:
+
+- **Month view** and **Week view** with forward/back navigation
+- Color-coded event pills with title and time
+- Click any event for a summary card: title, abstract, registrants, attendees, conversion rate, poll/survey responses, resource downloads (nonzero items only)
+- Future events show "Performance data available after the event concludes"
 
 ## Feedback Loop
 
 Each bot response shows a thumbs up / thumbs down on hover.
 
 - **Thumbs down** opens an inline popup: "Tell me what I got wrong"
-- Feedback is saved to `data/improvement-inbox-MM-DD-YYYY.txt` as a structured LLM-ready improvement prompt including timestamp, agent used, user question, and bot response
-- The `data/` folder is mounted as a Docker volume and persists outside the container
+- Feedback is saved to `data/improvement-inbox-MM-DD-YYYY.txt` as a structured LLM-ready improvement prompt including timestamp, client ID, agent used, user question, bot response, and diagnostic questions
+- A new file is created each day; the `data/` folder is mounted as a Docker volume
 
 ## Regression Tests
 
@@ -82,6 +97,7 @@ python -m pytest tests/test_chat_prompts.py -q
 ```
 
 26 prompt tests — 22 pass, 4 skipped (known data gaps: no poll responses or resource clicks for client 10710 since 2023).
+Each test uses an isolated session ID to prevent cross-test history contamination.
 
 ## Development
 

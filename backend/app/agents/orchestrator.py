@@ -112,13 +112,18 @@ class OrchestratorAgent:
         """
         self.conversation_history.append({"role": "user", "content": user_message})
 
-        response = await self.client.messages.create(
-            model=self.model,
-            max_tokens=2048,
-            system=_build_orchestrator_prompt(),
-            tools=self.ROUTING_TOOLS,
-            messages=self.conversation_history,
-        )
+        try:
+            response = await self.client.messages.create(
+                model=self.model,
+                max_tokens=2048,
+                system=_build_orchestrator_prompt(),
+                tools=self.ROUTING_TOOLS,
+                messages=self.conversation_history,
+            )
+        except Exception:
+            # Roll back the user message to keep history consistent
+            self.conversation_history.pop()
+            raise
 
         if response.stop_reason == "tool_use":
             assistant_content = response.content
@@ -131,7 +136,13 @@ class OrchestratorAgent:
 
                     if tool_name == "route_to_data_agent":
                         logger.info(f"Routing to Data Agent: {query}")
-                        result = await self.data_agent.run(query, conversation_history=self._text_history())
+                        try:
+                            result = await self.data_agent.run(query, conversation_history=self._text_history())
+                        except Exception:
+                            # Roll back the dangling tool_use assistant message + user message
+                            self.conversation_history.pop()  # assistant tool_use
+                            self.conversation_history.pop()  # user message
+                            raise
 
                         # Feed result back into conversation history for context
                         self.conversation_history.append({
@@ -163,7 +174,12 @@ class OrchestratorAgent:
 
                     elif tool_name == "route_to_content_agent":
                         logger.info(f"Routing to Content Agent: {query}")
-                        result = await self.content_agent.run(query)
+                        try:
+                            result = await self.content_agent.run(query)
+                        except Exception:
+                            self.conversation_history.pop()
+                            self.conversation_history.pop()
+                            raise
 
                         self.conversation_history.append({
                             "role": "user",
@@ -190,11 +206,16 @@ class OrchestratorAgent:
 
                     elif tool_name == "route_to_admin_agent":
                         logger.info(f"Routing to Admin Agent: {query} (confirmed={confirmed})")
-                        result = await self.admin_agent.run(
-                            message=query,
-                            session_id="orchestrator",
-                            confirmed=confirmed,
-                        )
+                        try:
+                            result = await self.admin_agent.run(
+                                message=query,
+                                session_id="orchestrator",
+                                confirmed=confirmed,
+                            )
+                        except Exception:
+                            self.conversation_history.pop()
+                            self.conversation_history.pop()
+                            raise
 
                         self.conversation_history.append({
                             "role": "user",
