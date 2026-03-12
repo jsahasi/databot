@@ -227,8 +227,9 @@ async def websocket_chat(websocket: WebSocket):
                             "data": result["event_card"],
                         })
 
-                    # Send poll cards if available
-                    if result.get("poll_cards"):
+                    # Send poll cards only if no chart is already being shown
+                    # (chart takes precedence — avoids duplicate rendering when user asks "show as pie chart")
+                    if result.get("poll_cards") and not result.get("chart_data"):
                         await websocket.send_json({
                             "type": "poll_cards",
                             "data": result["poll_cards"],

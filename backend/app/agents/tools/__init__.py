@@ -206,13 +206,21 @@ DATA_AGENT_TOOLS = [
     {
         "name": "get_audience_companies",
         "description": (
-            "Return the top companies attending the current client's events, ranked by total attendance. "
-            "Includes event count, registrant count, attendee count, and average engagement per company."
+            "Return the top companies attending events, ranked by total attendance. "
+            "Pass event_id to scope to a single event (e.g. 'which companies attended this webinar?'). "
+            "Omit event_id for cross-event summary. Company falls back to email domain when company field is blank. "
+            "Pass exclude list to filter out internal/test companies (e.g. exclude=['on24', 'test'])."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "limit": {"type": "integer", "description": "Number of top companies to return (default 20)"},
+                "event_id": {"type": "integer", "description": "Scope to a single event (omit for cross-event)"},
+                "exclude": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Company name substrings to exclude (case-insensitive), e.g. ['on24', 'test']",
+                },
             },
         },
     },

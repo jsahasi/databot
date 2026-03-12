@@ -576,42 +576,85 @@ async def query_attendance_trends(months: int = 12) -> list[dict]:
 async def query_audience_companies(
     limit: int = 20,
     months: int = 1,
+    event_id: int | None = None,
+    exclude: list[str] | None = None,
 ) -> list[dict]:
-    """Top companies by attendance. Default: last 1 month, max 24.
+    """Top companies by attendance.
 
-    Uses dw_attendee (has event_user_id + engagement_score) joined to event_user
-    for company name. Date-scoped to limit event_user scan.
+    When event_id is provided: scopes to that single event (ignores months).
+    Otherwise: cross-event, last N months.
+    Company falls back to email domain when the company field is blank.
+    exclude: list of company name substrings to filter out (case-insensitive).
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
-    months = _clamp_months(months)
 
-    sql = f"""
-        SELECT
-            MODE() WITHIN GROUP (ORDER BY eu.company) AS company,
-            COUNT(DISTINCT eu.event_id)         AS events_attended,
-            COUNT(eu.event_user_id)             AS total_registrants,
-            COUNT(da.event_user_id)             AS total_attendees,
-            AVG(da.engagement_score)            AS avg_engagement
-        FROM on24master.event_user eu
-        JOIN on24master.event e
-          ON eu.event_id = e.event_id
-         AND e.client_id = ANY($1::bigint[])
-         AND e.goodafter >= NOW() - ($3 || ' months')::INTERVAL
-        LEFT JOIN on24master.dw_attendee da
-          ON da.event_user_id = eu.event_user_id
-         AND da.event_id = eu.event_id
-        WHERE eu.company IS NOT NULL
-          AND eu.company <> ''
-          {_EXCL_TEST}
-          {_MIN_REGS_SUBQ}
-        GROUP BY LOWER(TRIM(eu.company))
-        ORDER BY total_attendees DESC NULLS LAST
-        LIMIT $2
-    """
+    # Build exclusion fragment — safe because values are parameterised below
+    exclude_clauses = ""
+    exclude_params: list[str] = []
+    if exclude:
+        for ex in exclude[:10]:  # cap at 10 exclusions
+            exclude_params.append(ex.lower())
+        # Params layout: $1=client_ids, $2=event_id or limit, $3=limit or months, $4+=excludes
+        placeholders = ", ".join(f"${4 + i}" for i in range(len(exclude_params)))
+        exclude_clauses = f"AND LOWER(COALESCE(NULLIF(TRIM(eu.company), ''), SPLIT_PART(eu.email, '@', 2))) NOT IN ({placeholders})"
+
+    if event_id is not None:
+        # Single-event mode: no date filter, uses event_id directly
+        sql = f"""
+            SELECT
+                MODE() WITHIN GROUP (
+                    ORDER BY COALESCE(NULLIF(TRIM(eu.company), ''), SPLIT_PART(eu.email, '@', 2))
+                )                                      AS company,
+                COUNT(eu.event_user_id)                AS total_registrants,
+                COUNT(da.event_user_id)                AS total_attendees,
+                ROUND(AVG(da.engagement_score)::numeric, 1) AS avg_engagement
+            FROM on24master.event_user eu
+            JOIN on24master.event e
+              ON eu.event_id = e.event_id
+             AND e.client_id = ANY($1::bigint[])
+            LEFT JOIN on24master.dw_attendee da
+              ON da.event_user_id = eu.event_user_id
+             AND da.event_id = eu.event_id
+            WHERE eu.event_id = $2
+              AND COALESCE(NULLIF(TRIM(eu.company), ''), SPLIT_PART(eu.email, '@', 2)) <> ''
+              {exclude_clauses}
+            GROUP BY LOWER(TRIM(COALESCE(NULLIF(eu.company, ''), SPLIT_PART(eu.email, '@', 2))))
+            ORDER BY total_attendees DESC NULLS LAST, total_registrants DESC
+            LIMIT $3
+        """
+        params: list = [client_ids, event_id, limit] + exclude_params
+    else:
+        months = _clamp_months(months)
+        sql = f"""
+            SELECT
+                MODE() WITHIN GROUP (
+                    ORDER BY COALESCE(NULLIF(TRIM(eu.company), ''), SPLIT_PART(eu.email, '@', 2))
+                )                                      AS company,
+                COUNT(DISTINCT eu.event_id)            AS events_attended,
+                COUNT(eu.event_user_id)                AS total_registrants,
+                COUNT(da.event_user_id)                AS total_attendees,
+                ROUND(AVG(da.engagement_score)::numeric, 1) AS avg_engagement
+            FROM on24master.event_user eu
+            JOIN on24master.event e
+              ON eu.event_id = e.event_id
+             AND e.client_id = ANY($1::bigint[])
+             AND e.goodafter >= NOW() - ($3 || ' months')::INTERVAL
+            LEFT JOIN on24master.dw_attendee da
+              ON da.event_user_id = eu.event_user_id
+             AND da.event_id = eu.event_id
+            WHERE COALESCE(NULLIF(TRIM(eu.company), ''), SPLIT_PART(eu.email, '@', 2)) <> ''
+              {_EXCL_TEST}
+              {_MIN_REGS_SUBQ}
+              {exclude_clauses}
+            GROUP BY LOWER(TRIM(COALESCE(NULLIF(eu.company, ''), SPLIT_PART(eu.email, '@', 2))))
+            ORDER BY total_attendees DESC NULLS LAST
+            LIMIT $2
+        """
+        params = [client_ids, limit, str(months)] + exclude_params
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, limit, str(months), timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, *params, timeout=_QUERY_TIMEOUT)
 
     results = []
     for row in rows:

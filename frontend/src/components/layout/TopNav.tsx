@@ -35,7 +35,7 @@ export default function TopNav() {
           color: '#fff', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '-0.02em',
         }}>ON24</div>
         <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
-          ON24 Data Agent
+          ON24 Nexus
         </span>
       </div>
 
