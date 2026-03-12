@@ -135,6 +135,19 @@ class DataAgent:
                                     poll_cards = result
 
                                 # Capture event card for single-event queries
+                                if tool_name == "get_event_detail" and isinstance(result, dict) and result.get("event_id"):
+                                    event_card = {
+                                        "event_id": result["event_id"],
+                                        "title": result.get("description") or result.get("title") or "",
+                                        "start_time": result.get("goodafter") or result.get("start_time"),
+                                        "end_time": result.get("goodtill") or result.get("end_time"),
+                                        "event_type": result.get("event_type") or "",
+                                        "registrant_count": None,
+                                        "attendee_count": None,
+                                        "conversion_rate": None,
+                                        "engagement_score_avg": None,
+                                    }
+
                                 if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
                                     eid = result["event_id"]
                                     try:
