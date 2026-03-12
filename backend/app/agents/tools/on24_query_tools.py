@@ -287,6 +287,9 @@ async def query_top_events(
         "engagement": "avg_engagement",
     }
     order_col = _sort_map.get(sort_by, "total_attendees")
+    # Hard assert: order_col must be one of the two known safe column aliases.
+    # This prevents any future code path from injecting an arbitrary string (A03).
+    assert order_col in ("total_attendees", "avg_engagement"), f"Unexpected order_col: {order_col}"
 
     sql = f"""
         SELECT
@@ -306,7 +309,7 @@ async def query_top_events(
         GROUP BY e.event_id, e.description, e.event_type, e.goodafter, e.is_active
         ORDER BY {order_col} DESC NULLS LAST
         LIMIT $3
-    """  # order_col from allow-list above
+    """  # order_col sourced from allowlist + asserted above; $2 is clamped integer cast to interval
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, str(months), limit, timeout=_QUERY_TIMEOUT)

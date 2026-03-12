@@ -7,8 +7,8 @@ import re
 from typing import Any
 
 import anthropic
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, field_validator
 
 from app.agents.orchestrator import OrchestratorAgent
 
@@ -101,6 +101,17 @@ async def websocket_chat(websocket: WebSocket):
                     await websocket.send_json({"type": "error", "message": "Empty message"})
                     continue
 
+                # Bound message length to prevent prompt-stuffing and resource exhaustion (A03).
+                _MAX_MESSAGE_LEN = 4000
+                if len(content) > _MAX_MESSAGE_LEN:
+                    await websocket.send_json({"type": "error", "message": "Message too long (max 4000 characters)."})
+                    continue
+
+                # Sanitise session_id: accept only alphanumeric/hyphen/underscore to prevent
+                # session-ID-based injection or path traversal in future storage backends (A01).
+                if not re.match(r'^[\w\-]{1,128}$', session_id):
+                    session_id = "default"
+
                 agent = _get_or_create_agent(session_id)
 
                 # Notify client we're starting
@@ -171,10 +182,12 @@ async def websocket_chat(websocket: WebSocket):
                     ))
 
                 except Exception as e:
+                    # Log full detail server-side; send only a generic message to the client
+                    # to prevent leaking stack traces, SQL errors, or internal details (A02).
                     logger.error(f"Agent error: {e}", exc_info=True)
                     await websocket.send_json({
                         "type": "error",
-                        "message": f"Agent error: {str(e)}",
+                        "message": "An error occurred processing your request. Please try again.",
                     })
 
             elif data.get("type") == "reset":
@@ -198,6 +211,14 @@ class ChatRequest(BaseModel):
     message: str
     session_id: str = "default"
 
+    # Bound message length to prevent prompt-stuffing / resource exhaustion (A03).
+    @field_validator("message")
+    @classmethod
+    def _message_length(cls, v: str) -> str:
+        if len(v) > 4000:
+            raise ValueError("Message too long (max 4000 characters).")
+        return v
+
 
 class ChatResponse(BaseModel):
     text: str
@@ -208,10 +229,17 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def chat_http(request: ChatRequest):
     """HTTP fallback for agent conversations (non-streaming)."""
-    agent = _get_or_create_agent(request.session_id)
-    result = await agent.process_message(request.message)
-    return ChatResponse(
-        text=result.get("text", ""),
-        agent_used=result.get("agent_used"),
-        chart_data=result.get("chart_data"),
-    )
+    # Sanitise session_id (A01) — same rule as the WebSocket handler.
+    session_id = request.session_id if re.match(r'^[\w\-]{1,128}$', request.session_id) else "default"
+    try:
+        agent = _get_or_create_agent(session_id)
+        result = await agent.process_message(request.message)
+        return ChatResponse(
+            text=result.get("text", ""),
+            agent_used=result.get("agent_used"),
+            chart_data=result.get("chart_data"),
+        )
+    except Exception as e:
+        # Log internally; do not expose exception details to the client (A02).
+        logger.error(f"HTTP chat error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred processing your request.")
