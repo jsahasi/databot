@@ -1,5 +1,9 @@
 # Architecture Decisions
 
+## 2026-03-11: Chart-first data display + alternative view suggestions
+- Data agent defaults to bar/line charts for 3+ event comparisons and all trend data
+- Suggestion chips include alternative view options (show as table, show as bar chart) based on response type
+- generate_suggestions() detects has_chart / has_table from response and adjusts chip generation prompt
 
 ## 2026-03-11: Agent Framework
 **Decision:** Anthropic Python SDK `messages.create()` with `tools` parameter, NOT the `claude-agent-sdk` package and NOT Claude Code Skills

@@ -67,6 +67,12 @@
 - [x] Agent prompts: no-emoji rule, no markdown headers, use bold sparingly (content_agent.md + data_agent.md)
 - [x] Port conflict fix: postgres host port 5432 → 5433 (conflict with agentic-video-db-1 container)
 
+## Phase 8 Addendum: Chart-first UX + Sidebar Dark Mode — COMPLETE (2026-03-11)
+- [x] Dark mode sidebar fix — ChatSidebar.tsx hardcoded colors replaced with CSS variables
+- [x] Data agent defaults to bar/line charts for 3+ event comparisons and all trend data
+- [x] Alternative view suggestion chips ("Show as bar chart", "Show as table") based on response type
+- [x] generate_suggestions() updated to accept has_chart and has_table params
+
 ## Local Setup Notes
 - **App URL**: http://localhost:3001 (via `docker compose up --build`)
 - **Postgres host port**: 5433 (internal container port remains 5432; only host mapping changed)
