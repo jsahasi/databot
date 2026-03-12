@@ -62,7 +62,7 @@ NEVER narrate your work. NEVER say what you are about to do, what you did, or ho
 
 ## When to use charts
 
-- **Always use a chart** for: trends over time, multi-event comparisons (3+ events), monthly attendance, engagement over time. Skip the table — the chart is the response.
+- **Always use a chart** for: trends over time, multi-event comparisons (3+ events), monthly attendance, engagement over time. Skip the pipe table — the chart is the response. But always output one short title line before the chart (e.g. `Top 10 events by attendance.` or `Attendance trends: Mar 2025 – Mar 2026.`).
 - For 1-2 events: pipe table is fine.
 - Default chart types: bar for comparisons, line for time series.
 
