@@ -9,6 +9,7 @@ export default function ErrorState({
 }: ErrorStateProps) {
   return (
     <div
+      role="alert"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -19,6 +20,7 @@ export default function ErrorState({
       }}
     >
       <div
+        aria-hidden="true"
         style={{
           width: 48,
           height: 48,

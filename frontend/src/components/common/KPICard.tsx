@@ -22,7 +22,7 @@ export default function KPICard({ title, value, subtitle, icon }: KPICardProps) 
         <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
           {title}
         </span>
-        {icon && <span style={{ fontSize: '1.25rem' }}>{icon}</span>}
+        {icon && <span aria-hidden="true" style={{ fontSize: '1.25rem' }}>{icon}</span>}
       </div>
       <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.2 }}>
         {value}

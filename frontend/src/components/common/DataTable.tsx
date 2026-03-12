@@ -55,7 +55,22 @@ export default function DataTable<T extends Record<string, any>>({
               {columns.map(col => (
                 <th
                   key={col.key}
+                  scope="col"
+                  aria-sort={
+                    col.sortable
+                      ? sortKey === col.key
+                        ? sortOrder === 'asc' ? 'ascending' : 'descending'
+                        : 'none'
+                      : undefined
+                  }
+                  tabIndex={col.sortable ? 0 : undefined}
                   onClick={() => col.sortable && handleSort(col.key)}
+                  onKeyDown={e => {
+                    if (col.sortable && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault()
+                      handleSort(col.key)
+                    }
+                  }}
                   style={{
                     padding: '0.75rem 1rem',
                     textAlign: 'left',
@@ -69,7 +84,7 @@ export default function DataTable<T extends Record<string, any>>({
                 >
                   {col.header}
                   {col.sortable && sortKey === col.key && (
-                    <span style={{ marginLeft: '0.25rem' }}>
+                    <span aria-hidden="true" style={{ marginLeft: '0.25rem' }}>
                       {sortOrder === 'asc' ? '\u25B2' : '\u25BC'}
                     </span>
                   )}
@@ -126,6 +141,7 @@ export default function DataTable<T extends Record<string, any>>({
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               disabled={page <= 1}
+              aria-label="Go to previous page"
               onClick={() => onPageChange?.(page - 1)}
               style={{
                 padding: '0.375rem 0.75rem',
@@ -138,11 +154,12 @@ export default function DataTable<T extends Record<string, any>>({
             >
               Previous
             </button>
-            <span style={{ padding: '0.375rem 0.5rem' }}>
+            <span aria-live="polite" aria-atomic="true" style={{ padding: '0.375rem 0.5rem' }}>
               Page {page} of {totalPages}
             </span>
             <button
               disabled={page >= totalPages}
+              aria-label="Go to next page"
               onClick={() => onPageChange?.(page + 1)}
               style={{
                 padding: '0.375rem 0.75rem',

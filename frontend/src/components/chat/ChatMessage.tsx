@@ -16,9 +16,13 @@ function ChatChart({ data }: { data: any }) {
   const ChartComponent = data.type === 'line' ? LineChart : BarChart
 
   return (
-    <div style={{ marginTop: '0.75rem', width: '100%', maxWidth: 560 }}>
+    <div
+      role="img"
+      aria-label={data.title ? `Chart: ${data.title}` : 'Chart'}
+      style={{ marginTop: '0.75rem', width: '100%', maxWidth: 560 }}
+    >
       {data.title && (
-        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+        <p aria-hidden="true" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
           {data.title}
         </p>
       )}
@@ -94,10 +98,13 @@ export default function ChatMessage({ message }: ChatMessageProps) {
     }}>
       {/* Agent badge */}
       {!isUser && message.agentUsed && (
-        <span style={{
-          fontSize: '0.65rem', color: 'var(--color-text-secondary)',
-          marginBottom: '0.25rem', paddingLeft: '0.25rem',
-        }}>
+        <span
+          aria-label={`Response via ${message.agentUsed.replace('_', ' ')}`}
+          style={{
+            fontSize: '0.65rem', color: 'var(--color-text-secondary)',
+            marginBottom: '0.25rem', paddingLeft: '0.25rem',
+          }}
+        >
           via {message.agentUsed.replace('_', ' ')}
         </span>
       )}
@@ -113,10 +120,10 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         wordBreak: 'break-word',
       }}>
         {message.isLoading ? (
-          <span style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
-            <span style={{ animation: 'bounce 1s infinite 0s' }}>.</span>
-            <span style={{ animation: 'bounce 1s infinite 0.2s' }}>.</span>
-            <span style={{ animation: 'bounce 1s infinite 0.4s' }}>.</span>
+          <span role="status" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
+            <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0s' }}>.</span>
+            <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.2s' }}>.</span>
+            <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.4s' }}>.</span>
             <style>{`@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }`}</style>
           </span>
         ) : isUser ? (

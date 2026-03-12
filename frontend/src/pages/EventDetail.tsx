@@ -281,6 +281,8 @@ export default function EventDetail() {
 
       {/* Tab navigation */}
       <div
+        role="tablist"
+        aria-label="Event data tabs"
         style={{
           display: 'flex',
           gap: '0',
@@ -293,6 +295,10 @@ export default function EventDetail() {
           return (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`tabpanel-${tab.key}`}
+              id={`tab-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
               style={{
                 padding: '0.75rem 1.25rem',
@@ -316,33 +322,37 @@ export default function EventDetail() {
 
       {/* Tab content */}
       {activeTab === 'attendees' && (
-        <DataTable
-          columns={attendeeColumns}
-          data={attendeesData?.items ?? []}
-          total={attendeesData?.total}
-          page={attendeePage}
-          perPage={20}
-          onPageChange={setAttendeePage}
-          loading={attendeesLoading}
-        />
+        <div role="tabpanel" id="tabpanel-attendees" aria-labelledby="tab-attendees">
+          <DataTable
+            columns={attendeeColumns}
+            data={attendeesData?.items ?? []}
+            total={attendeesData?.total}
+            page={attendeePage}
+            perPage={20}
+            onPageChange={setAttendeePage}
+            loading={attendeesLoading}
+          />
+        </div>
       )}
 
       {activeTab === 'registrants' && (
-        <DataTable
-          columns={registrantColumns}
-          data={registrantsData?.items ?? []}
-          total={registrantsData?.total}
-          page={registrantPage}
-          perPage={20}
-          onPageChange={setRegistrantPage}
-          loading={registrantsLoading}
-        />
+        <div role="tabpanel" id="tabpanel-registrants" aria-labelledby="tab-registrants">
+          <DataTable
+            columns={registrantColumns}
+            data={registrantsData?.items ?? []}
+            total={registrantsData?.total}
+            page={registrantPage}
+            perPage={20}
+            onPageChange={setRegistrantPage}
+            loading={registrantsLoading}
+          />
+        </div>
       )}
 
-      {activeTab === 'polls' && <ComingSoon label="Polls" />}
-      {activeTab === 'surveys' && <ComingSoon label="Surveys" />}
-      {activeTab === 'resources' && <ComingSoon label="Resources" />}
-      {activeTab === 'ctas' && <ComingSoon label="CTAs" />}
+      {activeTab === 'polls' && <div role="tabpanel" id="tabpanel-polls" aria-labelledby="tab-polls"><ComingSoon label="Polls" /></div>}
+      {activeTab === 'surveys' && <div role="tabpanel" id="tabpanel-surveys" aria-labelledby="tab-surveys"><ComingSoon label="Surveys" /></div>}
+      {activeTab === 'resources' && <div role="tabpanel" id="tabpanel-resources" aria-labelledby="tab-resources"><ComingSoon label="Resources" /></div>}
+      {activeTab === 'ctas' && <div role="tabpanel" id="tabpanel-ctas" aria-labelledby="tab-ctas"><ComingSoon label="CTAs" /></div>}
     </div>
   )
 }

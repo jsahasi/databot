@@ -16,16 +16,24 @@ export default function AgentIndicator({ agent, isProcessing }: AgentIndicatorPr
   const info = AGENT_LABELS[agent] || { label: agent, color: 'var(--color-primary)' }
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '0.5rem',
-      padding: '0.375rem 0.75rem', fontSize: '0.75rem',
-      color: info.color, background: `${info.color}10`,
-      borderRadius: '1rem', width: 'fit-content',
-    }}>
-      <div style={{
-        width: 6, height: 6, borderRadius: '50%',
-        background: info.color, animation: 'pulse 1.5s infinite',
-      }} />
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={`${info.label}, please wait`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '0.5rem',
+        padding: '0.375rem 0.75rem', fontSize: '0.75rem',
+        color: info.color, background: `${info.color}10`,
+        borderRadius: '1rem', width: 'fit-content',
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: info.color, animation: 'pulse 1.5s infinite',
+        }}
+      />
       <span>{info.label}...</span>
       <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
     </div>

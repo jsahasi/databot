@@ -84,7 +84,7 @@ export default function ChatPanel() {
               marginBottom: '1.25rem',
               boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
             }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 <circle cx="12" cy="16" r="1" fill="#fff" stroke="none" />
@@ -112,6 +112,7 @@ export default function ChatPanel() {
               {SUGGESTIONS.map((s, i) => (
                 <button
                   key={i}
+                  aria-label={`Suggest: ${s}`}
                   onClick={() => { sendMessage(s); setInput('') }}
                   style={{
                     padding: '0.875rem 1rem',
@@ -143,7 +144,7 @@ export default function ChatPanel() {
           </div>
         ) : (
           /* Chat messages */
-          <div style={{ padding: '1.5rem 2rem', display: 'flex', flexDirection: 'column' }}>
+          <div role="log" aria-live="polite" aria-label="Chat messages" style={{ padding: '1.5rem 2rem', display: 'flex', flexDirection: 'column' }}>
             {messages.map(msg => (
               <React.Fragment key={msg.id}>
                 <ChatMessage message={msg} />
@@ -158,6 +159,7 @@ export default function ChatPanel() {
                     {msg.suggestions.map((s, i) => (
                       <button
                         key={i}
+                        aria-label={`Suggest: ${s}`}
                         onClick={() => { sendMessage(s); setInput('') }}
                         style={{
                           padding: '0.35rem 0.875rem',
@@ -192,23 +194,26 @@ export default function ChatPanel() {
         padding: '0.875rem 2rem',
       }}>
         {activeAgent && (
-          <p style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.375rem' }}>
+          <p aria-live="polite" aria-atomic="true" style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.375rem' }}>
             {activeAgent.replace('_', ' ')} is thinking...
           </p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           {/* Attachment icon */}
-          <button style={{
-            flexShrink: 0,
-            width: 36, height: 36,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#9ca3af',
-            borderRadius: 6,
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            aria-label="Attach file"
+            style={{
+              flexShrink: 0,
+              width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#9ca3af',
+              borderRadius: 6,
+            }}
+          >
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
             </svg>
           </button>
@@ -220,6 +225,7 @@ export default function ChatPanel() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Or type your message to chat here..."
+            aria-label="Chat message input"
             disabled={isProcessing}
             autoFocus
             rows={1}
@@ -243,6 +249,7 @@ export default function ChatPanel() {
           <button
             onClick={handleSend}
             disabled={!input.trim() || isProcessing}
+            aria-label="Send message"
             style={{
               flexShrink: 0,
               width: 36, height: 36,
@@ -255,7 +262,7 @@ export default function ChatPanel() {
               transition: 'background 0.15s',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </button>

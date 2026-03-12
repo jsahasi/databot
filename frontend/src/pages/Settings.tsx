@@ -93,7 +93,7 @@ export default function Settings() {
           gap: '0.5rem',
           alignItems: 'flex-start',
         }}>
-          <span style={{ flexShrink: 0, marginTop: '0.05rem' }}>&#9432;</span>
+          <span aria-hidden="true" style={{ flexShrink: 0, marginTop: '0.05rem' }}>&#9432;</span>
           <span>
             These credentials are stored server-side and loaded from environment variables.
             Contact your administrator to update them.
@@ -110,7 +110,7 @@ export default function Settings() {
               display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
               fontSize: '0.8rem', fontWeight: 500, color: '#15803d',
             }}>
-              <span style={{
+              <span aria-hidden="true" style={{
                 width: 8, height: 8, borderRadius: '50%',
                 background: '#22c55e', display: 'inline-block',
               }} />
@@ -121,7 +121,7 @@ export default function Settings() {
               display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
               fontSize: '0.8rem', fontWeight: 500, color: '#b91c1c',
             }}>
-              <span style={{
+              <span aria-hidden="true" style={{
                 width: 8, height: 8, borderRadius: '50%',
                 background: '#ef4444', display: 'inline-block',
               }} />
@@ -132,33 +132,39 @@ export default function Settings() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={fieldGroupStyle}>
-            <label style={labelStyle}>Client ID</label>
+            <label htmlFor="settings-client-id" style={labelStyle}>Client ID</label>
             <input
-              type="number"
+              id="settings-client-id"
+              type="text"
               value="••••••••"
               readOnly
+              aria-label="Client ID (hidden)"
               style={inputStyle}
             />
           </div>
 
           <div style={fieldGroupStyle}>
-            <label style={labelStyle}>Access Token Key</label>
+            <label htmlFor="settings-token-key" style={labelStyle}>Access Token Key</label>
             <input
+              id="settings-token-key"
               type="text"
               value="••••••••••••••••"
               readOnly
+              aria-label="Access Token Key (hidden)"
               style={inputStyle}
             />
           </div>
         </div>
 
         <div style={fieldGroupStyle}>
-          <label style={labelStyle}>Access Token Secret</label>
+          <label htmlFor="settings-token-secret" style={labelStyle}>Access Token Secret</label>
           <div style={{ position: 'relative' }}>
             <input
+              id="settings-token-secret"
               type={showSecret ? 'text' : 'password'}
               value="••••••••••••••••••••••••"
               readOnly
+              aria-label="Access Token Secret (hidden)"
               style={{ ...inputStyle, paddingRight: '3rem' }}
             />
             <button

@@ -5,6 +5,8 @@ interface LoadingStateProps {
 export default function LoadingState({ message = 'Loading...' }: LoadingStateProps) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -15,6 +17,7 @@ export default function LoadingState({ message = 'Loading...' }: LoadingStatePro
       }}
     >
       <div
+        aria-hidden="true"
         style={{
           width: 32,
           height: 32,
