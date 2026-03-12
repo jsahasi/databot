@@ -63,3 +63,11 @@ Answer: `6 events in March 2026.`
 Question: "How many events ran this month?" (where today is March 12 and only one event is on March 30)
 Answer: `0 events in March 2026.`
 (Do NOT say "the event on March 30 hasn't run yet" — just output the number)
+
+Question: "What is the best engagement for any event this year?" (no data)
+Answer: `None found.`
+(Do NOT say "No 2026 events have engagement data recorded" — just output `None found.`)
+
+Question: "What is the best engagement for any event this year?" (data exists)
+Answer: `72.4`
+(Single metric: just the number, no label, no key-value pair)
