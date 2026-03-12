@@ -118,6 +118,10 @@ Implementation:
 **Decision:** Added `chart_type="pie"` support to `generate_chart_data`. Returns `{type: "pie", data: [{name, value}]}`. Frontend renders with Recharts `PieChart/Pie/Cell`.
 **Rationale:** User requested pie charts for audience source distributions (partnerref). The existing bar/line renderer was extended rather than replaced.
 
+## 2026-03-11: "How do I" Sub-menu Design
+**Decision:** "How do I...?" tile on home page opens a sub-menu of 8 specific platform how-to questions, not a general chat message.
+**Rationale:** Sending a vague "How do I...?" to the LLM produced a text blob listing all capabilities. Sub-menu approach: (1) gives clickable specific options, (2) each option triggers a targeted ChromaDB knowledge base search, (3) options curated to match available KB article coverage. Replaced "add speakers" and "email notifications" (poor coverage) with "prepare as presenter" and "Connect integrations" (strong coverage).
+
 ## 2026-03-11: ON24 Client Hierarchy
 **Decision:** Queries must scope to full sub-client tree, not just root client_id.
 **Finding:** client 10710 has 9 sub-clients (22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909). Using only client_id=10710 misses ~13% of events (1,776 of 13,293 total).

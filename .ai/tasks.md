@@ -180,6 +180,15 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] No-hallucination rule: orchestrator MUST only cite knowledge base articles; if none found, redirect to ON24 Help Center
 - [x] ON24 speakers: documented — added as card on registration page + Speaker Bio tool on Audience Console via Console Builder
 
+## Phase 8 Addendum 8: How Do I Sub-menu + Feedback Footer — COMPLETE (2026-03-11)
+- [x] "How do I...?" suggestion tile on home page → shows 8 platform how-to options as sub-menu
+- [x] Sub-menu replaces main suggestion grid when clicked; back button returns to main view
+- [x] Options: set up webinar, polls, registration page, integrations, analytics, Engagement Hub, presenter prep, Connect integrations
+- [x] Replaced "speakers" and "email notifications" options (poor KB coverage) with "prepare as presenter" and "Connect integrations" (strong coverage)
+- [x] Removed "Content performance insights" from main suggestions (not calculable); replaced with "Poll results overview"
+- [x] Thumbs-down feedback form: added footer text — "Your suggestion will inform LLM refinement. Saved to improvement-inbox.txt"
+- [x] Knowledge base coverage verified: 6/8 options have strong ChromaDB article coverage
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)

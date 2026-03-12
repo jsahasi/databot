@@ -496,6 +496,10 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
               Submit
             </button>
           </div>
+          <p style={{ fontSize: '0.6rem', color: '#9ca3af', marginTop: '0.5rem', lineHeight: 1.4 }}>
+            Your suggestion will inform LLM refinement.
+            {' '}Saved to <span style={{ fontFamily: 'monospace' }}>improvement-inbox.txt</span>
+          </p>
         </div>
       )}
 

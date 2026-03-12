@@ -5,20 +5,32 @@ import AgentIndicator from './AgentIndicator'
 
 const SUGGESTIONS = [
   'Show event calendar',
+  'How do I ...? (ON24 help)',
   'Show attendance trends',
   'Which events had the best engagement?',
   'How many events ran this month?',
   'Top audience companies',
-  'Average engagement score',
   'Event registration rates',
-  'Content performance insights',
+  'Poll results overview',
 ]
 
 export default function ChatPanel() {
   const { messages, isProcessing, activeAgent, sendMessage, openCalendar } = useChatContext()
   const [input, setInput] = useState('')
+  const [showHowDoI, setShowHowDoI] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  const HOW_DO_I_OPTIONS = [
+    'How do I set up a webinar?',
+    'How do I set up polls for my event?',
+    'How do I configure a registration page?',
+    'How do I set up an integration?',
+    'How do I view my event analytics?',
+    'How do I create an Engagement Hub?',
+    'How do I prepare as a presenter?',
+    'How do I use Connect integrations?',
+  ]
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -102,45 +114,109 @@ export default function ChatPanel() {
             </h2>
 
             {/* Suggestion tiles — 2-column grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '0.625rem',
-              width: '100%',
-              maxWidth: 680,
-            }}>
-              {SUGGESTIONS.map((s, i) => (
+            {!showHowDoI ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '0.625rem',
+                width: '100%',
+                maxWidth: 680,
+              }}>
+                {SUGGESTIONS.map((s, i) => (
+                  <button
+                    key={i}
+                    aria-label={`Suggest: ${s}`}
+                    onClick={() => {
+                      if (s === 'Show event calendar') { openCalendar() }
+                      else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
+                      else { sendMessage(s); setInput('') }
+                    }}
+                    style={{
+                      padding: '0.875rem 1rem',
+                      background: 'var(--color-chip-bg)',
+                      border: '1px solid var(--color-chip-border)',
+                      borderRadius: 8,
+                      color: 'var(--color-chip-text)',
+                      fontSize: '0.825rem',
+                      fontWeight: 500,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      lineHeight: 1.4,
+                      transition: 'border-color 0.12s, background 0.12s',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-hover-bg)'
+                      ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-bg)'
+                      ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-chip-border)'
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              /* "How do I...?" sub-menu */
+              <div style={{ width: '100%', maxWidth: 680 }}>
                 <button
-                  key={i}
-                  aria-label={`Suggest: ${s}`}
-                  onClick={() => { if (s === 'Show event calendar') { openCalendar() } else { sendMessage(s); setInput('') } }}
+                  onClick={() => setShowHowDoI(false)}
                   style={{
-                    padding: '0.875rem 1rem',
-                    background: 'var(--color-chip-bg)',
-                    border: '1px solid var(--color-chip-border)',
-                    borderRadius: 8,
-                    color: 'var(--color-chip-text)',
-                    fontSize: '0.825rem',
-                    fontWeight: 500,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    lineHeight: 1.4,
-                    transition: 'border-color 0.12s, background 0.12s',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-hover-bg)'
-                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-bg)'
-                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-chip-border)'
+                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--color-primary)', fontSize: '0.8rem', fontWeight: 500,
+                    marginBottom: '0.75rem', padding: 0,
                   }}
                 >
-                  {s}
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  Back
                 </button>
-              ))}
-            </div>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                  What would you like help with?
+                </p>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '0.625rem',
+                }}>
+                  {HOW_DO_I_OPTIONS.map((q, i) => (
+                    <button
+                      key={i}
+                      aria-label={q}
+                      onClick={() => { sendMessage(q); setInput(''); setShowHowDoI(false) }}
+                      style={{
+                        padding: '0.875rem 1rem',
+                        background: 'var(--color-chip-bg)',
+                        border: '1px solid var(--color-chip-border)',
+                        borderRadius: 8,
+                        color: 'var(--color-chip-text)',
+                        fontSize: '0.825rem',
+                        fontWeight: 500,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        lineHeight: 1.4,
+                        transition: 'border-color 0.12s, background 0.12s',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-hover-bg)'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-bg)'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-chip-border)'
+                      }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Chat messages */
