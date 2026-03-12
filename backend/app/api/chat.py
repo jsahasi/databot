@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import re
 from typing import Any
 
 import anthropic
@@ -38,7 +39,10 @@ async def generate_suggestions(user_message: str, response_text: str, agent_used
         messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
-    suggestions: list[str] = json.loads(text)
+    # Extract JSON array even if Haiku wraps it in prose
+    match = re.search(r'\[.*\]', text, re.DOTALL)
+    raw = match.group() if match else text
+    suggestions: list[str] = json.loads(raw)
     return suggestions[:5]
 
 

@@ -29,7 +29,7 @@ class AdminAgent:
 
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        self.model = "claude-sonnet-4-6"
+        self.model = "claude-opus-4-6"
         self.max_tool_rounds = 5
 
     async def run(

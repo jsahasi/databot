@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import date
 from pathlib import Path
 from typing import Any, AsyncIterator
 
@@ -14,7 +15,12 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "orchestrator.md").read_text()
+_ORCHESTRATOR_TEMPLATE = (Path(__file__).parent / "prompts" / "orchestrator.md").read_text()
+
+
+def _build_orchestrator_prompt() -> str:
+    today = date.today().strftime("%B %d, %Y")
+    return f"Today's date is {today}.\n\n{_ORCHESTRATOR_TEMPLATE}"
 
 
 class OrchestratorAgent:
@@ -22,7 +28,7 @@ class OrchestratorAgent:
 
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        self.model = "claude-haiku-4-5-20251001"
+        self.model = "claude-opus-4-6"
         self.data_agent = DataAgent()
         self.content_agent = ContentAgent()
         self.admin_agent = AdminAgent()
@@ -86,7 +92,7 @@ class OrchestratorAgent:
         response = await self.client.messages.create(
             model=self.model,
             max_tokens=2048,
-            system=SYSTEM_PROMPT,
+            system=_build_orchestrator_prompt(),
             tools=self.ROUTING_TOOLS,
             messages=self.conversation_history,
         )

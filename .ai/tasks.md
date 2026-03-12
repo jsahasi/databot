@@ -38,41 +38,50 @@
 - [x] on24_query_tools.py: 10 tenant-safe query functions (client_id = ANY hierarchy)
 - [x] All queries scope to full sub-client hierarchy (client 10710 + 9 sub-clients)
 - [x] Multi-client architecture documented and planned (contextvars swap path)
-- [x] Chat speed: routing → haiku, synthesis call removed (3 LLM calls → 2)
-- [x] Follow-up suggestion chips after every bot response
 
-## Phase 7: Smoke Test + Stabilization — IN PROGRESS (commit 616963f)
-- [x] Add ANTHROPIC_API_KEY to .env.local
-- [x] Fix ON24_DB_URL (was reusing DATABASE_URL — now separate setting)
-- [x] Fix env loading: config.py loads both .env and .env.local; compose uses env_file
-- [x] Fix CORS: cors_origins includes localhost:3001
-- [x] Fix Dockerfile: alembic upgrade head runs before uvicorn
-- [ ] Run end-to-end smoke test: docker compose up --build (awaiting Docker Desktop)
-- [ ] Verify ON24 REST API credentials (may need IP allowlist on apiqa.on24.com)
+## Phase 7: Stabilization + UI Redesign — COMPLETE (commit 8576f67)
+- [x] Fix all Docker issues (alpine → Debian images, platform flags, env loading)
+- [x] Fix model ID: claude-sonnet-4-20250514 → claude-sonnet-4-6
+- [x] Fix SSL: removed ON24 SSL certs from local postgres session.py
+- [x] Fix query timeouts: dw_event_session for aggregates, 8s per-query timeout, 1-month default
+- [x] Fix ON24 DB column names (discovered via information_schema):
+  - dw_event_session: registrant_count, attendee_count, engagement_score_avg (event-level, no event_user_id)
+  - question: description (not question_text)
+  - resource_hit_track: event_id, event_user_id, resource_id, timestamp, partnerref only
+- [x] UI redesign to match mockup: top nav + left chat sidebar + main chat area
+- [x] ChatContext: shared useChat state across sidebar + panel via React context
+- [x] Markdown table rendering in ChatMessage (pipe tables → HTML tables)
+- [x] Agent prompt: concise responses, event_id+date+title format, ban key-value tables
+- [x] list_events: past_only param to exclude future-dated events for "last event" queries
+- [x] data_agent max_tool_rounds: 5 → 10; graceful fallback with tool_choice=none
+- [x] generate_suggestions: 5 anticipatory chips (up from 3), context-aware, 8s timeout
+- [x] Chat input autofocus on page load
+- [x] Git remote: GitHub only (https://github.com/jsahasi/databot, private)
 
 ## Backlog / Next Steps
-- [ ] Explore dw_event_attendee, dw_event_session tables (more DW aggregates)
-- [ ] Explore property table — look up epid labels for event_info
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
-- [ ] Verify query tool performance on real data with EXPLAIN ANALYZE
+- [ ] Explore question_x_answer + event_user_x_answer for poll response counts
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
 - [ ] Frontend Vitest component tests + Playwright E2E
 - [ ] Multi-client: implement per-request context var for tenant ID
-- [ ] Redis + async job queue if scheduled sync needs to survive restarts
+- [ ] Recent Chats: persist chat history in localStorage
 
-## Schema Notes (on24master)
-Key tables for analytics:
-- `event` (6.8GB, ~7.4M rows) — events, filter by client_id
-- `event_user` (404GB, ~586M rows) — registrants/attendees; join through event for tenant scope
-- `dw_attendee` (110GB, ~262M rows) — **use this** for engagement/duration aggregates
-- `dw_lead` (53GB, ~105M rows) — lead/prospect data, has client_id directly
-- `dw_lead_user` (57GB, ~302M rows) — lead↔event_user mapping
-- `question` (9.6GB, ~47M rows) — polls, Q&A, surveys (question_type_cd)
-- `event_user_x_answer` (123GB, ~334M rows) — individual poll/survey responses
-- `resource_hit_track` (6.9GB, ~55M rows) — resource download tracking
-- `content_hit_track_summary` (30GB, ~109M rows) — content interaction aggregates
-- `client_property_info` — client settings (timezone, domain, etc.)
-- `event_info` — event config key-value (epid = property ID, mostly internal flags)
+## Verified ON24 Schema (on24master)
 
-Sub-client hierarchy for 10710: [22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909]
-Total events across hierarchy: ~13,293 (10710: 11,517 + sub-clients: 1,776)
+### Key Tables
+| Table | Rows | Notes |
+|-------|------|-------|
+| event | ~7.4M | Filter by client_id; goodafter = event date |
+| event_user | 585M / 404GB | Registrants — avoid for aggregates; join through event |
+| dw_attendee | 262M | Per-attendee: event_user_id, engagement_score, live_minutes, archive_minutes |
+| dw_event_session | — | Per-event aggregate: registrant_count, attendee_count, engagement_score_avg, live_attendee_mins, conversion_percent |
+| question | 47M | Poll/Q&A/Survey; text in `description` column (not question_text) |
+| question_x_answer | — | Poll answer options |
+| event_user_x_answer | 334M | Individual responses |
+| resource_hit_track | 55M | Columns: event_id, event_user_id, resource_id, timestamp, partnerref |
+| dw_lead | 105M | Leads; has client_id directly |
+| client_hierarchy | — | Parent/child with self-refs; use cycle-safe recursive CTE |
+
+### Sub-client hierarchy for 10710
+[22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909]
+Total events: ~13,293 (10710: 11,517 + sub-clients: 1,776)

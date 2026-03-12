@@ -24,6 +24,13 @@ export default function ChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Restore focus to input whenever processing finishes
+  useEffect(() => {
+    if (!isProcessing) {
+      inputRef.current?.focus()
+    }
+  }, [isProcessing])
+
   const handleSend = () => {
     const trimmed = input.trim()
     if (!trimmed || isProcessing) return

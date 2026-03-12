@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +14,12 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "data_agent.md").read_text()
+_PROMPT_TEMPLATE = (Path(__file__).parent / "prompts" / "data_agent.md").read_text()
+
+
+def _build_system_prompt() -> str:
+    today = date.today().strftime("%B %d, %Y")
+    return f"Today's date is {today}.\n\n{_PROMPT_TEMPLATE}"
 
 
 class DataAgent:
@@ -21,7 +27,7 @@ class DataAgent:
 
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        self.model = "claude-sonnet-4-6"
+        self.model = "claude-opus-4-6"
         self.max_tool_rounds = 10
 
     async def _write_audit_log(
@@ -69,11 +75,13 @@ class DataAgent:
         chart_data = None
         tool_calls_made = []
 
+        system_prompt = _build_system_prompt()
+
         for _round in range(self.max_tool_rounds):
             response = await self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
-                system=SYSTEM_PROMPT,
+                system=system_prompt,
                 tools=DATA_AGENT_TOOLS,
                 messages=messages,
             )
@@ -147,7 +155,7 @@ class DataAgent:
         final = await self.client.messages.create(
             model=self.model,
             max_tokens=2048,
-            system=SYSTEM_PROMPT,
+            system=system_prompt,
             tools=DATA_AGENT_TOOLS,
             tool_choice={"type": "none"},
             messages=messages,
