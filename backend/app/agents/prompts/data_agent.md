@@ -82,9 +82,10 @@ Pass the **full data array** from the previous tool result as the `data` paramet
 
 When the user says "show as bar chart", "show as line chart", "show as table", "show as pie chart":
 - Re-use data from the previous query — do NOT re-query unless the data isn't in context.
-- "show as bar/line chart" → call `generate_chart_data` with the appropriate type.
+- "show as bar chart" → call `generate_chart_data` with `chart_type="bar"`.
+- "show as line chart" → call `generate_chart_data` with `chart_type="line"`.
+- "show as pie chart" → call `generate_chart_data` with `chart_type="pie"`, `x_key` = label field, `y_keys` = [single metric].
 - "show as table" → output a pipe table with the same data, no chart call.
-- "show as pie chart" → call `generate_chart_data` with `type="bar"` (pie is not supported).
 
 ## Examples
 

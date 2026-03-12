@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import {
   BarChart, Bar, LineChart, Line,
+  PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import ReactMarkdown from 'react-markdown'
@@ -11,10 +12,6 @@ const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
 function ChatChart({ data }: { data: any }) {
   if (!data?.data?.length) return null
-  const keys = Object.keys(data.data[0])
-  const xKey = keys[0]
-  const seriesKeys = keys.slice(1)
-  const ChartComponent = data.type === 'line' ? LineChart : BarChart
 
   return (
     <div
@@ -27,20 +24,49 @@ function ChatChart({ data }: { data: any }) {
           {data.title}
         </p>
       )}
-      <ResponsiveContainer width="100%" height={220}>
-        <ChartComponent data={data.data} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} label={data.yLabel ? { value: data.yLabel, angle: -90, position: 'insideLeft', style: { fontSize: 11 } } : undefined} />
-          <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
-          {seriesKeys.length > 1 && <Legend wrapperStyle={{ fontSize: '0.75rem' }} />}
-          {seriesKeys.map((key, i) =>
-            data.type === 'line'
-              ? <Line key={key} type="monotone" dataKey={key} stroke={CHART_COLORS[i % CHART_COLORS.length]} dot={false} strokeWidth={2} />
-              : <Bar key={key} dataKey={key} fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[3, 3, 0, 0]} />
-          )}
-        </ChartComponent>
-      </ResponsiveContainer>
+      {data.type === 'pie' ? (
+        <ResponsiveContainer width="100%" height={240}>
+          <PieChart>
+            <Pie
+              data={data.data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={90}
+              label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+              labelLine={false}
+            >
+              {data.data.map((_: any, i: number) => (
+                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ fontSize: '0.75rem' }} formatter={(v: any) => v.toLocaleString()} />
+            <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (() => {
+        const keys = Object.keys(data.data[0])
+        const xKey = keys[0]
+        const seriesKeys = keys.slice(1)
+        const ChartComponent = data.type === 'line' ? LineChart : BarChart
+        return (
+          <ResponsiveContainer width="100%" height={220}>
+            <ChartComponent data={data.data} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} label={data.yLabel ? { value: data.yLabel, angle: -90, position: 'insideLeft', style: { fontSize: 11 } } : undefined} />
+              <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
+              {seriesKeys.length > 1 && <Legend wrapperStyle={{ fontSize: '0.75rem' }} />}
+              {seriesKeys.map((key, i) =>
+                data.type === 'line'
+                  ? <Line key={key} type="monotone" dataKey={key} stroke={CHART_COLORS[i % CHART_COLORS.length]} dot={false} strokeWidth={2} />
+                  : <Bar key={key} dataKey={key} fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[3, 3, 0, 0]} />
+              )}
+            </ChartComponent>
+          </ResponsiveContainer>
+        )
+      })()}
     </div>
   )
 }

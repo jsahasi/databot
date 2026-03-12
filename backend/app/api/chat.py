@@ -38,24 +38,30 @@ async def generate_suggestions(
         if chart_type == "bar":
             view_rule = (
                 "The response already shows a BAR chart. "
-                "Include 1 suggestion for an alternative view — use 'Show as line chart' or 'Show as table'. "
+                "Include 1 suggestion for an alternative view — 'Show as line chart', 'Show as pie chart', or 'Show as table'. "
                 "Do NOT suggest 'Show as bar chart'."
             )
         elif chart_type == "line":
             view_rule = (
                 "The response already shows a LINE chart. "
-                "Include 1 suggestion for an alternative view — use 'Show as bar chart' or 'Show as table'. "
+                "Include 1 suggestion for an alternative view — 'Show as bar chart', 'Show as pie chart', or 'Show as table'. "
                 "Do NOT suggest 'Show as line chart'."
+            )
+        elif chart_type == "pie":
+            view_rule = (
+                "The response already shows a PIE chart. "
+                "Include 1 suggestion for an alternative view — 'Show as bar chart' or 'Show as table'. "
+                "Do NOT suggest 'Show as pie chart'."
             )
         else:
             view_rule = (
                 "The response included a chart. Include 1 suggestion for an alternative view "
-                "such as 'Show as table' or 'Show as bar chart'. "
+                "such as 'Show as table', 'Show as bar chart', or 'Show as pie chart'. "
             )
     elif has_table:
         view_rule = (
             "The response already shows a DATA TABLE. "
-            "Include 1-2 suggestions offering chart views: 'Show as bar chart' or 'Show as line chart'. "
+            "Include 1-2 suggestions offering chart views: 'Show as bar chart', 'Show as line chart', or 'Show as pie chart'. "
             "Do NOT suggest 'Show as table'."
         )
 
@@ -69,9 +75,8 @@ async def generate_suggestions(
             f"{view_rule}"
             "Each suggestion must be 3-7 words, conversational, specific to the context. "
             "NEVER suggest questions about region, geography, or location — that data is not available. "
-            "NEVER suggest 'Show as pie chart' — pie charts are not supported. "
             "Examples: 'How did it perform?', 'Show attendee breakdown', 'Compare to last month', "
-            "'Which companies attended?', 'Show poll results', 'Show as bar chart', 'Show as table'. "
+            "'Which companies attended?', 'Show poll results', 'Show as bar chart', 'Show as pie chart', 'Show as table'. "
             "Return only a JSON array of exactly 5 strings, nothing else."
         ),
         messages=[{"role": "user", "content": prompt}],

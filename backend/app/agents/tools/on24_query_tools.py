@@ -575,6 +575,15 @@ async def generate_chart_data(
         sample = data[0]
         y_keys = [k for k, v in sample.items() if k != x_key and isinstance(v, (int, float))]
 
+    # Pie charts use {name, value} pairs — first y_key only
+    if chart_type == "pie":
+        chart_rows = [
+            {"name": str(row.get(x_key, "")), "value": row.get(y_keys[0], 0)}
+            for row in data
+            if row.get(y_keys[0]) is not None
+        ]
+        return {"type": "pie", "data": chart_rows, "title": title}
+
     chart_rows = []
     for row in data:
         point: dict[str, Any] = {x_key: row.get(x_key, "")}

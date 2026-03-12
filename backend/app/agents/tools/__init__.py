@@ -232,8 +232,8 @@ DATA_AGENT_TOOLS = [
                 },
                 "chart_type": {
                     "type": "string",
-                    "enum": ["bar", "line"],
-                    "description": "Chart type: 'line' for time series, 'bar' for comparisons",
+                    "enum": ["bar", "line", "pie"],
+                    "description": "Chart type: 'line' for time series, 'bar' for comparisons, 'pie' for part-of-whole distributions",
                 },
                 "x_key": {
                     "type": "string",
