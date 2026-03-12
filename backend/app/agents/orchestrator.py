@@ -231,6 +231,7 @@ class OrchestratorAgent:
                             "agent_used": "data_agent",
                             "chart_data": result.get("chart_data"),
                             "event_card": result.get("event_card"),
+                            "event_cards": result.get("event_cards"),
                             "poll_cards": result.get("poll_cards"),
                             "requires_confirmation": False,
                             "confirmation_summary": None,

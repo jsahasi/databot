@@ -204,6 +204,16 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Rename TopNav to "ON24 Nexus"
 - [x] Poll chart suppresses poll cards (chart takes precedence over card rendering)
 
+## Phase 8 Addendum 11: Multi-Event Card Grid — COMPLETE (2026-03-11)
+- [x] list_events returning 2–4 results now captured as `event_cards` in data_agent.py
+- [x] event_cards discarded if agent called tools other than list_events/generate_chart_data after (intermediate lookup, not final answer)
+- [x] orchestrator.py passes event_cards through to chat.py
+- [x] chat.py sends `event_cards` WS message type when present
+- [x] useChat.ts: added `eventCards?: any[] | null` field to ChatMessage interface; handles `event_cards` WS message
+- [x] ChatMessage.tsx: EventCardsGrid component — 2-col grid with 20px gap for 2–4 events (title, event_id, date, event_type)
+- [x] data_agent.md: prompt rule — when list_events returns 2–4, output count line only; cards render automatically
+- [x] Explored smart_tips_benchmark: not found as table or materialized view via ON24_RO user (likely in a restricted schema or different DB)
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)

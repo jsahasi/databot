@@ -94,6 +94,7 @@ class DataAgent:
         chart_data = None
         event_card = None
         poll_cards = None
+        event_cards = None   # 2–4 events → tiled cards
         tool_calls_made = []
 
         system_prompt = _build_system_prompt()
@@ -129,6 +130,19 @@ class DataAgent:
                                 # Capture chart data if this was a chart generation call
                                 if tool_name == "generate_chart_data":
                                     chart_data = result
+
+                                # Capture 2–4 event results for card grid rendering
+                                if tool_name == "list_events" and isinstance(result, list) and 1 < len(result) <= 4:
+                                    event_cards = [
+                                        {
+                                            "event_id": r.get("event_id"),
+                                            "title": r.get("description") or r.get("title") or "",
+                                            "start_time": r.get("goodafter") or r.get("start_time"),
+                                            "event_type": r.get("event_type") or r.get("type") or "",
+                                            "status": r.get("is_active") or r.get("status") or "",
+                                        }
+                                        for r in result
+                                    ]
 
                                 # Capture poll cards for visual display
                                 if tool_name == "get_polls" and isinstance(result, list) and len(result) > 0:
@@ -202,10 +216,17 @@ class DataAgent:
                 text_parts = [block.text for block in response.content if hasattr(block, "text")]
                 raw_text = "\n".join(text_parts)
                 cleaned_text, extracted_chart = _extract_chart(raw_text)
+                # Discard event_cards if agent went on to call more tools after list_events
+                # (it was an intermediate lookup, not the final answer)
+                final_event_cards = event_cards if not any(
+                    t["tool"] not in ("list_events", "generate_chart_data")
+                    for t in tool_calls_made
+                ) else None
                 return {
                     "text": cleaned_text,
                     "chart_data": extracted_chart or chart_data,
                     "event_card": event_card,
+                    "event_cards": final_event_cards,
                     "poll_cards": poll_cards,
                     "tool_calls": tool_calls_made,
                 }
@@ -229,5 +250,8 @@ class DataAgent:
         return {
             "text": cleaned_text,
             "chart_data": extracted_chart or chart_data,
+            "event_card": event_card,
+            "event_cards": None,
+            "poll_cards": poll_cards,
             "tool_calls": tool_calls_made,
         }

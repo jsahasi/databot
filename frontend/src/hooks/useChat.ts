@@ -7,6 +7,7 @@ export interface ChatMessage {
   agentUsed?: string | null
   chartData?: any | null
   eventCard?: any | null
+  eventCards?: any[] | null
   pollCards?: any[] | null
   suggestions?: string[]
   isLoading?: boolean
@@ -104,6 +105,19 @@ export function useChat(options: UseChatOptions = {}) {
               return [
                 ...prev.slice(0, -1),
                 { ...last, eventCard: data.data },
+              ]
+            }
+            return prev
+          })
+          break
+
+        case 'event_cards':
+          setMessages(prev => {
+            const last = prev[prev.length - 1]
+            if (last && last.role === 'assistant') {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, eventCards: data.data },
               ]
             }
             return prev

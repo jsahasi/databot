@@ -122,6 +122,15 @@ Implementation:
 **Decision:** "How do I...?" tile on home page opens a sub-menu of 8 specific platform how-to questions, not a general chat message.
 **Rationale:** Sending a vague "How do I...?" to the LLM produced a text blob listing all capabilities. Sub-menu approach: (1) gives clickable specific options, (2) each option triggers a targeted ChromaDB knowledge base search, (3) options curated to match available KB article coverage. Replaced "add speakers" and "email notifications" (poor coverage) with "prepare as presenter" and "Connect integrations" (strong coverage).
 
+## 2026-03-11: Multi-Event Card Grid (2–4 events)
+**Decision:** When `list_events` returns 2–4 events as a final answer, render a 2-column card grid (EventCardsGrid) instead of a pipe table.
+**Rationale:** Small event sets (2–4) benefit from a richer visual layout. Each card shows title, event_id, event_type, and date. For 5+ events a table is more scannable. Cards are only shown when list_events is the final tool (not an intermediate lookup) — discarded if agent calls other tools after.
+**Implementation:** data_agent.py captures event_cards; discard logic based on tool_calls_made; WS message type `event_cards`; EventCardsGrid in ChatMessage.tsx; data_agent.md prompt rule for count-only output.
+
+## 2026-03-11: smart_tips_benchmark — Not Accessible
+**Decision:** Deferred. The `smart_tips_benchmark` materialized view exists somewhere in the ON24 platform but is not visible via the `ON24_RO` read-only user (pg_matviews shows zero rows; information_schema tables search returns nothing). Related benchmark tables exist: `dw_benchmark` (benchmark_code, benchmark_value, benchmark_month, industry_id, application_id), `dw_benchmark_industry`, `benchmark_industry`, `benchmark_application`, `dw_benchmark_metadata`.
+**Next step:** Determine which schema/DB hosts the view, or use `dw_benchmark` directly as a benchmark data source.
+
 ## 2026-03-11: ON24 Client Hierarchy
 **Decision:** Queries must scope to full sub-client tree, not just root client_id.
 **Finding:** client 10710 has 9 sub-clients (22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909). Using only client_id=10710 misses ~13% of events (1,776 of 13,293 total).

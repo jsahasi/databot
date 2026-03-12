@@ -255,6 +255,41 @@ function EventCardInline({ card }: { card: any }) {
   )
 }
 
+function EventCardsGrid({ cards }: { cards: any[] }) {
+  if (!cards?.length) return null
+  return (
+    <div style={{
+      marginTop: '0.75rem',
+      display: 'grid',
+      gridTemplateColumns: cards.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+      gap: 20,
+      maxWidth: cards.length === 1 ? 420 : 860,
+    }}>
+      {cards.map((card: any, i: number) => (
+        <div key={card.event_id || i} style={{
+          borderRadius: 10, border: '1px solid var(--color-border)',
+          background: 'var(--color-card)', overflow: 'hidden',
+        }}>
+          <div style={{ height: 4, background: '#4f46e5' }} />
+          <div style={{ padding: '0.65rem 0.85rem' }}>
+            <div style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.15rem' }}>
+              Event {card.event_id}{card.event_type ? ` · ${card.event_type}` : ''}
+            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35, marginBottom: '0.3rem' }}>
+              {card.title}
+            </div>
+            {card.start_time && (
+              <div style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)' }}>
+                {new Date(card.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function ChatMessage({ message, userQuestion = '' }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const [hovered, setHovered] = useState(false)
@@ -410,7 +445,10 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
       {message.chartData && <ChatChart data={message.chartData} />}
 
       {/* Event Card */}
-      {message.eventCard && <EventCardInline card={message.eventCard} />}
+      {message.eventCard && !message.eventCards && <EventCardInline card={message.eventCard} />}
+
+      {/* Event Cards Grid (2–4 events) */}
+      {message.eventCards && <EventCardsGrid cards={message.eventCards} />}
 
       {/* Poll Cards */}
       {message.pollCards && <PollCardsInline polls={message.pollCards} />}
