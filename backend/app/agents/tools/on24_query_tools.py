@@ -17,9 +17,24 @@ PERFORMANCE RULES:
 """
 
 import logging
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from app.db.on24_db import get_pool, get_tenant_client_ids
+
+
+def _serialize(obj: Any) -> Any:
+    """Recursively convert asyncpg/Decimal/datetime types to JSON-safe primitives."""
+    if isinstance(obj, dict):
+        return {k: _serialize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_serialize(v) for v in obj]
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    return obj
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +97,7 @@ async def query_events(
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, event_type, is_active, search, past_only, limit, offset,
                                 timeout=_QUERY_TIMEOUT)
-    return [dict(row) for row in rows]
+    return [_serialize(dict(row)) for row in rows]
 
 
 async def get_event_detail(event_id: int) -> dict | None:
@@ -100,7 +115,7 @@ async def get_event_detail(event_id: int) -> dict | None:
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
-    return dict(row) if row else None
+    return _serialize(dict(row)) if row else None
 
 
 async def query_attendees(
@@ -133,7 +148,7 @@ async def query_attendees(
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, event_id, client_ids, limit, offset,
                                 timeout=_QUERY_TIMEOUT)
-    return [dict(row) for row in rows]
+    return [_serialize(dict(row)) for row in rows]
 
 
 async def compute_event_kpis(event_id: int) -> dict:
@@ -314,10 +329,10 @@ async def query_top_events_by_polls(limit: int = 10) -> list[dict]:
     """
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, limit, timeout=_QUERY_TIMEOUT)
-    return [dict(row) for row in rows]
+    return [_serialize(dict(row)) for row in rows]
 
 
-async def query_poll_overview(months: int = 6) -> list[dict]:
+async def query_poll_overview(months: int = 24) -> list[dict]:
     """Cross-event poll summary: events with polls, question count, and total responses.
 
     Scoped to past N months. Sorted by total responses descending.
@@ -351,7 +366,7 @@ async def query_poll_overview(months: int = 6) -> list[dict]:
     """
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
-    return [dict(row) for row in rows]
+    return [_serialize(dict(row)) for row in rows]
 
 
 async def query_top_events(
@@ -407,12 +422,12 @@ async def query_top_events(
         r = dict(row)
         if r.get("avg_engagement") is not None:
             r["avg_engagement"] = round(float(r["avg_engagement"]), 2)
-        results.append(r)
+        results.append(_serialize(r))
     return results
 
 
-async def query_attendance_trends(months: int = 1) -> list[dict]:
-    """Monthly attendance and registration trends. Default: last 1 month, max 24.
+async def query_attendance_trends(months: int = 12) -> list[dict]:
+    """Monthly attendance and registration trends. Default: last 12 months, max 24.
 
     Uses dw_event_session registrant_count / attendee_count per event.
     Only includes events that pass the test-exclusion and min-registrant filters.
@@ -448,7 +463,7 @@ async def query_attendance_trends(months: int = 1) -> list[dict]:
         r = dict(row)
         if r.get("avg_engagement") is not None:
             r["avg_engagement"] = round(float(r["avg_engagement"]), 2)
-        results.append(r)
+        results.append(_serialize(r))
     return results
 
 
@@ -497,7 +512,7 @@ async def query_audience_companies(
         r = dict(row)
         if r.get("avg_engagement") is not None:
             r["avg_engagement"] = round(float(r["avg_engagement"]), 2)
-        results.append(r)
+        results.append(_serialize(r))
     return results
 
 
@@ -527,4 +542,4 @@ async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, event_id, client_ids, limit, timeout=_QUERY_TIMEOUT)
-    return [dict(row) for row in rows]
+    return [_serialize(dict(row)) for row in rows]

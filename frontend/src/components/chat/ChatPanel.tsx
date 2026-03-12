@@ -33,7 +33,7 @@ export default function ChatPanel() {
 
   const handleSend = () => {
     const trimmed = input.trim()
-    if (!trimmed || isProcessing) return
+    if (!trimmed) return
     sendMessage(trimmed)
     setInput('')
     inputRef.current?.focus()
@@ -247,16 +247,16 @@ export default function ChatPanel() {
           {/* Send button */}
           <button
             onClick={handleSend}
-            disabled={!input.trim() || isProcessing}
+            disabled={!input.trim()}
             aria-label="Send message"
             style={{
               flexShrink: 0,
               width: 36, height: 36,
               borderRadius: '50%',
-              background: input.trim() && !isProcessing ? 'var(--color-primary)' : '#e5e7eb',
+              background: input.trim() ? 'var(--color-primary)' : '#e5e7eb',
               color: '#fff',
               border: 'none',
-              cursor: input.trim() && !isProcessing ? 'pointer' : 'not-allowed',
+              cursor: input.trim() ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'background 0.15s',
             }}

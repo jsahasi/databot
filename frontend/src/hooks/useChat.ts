@@ -23,6 +23,8 @@ export function useChat(options: UseChatOptions = {}) {
   const [activeAgent, setActiveAgent] = useState<string | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const pendingMessageRef = useRef<string | null>(null)
+  const isProcessingRef = useRef(false)
+  const queueRef = useRef<string[]>([])
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return
@@ -50,6 +52,7 @@ export function useChat(options: UseChatOptions = {}) {
         case 'agent_start':
           setActiveAgent(data.agent)
           setIsProcessing(true)
+          isProcessingRef.current = true
           break
 
         case 'agent_routing':
@@ -94,6 +97,7 @@ export function useChat(options: UseChatOptions = {}) {
 
         case 'message_complete':
           setIsProcessing(false)
+          isProcessingRef.current = false
           setActiveAgent(null)
           setMessages(prev => {
             const last = prev[prev.length - 1]
@@ -105,6 +109,17 @@ export function useChat(options: UseChatOptions = {}) {
             }
             return prev
           })
+          // Drain queue: send next message if one was typed while processing
+          if (queueRef.current.length > 0) {
+            const next = queueRef.current.shift()!
+            setMessages(prev => [
+              ...prev,
+              { id: `loading-${Date.now()}`, role: 'assistant', content: '', isLoading: true, timestamp: new Date() },
+            ])
+            setIsProcessing(true)
+            isProcessingRef.current = true
+            ws.send(JSON.stringify({ type: 'message', content: next, session_id: sessionId }))
+          }
           break
 
         case 'suggestions':
@@ -159,32 +174,26 @@ export function useChat(options: UseChatOptions = {}) {
   }, [connect])
 
   const sendMessage = useCallback((content: string) => {
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content,
-      timestamp: new Date(),
-    }
-    setMessages(prev => [...prev, userMessage])
-
-    // Add loading assistant message
+    // Always show the user message immediately
     setMessages(prev => [
       ...prev,
-      {
-        id: `loading-${Date.now()}`,
-        role: 'assistant',
-        content: '',
-        isLoading: true,
-        timestamp: new Date(),
-      },
+      { id: `user-${Date.now()}`, role: 'user', content, timestamp: new Date() },
+    ])
+
+    if (isProcessingRef.current) {
+      // Queue the message — it will be sent automatically when current response finishes
+      queueRef.current.push(content)
+      return
+    }
+
+    // Add loading assistant placeholder and send
+    setMessages(prev => [
+      ...prev,
+      { id: `loading-${Date.now()}`, role: 'assistant', content: '', isLoading: true, timestamp: new Date() },
     ])
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'message',
-        content,
-        session_id: sessionId,
-      }))
+      wsRef.current.send(JSON.stringify({ type: 'message', content, session_id: sessionId }))
     } else {
       pendingMessageRef.current = content
       connect()
