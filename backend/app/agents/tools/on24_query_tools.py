@@ -543,3 +543,50 @@ async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, event_id, client_ids, limit, timeout=_QUERY_TIMEOUT)
     return [_serialize(dict(row)) for row in rows]
+
+
+def generate_chart_data(
+    data: list[dict],
+    chart_type: str = "bar",
+    x_key: str = "",
+    y_keys: list[str] | None = None,
+    title: str = "",
+    y_label: str = "",
+) -> dict:
+    """Format tool result data for the frontend chart renderer.
+
+    Pass the raw list returned by a previous tool (get_attendance_trends,
+    get_top_events, etc.), specify x_key (the label field) and optionally
+    y_keys (the metric fields to plot). Returns a chart payload.
+
+    chart_type: 'bar' or 'line'
+    x_key: field to use as x-axis label (e.g. 'period', 'description')
+    y_keys: fields to plot as series (defaults to all non-x_key numeric fields)
+    title: chart title shown above the chart
+    y_label: optional y-axis label
+    """
+    if not data:
+        return {}
+
+    if not x_key and data:
+        x_key = list(data[0].keys())[0]
+
+    if not y_keys:
+        sample = data[0]
+        y_keys = [k for k, v in sample.items() if k != x_key and isinstance(v, (int, float))]
+
+    chart_rows = []
+    for row in data:
+        point: dict[str, Any] = {x_key: row.get(x_key, "")}
+        for k in y_keys:
+            point[k] = row.get(k)
+        chart_rows.append(point)
+
+    result: dict[str, Any] = {
+        "type": chart_type if chart_type in ("bar", "line") else "bar",
+        "data": chart_rows,
+        "title": title,
+    }
+    if y_label:
+        result["yLabel"] = y_label
+    return result

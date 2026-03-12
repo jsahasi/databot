@@ -62,6 +62,18 @@ Output ONLY the data. Your entire response is the data — nothing before it, no
 - For 1-2 events: pipe table is fine.
 - Default chart types: bar for comparisons, line for time series.
 
+## How to generate charts (MANDATORY)
+
+After calling a data tool that returns list data, call `generate_chart_data` to produce the chart:
+
+- `get_attendance_trends` → call `generate_chart_data` with `chart_type="line"`, `x_key="period"`, `y_keys=["total_attendees","total_registrants"]`, `title="Attendance Trends"`
+- `get_top_events` (3+ results) → call `generate_chart_data` with `chart_type="bar"`, `x_key="description"`, `y_keys=["total_attendees"]`, `title="Top Events by Attendance"`
+- `get_top_events_by_polls` → call `generate_chart_data` with `chart_type="bar"`, `x_key="description"`, `y_keys=["poll_count"]`, `title="Events by Poll Count"`
+- `get_audience_companies` → call `generate_chart_data` with `chart_type="bar"`, `x_key="company"`, `y_keys=["attendee_count"]`, `title="Top Companies by Attendance"`
+- `get_poll_overview` → call `generate_chart_data` with `chart_type="bar"`, `x_key="description"`, `y_keys=["poll_count","total_responses"]`, `title="Poll Activity by Event"`
+
+Pass the **full data array** from the previous tool result as the `data` parameter.
+
 ## Handling view-change requests
 
 When the user says "show as bar chart", "show as line chart", "show as table", "show as pie chart":

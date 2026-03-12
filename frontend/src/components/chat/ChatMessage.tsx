@@ -22,7 +22,7 @@ function ChatChart({ data }: { data: any }) {
       style={{ marginTop: '0.75rem', width: '100%', maxWidth: 560 }}
     >
       {data.title && (
-        <p aria-hidden="true" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+        <p aria-hidden="true" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.375rem' }}>
           {data.title}
         </p>
       )}
@@ -55,9 +55,9 @@ const mdComponents = {
   p: ({ children }: any) => <p style={{ margin: '0.3rem 0' }}>{children}</p>,
   strong: ({ children }: any) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
   em: ({ children }: any) => <em>{children}</em>,
-  hr: () => <hr style={{ border: 'none', borderTop: '1px solid #cbd5e1', margin: '0.5rem 0' }} />,
+  hr: () => <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '0.5rem 0' }} />,
   blockquote: ({ children }: any) => (
-    <blockquote style={{ borderLeft: '3px solid #6366f1', paddingLeft: '0.75rem', margin: '0.4rem 0', color: '#4b5563', fontStyle: 'italic' }}>
+    <blockquote style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '0.75rem', margin: '0.4rem 0', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
       {children}
     </blockquote>
   ),
@@ -65,8 +65,8 @@ const mdComponents = {
   ol: ({ children }: any) => <ol style={{ paddingLeft: '1.25rem', margin: '0.3rem 0' }}>{children}</ol>,
   li: ({ children }: any) => <li style={{ margin: '0.15rem 0' }}>{children}</li>,
   code: ({ children, className }: any) => className
-    ? <pre style={{ background: '#1e293b', color: '#e2e8f0', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', fontSize: '0.78rem', overflowX: 'auto', margin: '0.4rem 0' }}><code>{children}</code></pre>
-    : <code style={{ background: '#e2e8f0', borderRadius: '0.2rem', padding: '0.1rem 0.3rem', fontSize: '0.8rem' }}>{children}</code>,
+    ? <pre style={{ background: 'var(--color-sidebar)', color: 'var(--color-text)', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', fontSize: '0.78rem', overflowX: 'auto', margin: '0.4rem 0' }}><code>{children}</code></pre>
+    : <code style={{ background: 'var(--color-border)', color: 'var(--color-text)', borderRadius: '0.2rem', padding: '0.1rem 0.3rem', fontSize: '0.8rem' }}>{children}</code>,
   table: ({ children }: any) => (
     <div style={{ overflowX: 'auto', margin: '0.5rem 0' }}>
       <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem', lineHeight: 1.5, width: '100%', minWidth: 'max-content' }}>
@@ -75,12 +75,12 @@ const mdComponents = {
     </div>
   ),
   th: ({ children }: any) => (
-    <th style={{ padding: '0.3rem 0.75rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #cbd5e1', whiteSpace: 'nowrap', color: '#374151' }}>
+    <th style={{ padding: '0.3rem 0.75rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid var(--color-border)', whiteSpace: 'nowrap', color: 'var(--color-text)' }}>
       {children}
     </th>
   ),
   td: ({ children }: any) => (
-    <td style={{ padding: '0.3rem 0.75rem', borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap', color: '#1a202c' }}>
+    <td style={{ padding: '0.3rem 0.75rem', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap', color: 'var(--color-text)' }}>
       {children}
     </td>
   ),

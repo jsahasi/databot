@@ -18,6 +18,7 @@ from app.agents.tools.on24_query_tools import (
     query_attendance_trends,
     query_audience_companies,
     query_resources,
+    generate_chart_data,
 )
 from app.agents.tools.content_tools import (
     analyze_topic_performance,
@@ -213,6 +214,42 @@ DATA_AGENT_TOOLS = [
             "required": ["event_id"],
         },
     },
+    {
+        "name": "generate_chart_data",
+        "description": (
+            "Format data from a previous tool call into a chart for the frontend. "
+            "Call this after get_attendance_trends, get_top_events, get_top_events_by_polls, "
+            "get_poll_overview, or get_audience_companies whenever a chart is appropriate. "
+            "Pass the full data array returned by the previous tool."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "description": "The data array from the previous tool call",
+                    "items": {"type": "object"},
+                },
+                "chart_type": {
+                    "type": "string",
+                    "enum": ["bar", "line"],
+                    "description": "Chart type: 'line' for time series, 'bar' for comparisons",
+                },
+                "x_key": {
+                    "type": "string",
+                    "description": "Field to use as x-axis label (e.g. 'period', 'description')",
+                },
+                "y_keys": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Metric fields to plot (omit to auto-detect all numeric fields)",
+                },
+                "title": {"type": "string", "description": "Chart title"},
+                "y_label": {"type": "string", "description": "Optional y-axis label"},
+            },
+            "required": ["data", "chart_type", "x_key"],
+        },
+    },
 ]
 
 # Map tool names to handler functions
@@ -229,6 +266,7 @@ TOOL_HANDLERS = {
     "get_attendance_trends": query_attendance_trends,
     "get_audience_companies": query_audience_companies,
     "get_resources": query_resources,
+    "generate_chart_data": generate_chart_data,
 }
 
 CONTENT_AGENT_TOOLS = [
