@@ -81,12 +81,29 @@
 - [x] OWASP security hardening: message length limit (4000), session ID sanitization, generic error messages
 - [x] Data quality filters: _EXCL_TEST (no "test" in name) + _MIN_REGS_SUBQ (>5 registrants); single-event queries use _EXCL_TEST only to avoid correlated subquery timeout
 
-## Phase 8 Addendum 3: Dark Mode Color Tuning — COMPLETE (2026-03-11)
-- [x] --color-text: #e2e8f0 → #c9cfe0 (softer off-white, less glare)
-- [x] --color-primary: #6366f1 → #a5b4fc (lighter indigo, legible on dark cards)
-- [x] --color-primary-hover: #818cf8 → #c7d2fe
-- [x] --color-sidebar-active: #ffffff → #c9cfe0 (matches body text)
-- [x] --color-text-secondary: #94a3b8 → #7b8599 (maintains hierarchy without washing out)
+## Phase 8 Addendum 3: Dark Mode + Charts + Polish — COMPLETE (2026-03-12)
+- [x] Dark mode color tuning: softer white (#c9cfe0), lighter primary (#a5b4fc)
+- [x] Dark mode table fix: ChatMessage.tsx all hardcoded colors → CSS variables (th/td/hr/blockquote/code)
+- [x] Chip text brightness: #a5b4fc → #c7d2fe in dark mode
+- [x] generate_chart_data tool: registered in DATA_AGENT_TOOLS, made async (was sync → await fail)
+- [x] data_agent.md: explicit chart instructions per tool with x_key/y_keys/title
+- [x] data_agent.md: stronger no-thinking-out-loud rule; count ≤20 may offer "Would you like me to list them?"
+- [x] Suggestion chips: exclude region/geography (data not available)
+- [x] Poll tenant isolation: event_user_x_answer → question → event → client_id chain
+- [x] Decimal/datetime serialization: _serialize() on all query return values
+- [x] query_attendance_trends default: 1 month → 12 months
+- [x] Message queue: type+send while agent processes; auto-sends on completion
+- [x] Frontend rebuild required after every change (nginx production build, no hot-reload)
+- [x] Regression test suite: tests/test_chat_prompts.py (26 prompts, 19/26 passing)
+- [x] Known failing: poll_overview, polls_last_event (client has no poll responses since 2023)
+
+## Poll Schema Findings (2026-03-12)
+- question_type_cd values: singleoption/multioption (polls, stopped 2023), singletext (Q&A, active)
+- question_subtype_cd: userquestion / useranswer (Q&A self-join: answer_id → question_id)
+- event_user_x_answer.answer contains answer text directly (question_x_answer not needed for responses)
+- Client 10710 has 86 poll questions (2021-2023) with zero responses in event_user_x_answer
+- dw_event_session.answered_polls is a Y/N flag, not a count; answered_surveys and asked_questions same pattern
+- Full dw_event_session columns documented in schema section above
 
 ## Local Setup Notes
 - **App URL**: http://localhost:3001 (via `docker compose up --build`)
@@ -113,7 +130,7 @@
 | event | ~7.4M | Filter by client_id; goodafter = event date; title is in `description` column (not event_name) |
 | event_user | 585M / 404GB | Registrants — avoid for aggregates; join through event |
 | dw_attendee | 262M | Per-attendee: event_user_id, engagement_score, live_minutes, archive_minutes |
-| dw_event_session | — | Per-event aggregate: registrant_count, attendee_count, engagement_score_avg, live_attendee_mins, conversion_percent |
+| dw_event_session | — | Per-event aggregate. Key columns: registrant_count, attendee_count, engagement_score_avg, conversion_percent, live_attendee_count, od_attendee_count, live_attendee_mins, od_attendee_mins, answered_polls (Y/N flag), answered_surveys (Y/N), asked_questions (Y/N), reminder/noshow/attendee email open rates |
 | question | 47M | Poll/Q&A/Survey; text in `description` column (not question_text) |
 | question_x_answer | — | Poll answer options |
 | event_user_x_answer | 334M | Individual responses |

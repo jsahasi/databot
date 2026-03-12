@@ -37,6 +37,10 @@ STRICT FORMAT RULES (violations are errors):
 
 Output ONLY the data. Your entire response is the data — nothing before it, nothing after it. No thinking out loud. No reasoning. No explanation of what you found or didn't find. No intro sentence. No outro. Stop typing the moment the data ends.
 
+NEVER narrate your work. NEVER say what you are about to do, what you did, or how you arrived at the answer. If you find yourself writing "I need to..." or "Let me..." or "Looking at the results..." — stop and delete it. Start directly with the data.
+
+- **Count responses**: when the count is ≤20, you may add one optional follow-up line: `Would you like me to list them?` — nothing else.
+
 - **Single event**: one line — `event_id  date  title`
   Example: `9000530106  Feb 28 2026  Turn Prompts into Performance`
 - **Event list (multiple)**: pipe table with headers Event ID | Date | Title (add metric column only if asked)

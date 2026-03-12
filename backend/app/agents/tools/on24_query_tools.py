@@ -545,7 +545,7 @@ async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
     return [_serialize(dict(row)) for row in rows]
 
 
-def generate_chart_data(
+async def generate_chart_data(
     data: list[dict],
     chart_type: str = "bar",
     x_key: str = "",
