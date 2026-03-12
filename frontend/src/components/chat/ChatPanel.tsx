@@ -116,10 +116,10 @@ export default function ChatPanel() {
                   onClick={() => { sendMessage(s); setInput('') }}
                   style={{
                     padding: '0.875rem 1rem',
-                    background: 'var(--color-card)',
-                    border: '1px solid #c7d2fe',
+                    background: 'var(--color-chip-bg)',
+                    border: '1px solid var(--color-chip-border)',
                     borderRadius: 8,
-                    color: 'var(--color-primary-hover, #4338ca)',
+                    color: 'var(--color-chip-text)',
                     fontSize: '0.825rem',
                     fontWeight: 500,
                     textAlign: 'left',
@@ -129,12 +129,12 @@ export default function ChatPanel() {
                     boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                   }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = '#eef2ff'
+                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-hover-bg)'
                     ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-card)'
-                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#c7d2fe'
+                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-bg)'
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-chip-border)'
                   }}
                 >
                   {s}
@@ -164,10 +164,10 @@ export default function ChatPanel() {
                         style={{
                           padding: '0.35rem 0.875rem',
                           fontSize: '0.775rem',
-                          background: 'var(--color-card)',
-                          border: '1px solid #c7d2fe',
+                          background: 'var(--color-chip-bg)',
+                          border: '1px solid var(--color-chip-border)',
                           borderRadius: 20,
-                          color: '#4338ca',
+                          color: 'var(--color-chip-text)',
                           cursor: 'pointer',
                           lineHeight: 1.4,
                           fontWeight: 500,
