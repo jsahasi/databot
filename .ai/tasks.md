@@ -33,7 +33,7 @@
 - [x] Plotly code-split via React.lazy
 
 ## Phase 6: Direct DB + Tenant Safety — COMPLETE (commit 5cd295f)
-- [x] ON24 QA DB connected (10.3.7.233:5459/on24master, Google Cloud SQL SSL)
+- [x] ON24 DB connected — initially QA (10.3.7.233:5459), now switched to **PROD (10.3.7.233:5458)**/on24master, Google Cloud SQL SSL
 - [x] on24_db.py: asyncpg pool with SSL, get_tenant_client_ids() hierarchy resolver
 - [x] on24_query_tools.py: 10 tenant-safe query functions (client_id = ANY hierarchy)
 - [x] All queries scope to full sub-client hierarchy (client 10710 + 9 sub-clients)
@@ -67,6 +67,9 @@
 - [ ] Recent Chats: persist chat history in localStorage
 
 ## Verified ON24 Schema (on24master)
+
+> **Active connection: PROD — 10.3.7.233:5458** (switched from QA port 5459 on 2026-03-11)
+> Env var: `ON24_DB_URL` in `.env.local`. The `_QA` suffixed entries are not used by the app.
 
 ### Key Tables
 | Table | Rows | Notes |
