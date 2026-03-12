@@ -71,6 +71,29 @@ class OrchestratorAgent:
         },
     ]
 
+    def _text_history(self) -> list[dict]:
+        """Return conversation history with only plain-text turns (no tool_use/tool_result).
+
+        The orchestrator's routing tool_use blocks must not be forwarded to sub-agents
+        because they reference tools the sub-agents don't have, causing API 400 errors.
+        """
+        clean = []
+        for msg in self.conversation_history:
+            content = msg.get("content")
+            if isinstance(content, str):
+                clean.append(msg)
+            elif isinstance(content, list):
+                # Keep only text blocks; skip tool_use and tool_result
+                text_blocks = [b for b in content if isinstance(b, dict) and b.get("type") == "text"]
+                if text_blocks:
+                    clean.append({"role": msg["role"], "content": text_blocks})
+                # If content is a list of ContentBlock objects (Anthropic SDK), extract text
+                elif all(hasattr(b, "type") for b in content):
+                    texts = [{"type": "text", "text": b.text} for b in content if hasattr(b, "text")]
+                    if texts:
+                        clean.append({"role": msg["role"], "content": texts})
+        return clean
+
     async def process_message(self, user_message: str, confirmed: bool = False) -> dict[str, Any]:
         """Process a user message through the orchestrator.
 
@@ -108,7 +131,7 @@ class OrchestratorAgent:
 
                     if tool_name == "route_to_data_agent":
                         logger.info(f"Routing to Data Agent: {query}")
-                        result = await self.data_agent.run(query, conversation_history=self.conversation_history)
+                        result = await self.data_agent.run(query, conversation_history=self._text_history())
 
                         # Feed result back into conversation history for context
                         self.conversation_history.append({
