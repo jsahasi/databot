@@ -1,0 +1,752 @@
+[
+  {
+    "id": "dir_001",
+    "prompt": "Across all our programs this year, what percentage of registrants are converting to live attendees, and how does that compare to last year?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_002",
+    "prompt": "What is the overall health of our webinar program \u00e2\u20ac\u201d total registrations, average attendance rate, and average engagement score?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_003",
+    "prompt": "Which funnel stage is leaking the most \u00e2\u20ac\u201d registration-to-live, live-to-engaged, or engaged-to-on-demand?",
+    "tool": "get_client_kpis",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_004",
+    "prompt": "Show me the top 10 events by registrant-to-attendee conversion rate so I can understand what's driving funnel efficiency.",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_005",
+    "prompt": "What is our average no-show rate across all webinars this year, and is it improving or getting worse?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_006",
+    "prompt": "How many total unique companies have we reached across our entire webinar program?",
+    "tool": "get_audience_companies",
+    "response_type": "single_metric",
+    "expect_data": true
+  },
+  {
+    "id": "dir_007",
+    "prompt": "Which audience sources are delivering the highest-converting registrants across all our events?",
+    "tool": "get_audience_sources",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_008",
+    "prompt": "Show me a bar chart of total registrations per quarter over the last two years.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_009",
+    "prompt": "What is our program's average audience size per event, and how has that trended over the past 12 months?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_010",
+    "prompt": "Which of our audience acquisition sources brings in the most registrants overall?",
+    "tool": "get_audience_sources",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_011",
+    "prompt": "What topics or themes have driven the highest attendance numbers across our webinar catalog?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_012",
+    "prompt": "Which content topics are generating the strongest registrant-to-attendee conversion rates?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_013",
+    "prompt": "Based on our historical performance data, what topics should we prioritize for next quarter's program?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_014",
+    "prompt": "Are there any content gaps in our webinar program \u00e2\u20ac\u201d topics our audience likely wants that we haven't covered?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_015",
+    "prompt": "Which event titles or themes consistently outperform our average attendance rate?",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_016",
+    "prompt": "What types of webinar content \u00e2\u20ac\u201d panels, demos, thought leadership \u00e2\u20ac\u201d tend to get the longest average watch times?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_017",
+    "prompt": "Show me the top 10 events by average engagement score to identify which content formats resonate most.",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_018",
+    "prompt": "Which webinar topics have seen declining attendance over the past year that we should retire or refresh?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_019",
+    "prompt": "What is the correlation between webinar topic and audience size based on our event history?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_020",
+    "prompt": "Give me a breakdown of our events by content category and average registrant count per category.",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_021",
+    "prompt": "Which speakers in our program have consistently delivered the highest engagement scores?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_022",
+    "prompt": "Who are our top 5 best-performing presenters based on average live attendance?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_023",
+    "prompt": "Which presenters tend to drive the highest registrant-to-attendee conversion rates?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_024",
+    "prompt": "Are there speakers whose events consistently underperform our program average that we should reconsider?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_025",
+    "prompt": "Which internal subject matter experts are our strongest webinar performers based on audience engagement?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_026",
+    "prompt": "Show me a ranked list of our speakers by average event attendance across all their sessions.",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_027",
+    "prompt": "Which speaker and topic combinations have produced our highest-performing events?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_028",
+    "prompt": "Do events with external guest speakers outperform events with internal speakers only?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_029",
+    "prompt": "Which presenters have the best average watch time across their events, indicating strong audience retention?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_030",
+    "prompt": "Identify any speakers who appear in multiple top-performing events so we can prioritize booking them again.",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_031",
+    "prompt": "What day of the week do our webinars get the highest average attendance?",
+    "tool": "content_agent",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_032",
+    "prompt": "What time of day drives the best live attendance for our webinars?",
+    "tool": "content_agent",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_033",
+    "prompt": "How many webinars are we running per month, and is our event cadence consistent?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_034",
+    "prompt": "Are there months where we're over-scheduling webinars and seeing diminishing attendance returns?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_035",
+    "prompt": "What is the optimal frequency for webinars \u00e2\u20ac\u201d weekly, biweekly, monthly \u00e2\u20ac\u201d based on our audience engagement patterns?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_036",
+    "prompt": "Show me a calendar heatmap of our event frequency and corresponding attendance rates by month.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_037",
+    "prompt": "Which months historically produce the highest registrations for our webinars?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_038",
+    "prompt": "Are there scheduling gaps in our webinar calendar where we're missing audience engagement opportunities?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_039",
+    "prompt": "How does webinar performance differ between morning and afternoon time slots?",
+    "tool": "content_agent",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_040",
+    "prompt": "What is the best lead time between when we announce a webinar and when we run it, based on registration patterns?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_041",
+    "prompt": "How has our overall program registration volume trended year over year?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_042",
+    "prompt": "Is our average live attendance rate improving, declining, or flat compared to 12 months ago?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_043",
+    "prompt": "Show me a year-over-year comparison of total events run and total registrations collected.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_044",
+    "prompt": "How does our webinar program performance compare to ON24 benchmarks for our industry?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_045",
+    "prompt": "What is the trend in average engagement score across all our webinars over the past 18 months?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_046",
+    "prompt": "Which quarter had our strongest webinar program performance and what drove it?",
+    "tool": "get_attendance_trends",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_047",
+    "prompt": "Show me a rolling 6-month trend of our average registrant-to-attendee conversion rate.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_048",
+    "prompt": "How has our no-show rate trended over the past two years \u00e2\u20ac\u201d are our audience engagement tactics working?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_049",
+    "prompt": "What poll questions have we asked most frequently across our webinar program, and what did audiences say?",
+    "tool": "get_polls",
+    "response_type": "pipe_table",
+    "expect_data": false
+  },
+  {
+    "id": "dir_050",
+    "prompt": "Which resource types \u00e2\u20ac\u201d whitepapers, case studies, demos \u00e2\u20ac\u201d are getting downloaded most across our webinar program?",
+    "tool": "get_resources",
+    "response_type": "pipe_table",
+    "expect_data": false
+  },
+  {
+    "id": "dir_051",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Which companies are showing up most frequently across our webinar programs this quarter?",
+    "tool": "get_audience_companies",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_052",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "What percentage of our webinar audience comes from our target ICP accounts?",
+    "tool": "get_audience_companies",
+    "response_type": "single_metric",
+    "expect_data": true
+  },
+  {
+    "id": "dir_053",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Are we attracting new companies or the same ones across our events? Show me overlap trends.",
+    "tool": "get_audience_companies",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_054",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Which of our events pulled in the most enterprise-tier companies by attendee count?",
+    "tool": "get_audience_companies",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_055",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Show me a breakdown of audience sources \u00e2\u20ac\u201d how are people finding and registering for our webinars?",
+    "tool": "get_audience_sources",
+    "response_type": "chart_pie",
+    "expect_data": true
+  },
+  {
+    "id": "dir_056",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Which registration source drives the highest attendance rate across our programs?",
+    "tool": "get_audience_sources",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_057",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "How has the mix of audience sources shifted over the past six months?",
+    "tool": "get_audience_sources",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_058",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Are the same companies attending multiple events in the same program series, or do we see fresh audiences each time?",
+    "tool": "get_audience_companies",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_059",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "Which event had the most diverse company representation in its audience?",
+    "tool": "get_audience_companies",
+    "response_type": "single_metric",
+    "expect_data": true
+  },
+  {
+    "id": "dir_060",
+    "category": "Audience Quality & Segmentation",
+    "prompt": "What share of our total registrations this year came from organic versus paid sources?",
+    "tool": "get_audience_sources",
+    "response_type": "chart_pie",
+    "expect_data": true
+  },
+  {
+    "id": "dir_061",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Which of our webinars generated the most high-intent engagement signals this quarter?",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_062",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Which events are consistently driving the most qualified leads into our funnel?",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_063",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Show me the top 10 events ranked by attendee engagement score \u00e2\u20ac\u201d these are our best pipeline contributors.",
+    "tool": "get_top_events_by_polls",
+    "response_type": "pipe_table",
+    "expect_data": false
+  },
+  {
+    "id": "dir_064",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "How does our overall program engagement score trend across the year? Are we improving funnel quality?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_065",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Which webinar topics correlate with the highest average engagement rates?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_066",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "What is the total number of high-engagement attendees we produced across all programs this year?",
+    "tool": "get_client_kpis",
+    "response_type": "single_metric",
+    "expect_data": true
+  },
+  {
+    "id": "dir_067",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Which single event drove the most account-level engagement this quarter?",
+    "tool": "get_top_events",
+    "response_type": "single_metric",
+    "expect_data": true
+  },
+  {
+    "id": "dir_068",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Show me a bar chart of our top 10 events ranked by total attendee count as a proxy for pipeline reach.",
+    "tool": "get_top_events",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_069",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Are there specific event formats \u00e2\u20ac\u201d live versus simulive \u00e2\u20ac\u201d that show meaningfully better engagement rates?",
+    "tool": "get_client_kpis",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_070",
+    "category": "Pipeline & Revenue Contribution",
+    "prompt": "Which companies attended three or more of our events and showed high engagement \u00e2\u20ac\u201d these are our best pipeline accounts.",
+    "tool": "get_audience_companies",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_071",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Which event types have performed best when aligned with a product launch \u00e2\u20ac\u201d what format should we default to?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_072",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "What topics drove the highest registration numbers in Q1 \u00e2\u20ac\u201d I want to align our next launch campaign around proven themes.",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_073",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Show me which of our recent webinars had the highest on-demand view rate \u00e2\u20ac\u201d those are the evergreen topics we should build campaigns around.",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_074",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Which of our content themes have shown consistent audience growth over multiple events? I want to double down for our next campaign.",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_075",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "What has been our average registration lift when we run a webinar as part of an integrated campaign versus standalone?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_076",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Which speakers have driven the highest registrations for product-focused webinars?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_077",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "How far in advance should we be scheduling launch webinars to maximize registration? Show me the cadence patterns from our historical data.",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_078",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Which resources were downloaded most often after our product-themed webinars?",
+    "tool": "get_resources",
+    "response_type": "pipe_table",
+    "expect_data": false
+  },
+  {
+    "id": "dir_079",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Are there content topics we have not covered yet that are trending in our industry and would complement an upcoming launch?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_080",
+    "category": "Product Launch & Campaign Alignment",
+    "prompt": "Show me our event list from the last 12 months so I can identify which ones were part of campaign series versus one-offs.",
+    "tool": "list_events",
+    "response_type": "event_list",
+    "expect_data": true
+  },
+  {
+    "id": "dir_081",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "How does our average webinar attendance rate compare to what we would expect for a program our size?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_082",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "Our average engagement score \u00e2\u20ac\u201d is it above or below what is typical for B2B technology webinar programs?",
+    "tool": "get_client_kpis",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_083",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "What is our registrant-to-attendee conversion rate trend and how does it compare to program benchmarks?",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_084",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "Are our on-demand view rates healthy relative to industry expectations for content longevity?",
+    "tool": "get_client_kpis",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_085",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "Which of our events exceeded typical industry engagement benchmarks? I want to learn what made them successful.",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_086",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "How does our no-show rate compare to the platform average for programs in our category?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_087",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "What poll response rates do programs like ours typically achieve, and are we on track?",
+    "tool": "get_polls",
+    "response_type": "text_answer",
+    "expect_data": false
+  },
+  {
+    "id": "dir_088",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "Show me a trend of our average engagement score over time \u00e2\u20ac\u201d I want to see if we are improving or declining relative to our own baseline.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_089",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "How many events per quarter are high-performing programs in our space running, and how does our cadence compare?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_090",
+    "category": "Competitive & Industry Benchmarking",
+    "prompt": "What content formats \u00e2\u20ac\u201d panel, solo presenter, demo \u00e2\u20ac\u201d tend to outperform in engagement benchmarks, and which are we underutilizing?",
+    "tool": "content_agent",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_091",
+    "category": "Executive Reporting",
+    "prompt": "Give me a full program health summary \u00e2\u20ac\u201d total events, registrations, attendees, and average engagement score for this quarter.",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_092",
+    "category": "Executive Reporting",
+    "prompt": "What were our top 5 performing events this quarter and what made them stand out?",
+    "tool": "get_top_events",
+    "response_type": "pipe_table",
+    "expect_data": true
+  },
+  {
+    "id": "dir_093",
+    "category": "Executive Reporting",
+    "prompt": "Show me a quarterly comparison of total registrations and attendees \u00e2\u20ac\u201d I need this for the board deck.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_bar",
+    "expect_data": true
+  },
+  {
+    "id": "dir_094",
+    "category": "Executive Reporting",
+    "prompt": "How many total events did we run this year and what was our overall average attendance rate?",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_095",
+    "category": "Executive Reporting",
+    "prompt": "What is the year-over-year change in our total registrations across all programs?",
+    "tool": "get_client_kpis",
+    "response_type": "single_metric",
+    "expect_data": true
+  },
+  {
+    "id": "dir_096",
+    "category": "Executive Reporting",
+    "prompt": "I need a single-slide summary of our webinar program KPIs for the CMO \u00e2\u20ac\u201d total reach, average engagement, and top event.",
+    "tool": "get_client_kpis",
+    "response_type": "kpi_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_097",
+    "category": "Executive Reporting",
+    "prompt": "Which quarter this year had our strongest webinar performance overall, and what drove it?",
+    "tool": "get_top_events",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_098",
+    "category": "Executive Reporting",
+    "prompt": "Show me a line chart of our monthly total registrations across the full year so I can present the growth story.",
+    "tool": "get_attendance_trends",
+    "response_type": "chart_line",
+    "expect_data": true
+  },
+  {
+    "id": "dir_099",
+    "category": "Executive Reporting",
+    "prompt": "What were our three biggest wins and three biggest underperformers in the webinar program this year?",
+    "tool": "get_top_events",
+    "response_type": "text_answer",
+    "expect_data": true
+  },
+  {
+    "id": "dir_100",
+    "category": "Executive Reporting",
+    "prompt": "Pull together a program dashboard snapshot \u00e2\u20ac\u201d events run, total registrations, average attendance rate, and top company attendees \u00e2\u20ac\u201d for our Q4 marketing review.",
+    "tool": "get_client_kpis",
+    "response_type": "pipe_table",
+    "expect_data": true
+  }
+]
