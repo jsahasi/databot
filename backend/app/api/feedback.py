@@ -1,12 +1,13 @@
 """Feedback endpoint: stores user thumbs-up/down ratings on bot responses."""
 
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter
 from pydantic import BaseModel
+
+from app.db.on24_db import get_client_id
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class FeedbackRequest(BaseModel):
     message_timestamp: str = "" # ISO timestamp of the original message
 
 
-def _build_improvement_prompt(req: FeedbackRequest, logged_at: datetime) -> str:
+def _build_improvement_prompt(req: FeedbackRequest, logged_at: datetime, client_id: int | str) -> str:
     """Build a structured LLM-ready prompt from the feedback context."""
     ts = logged_at.strftime("%Y-%m-%d %H:%M:%S UTC")
     agent = req.agent_used or "unknown"
@@ -32,6 +33,7 @@ def _build_improvement_prompt(req: FeedbackRequest, logged_at: datetime) -> str:
     lines = [
         "=== IMPROVEMENT FEEDBACK ===",
         f"Logged: {ts}",
+        f"Client ID: {client_id}",
         f"Agent: {agent}",
         "",
         "USER QUESTION:",
@@ -78,9 +80,10 @@ async def submit_feedback(req: FeedbackRequest):
 
     if req.feedback_type == "negative":
         try:
+            client_id = get_client_id()
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             filename = DATA_DIR / f"improvement-inbox-{now.strftime('%m-%d-%Y')}.txt"
-            entry = _build_improvement_prompt(req, now)
+            entry = _build_improvement_prompt(req, now, client_id)
             with open(filename, "a", encoding="utf-8") as f:
                 f.write(entry)
             logger.info(f"Feedback written to {filename}")
