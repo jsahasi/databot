@@ -12,6 +12,7 @@ from app.agents.tools.on24_query_tools import (
     compute_event_kpis,
     compute_client_kpis,
     query_polls,
+    query_questions,
     query_top_events,
     query_top_events_by_polls,
     query_poll_overview,
@@ -124,6 +125,22 @@ DATA_AGENT_TOOLS = [
             "type": "object",
             "properties": {
                 "event_id": {"type": "integer", "description": "ON24 event ID"},
+            },
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_questions",
+        "description": (
+            "Retrieve Q&A questions asked by attendees during a specific ON24 event. "
+            "Returns question text, asker name/company, timestamp, answered status, and answer text if answered. "
+            "Use for 'what questions were asked', 'Q&A', 'audience questions'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "ON24 event ID"},
+                "limit": {"type": "integer", "description": "Max questions to return (default 50)"},
             },
             "required": ["event_id"],
         },
@@ -278,6 +295,7 @@ TOOL_HANDLERS = {
     "get_event_kpis": compute_event_kpis,
     "get_client_kpis": compute_client_kpis,
     "get_polls": query_polls,
+    "get_questions": query_questions,
     "get_top_events": query_top_events,
     "get_top_events_by_polls": query_top_events_by_polls,
     "get_poll_overview": query_poll_overview,

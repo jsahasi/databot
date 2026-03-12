@@ -256,7 +256,7 @@ async def query_polls(event_id: int) -> list[dict]:
             Q.DESCRIPTION                             AS question_text,
             Q.QUESTION_TYPE_CD                        AS question_type_cd,
             QA.ANSWER_CD                              AS answer_cd,
-            QA.DESCRIPTION                            AS answer_text,
+            QA.ANSWER                                 AS answer_text,
             COUNT(DISTINCT EUA.EVENT_USER_ID)         AS response_count
         FROM on24master.event_user_x_answer EUA
         JOIN on24master.event_user EU
@@ -277,7 +277,7 @@ async def query_polls(event_id: int) -> list[dict]:
           AND MU.MEDIA_URL_NAME NOT LIKE '%<!--##survey##-->%'
           AND Q.QUESTION_TYPE_CD NOT IN ('singletext', 'singleanswer')
         GROUP BY MU.MEDIA_URL_ID, Q.QUESTION_ID, Q.DESCRIPTION,
-                 Q.QUESTION_TYPE_CD, QA.ANSWER_CD, QA.DESCRIPTION
+                 Q.QUESTION_TYPE_CD, QA.ANSWER_CD, QA.ANSWER
         ORDER BY Q.QUESTION_ID, response_count DESC
     """
 
@@ -288,7 +288,7 @@ async def query_polls(event_id: int) -> list[dict]:
             Q.DESCRIPTION                             AS question_text,
             Q.QUESTION_TYPE_CD                        AS question_type_cd,
             COUNT(DISTINCT EUA.EVENT_USER_ID)         AS response_count,
-            ARRAY_AGG(DISTINCT EUA.ANSWER ORDER BY EUA.ANSWER)[1:5] AS sample_answers
+            (ARRAY_AGG(DISTINCT EUA.ANSWER))[1:5] AS sample_answers
         FROM on24master.event_user_x_answer EUA
         JOIN on24master.event_user EU
           ON EU.EVENT_USER_ID = EUA.EVENT_USER_ID
@@ -343,6 +343,47 @@ async def query_polls(event_id: int) -> list[dict]:
         }
 
     return _serialize(list(questions.values()))
+
+
+async def query_questions(event_id: int, limit: int = 50) -> list[dict]:
+    """Get Q&A questions asked by attendees for an event.
+
+    Uses the question table filtered by event_id. question_source_cd is the
+    event_user_id of the asker. Returns question text, asker info, and status.
+    question_subtype_cd='userquestion' for attendee questions;
+    'useranswer' rows are answers (linked via answer_id on the question row).
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    limit = max(1, min(limit, 200))
+
+    sql = f"""
+        SELECT
+            q.question_id,
+            q.description                AS question_text,
+            q.first_name,
+            q.last_name,
+            q.company,
+            q.create_timestamp,
+            q.answered_status,
+            q.question_subtype_cd,
+            a.description                AS answer_text
+        FROM on24master.question q
+        JOIN on24master.event e
+          ON e.event_id = q.event_id
+         AND e.client_id = ANY($2::bigint[])
+        LEFT JOIN on24master.question a
+          ON a.question_id = q.answer_id
+         AND a.question_subtype_cd = 'useranswer'
+        WHERE q.event_id = $1
+          AND q.question_subtype_cd = 'userquestion'
+          {_EXCL_TEST}
+        ORDER BY q.create_timestamp ASC NULLS LAST
+        LIMIT $3
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, event_id, client_ids, limit, timeout=_QUERY_TIMEOUT)
+    return _serialize([dict(r) for r in rows])
 
 
 async def query_top_events_by_polls(limit: int = 10) -> list[dict]:
