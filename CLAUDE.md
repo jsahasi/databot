@@ -66,6 +66,7 @@ npm run typecheck    # npx tsc --noEmit
 npm run lint
 ```
 
+
 ## Key Conventions
 - **Models**: All use `TimestampMixin` (created_at, updated_at) + optional `SyncedMixin` (synced_at). Each has `to_dict()`. All synced models have `raw_json JSONB`.
 - **Upserts**: `sqlalchemy.dialects.postgresql.insert` with `on_conflict_do_update` — idempotent syncs.

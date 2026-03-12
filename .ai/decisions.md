@@ -1,5 +1,6 @@
 # Architecture Decisions
 
+
 ## 2026-03-11: Agent Framework
 **Decision:** Anthropic Python SDK `messages.create()` with `tools` parameter, NOT the `claude-agent-sdk` package and NOT Claude Code Skills
 **Rationale:** Skills are CLI-only markdown instructions — not deployable services. Using `anthropic.AsyncAnthropic().messages.create()` directly gives full control, runs inside FastAPI, supports concurrent multi-user, and is stable. Each agent is a plain Python class with a multi-round tool_use loop (max 5 rounds).
