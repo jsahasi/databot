@@ -386,15 +386,17 @@ async def query_questions(event_id: int, limit: int = 50) -> list[dict]:
     return _serialize([dict(r) for r in rows])
 
 
-async def query_top_events_by_polls(limit: int = 10) -> list[dict]:
+async def query_top_events_by_polls(limit: int = 10, months: int = 24) -> list[dict]:
     """Top events ranked by number of poll responses (not just questions).
 
     Uses the working join chain: event_user_x_answer → event_user → media_url.
     Only returns events that actually have poll responses.
+    Date-scoped to avoid full-table scan on 334M-row event_user_x_answer.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
     limit = max(1, min(limit, 50))
+    months = _clamp_months(months)
 
     sql = f"""
         SELECT
@@ -414,14 +416,14 @@ async def query_top_events_by_polls(limit: int = 10) -> list[dict]:
          AND mu.media_url_cd = 'poll'
          AND mu.media_url_name NOT LIKE '%<!--##test##-->%'
          AND mu.media_url_name NOT LIKE '%<!--##survey##-->%'
-        WHERE 1=1
+        WHERE e.goodafter >= NOW() - ($3 || ' months')::INTERVAL
           {_EXCL_TEST}
         GROUP BY e.event_id, e.description, e.goodafter
         ORDER BY respondent_count DESC NULLS LAST
         LIMIT $2
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, limit, timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, client_ids, limit, str(months), timeout=_QUERY_TIMEOUT)
     return [_serialize(dict(row)) for row in rows]
 
 
