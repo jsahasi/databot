@@ -56,18 +56,18 @@ async def get_calendar(
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    # Month window
-    start = datetime(year, month, 1, tzinfo=timezone.utc)
+    # Month window — use naive datetimes (goodafter is timezone-naive in on24master)
+    start = datetime(year, month, 1)
     if month == 12:
-        end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+        end = datetime(year + 1, 1, 1)
     else:
-        end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+        end = datetime(year, month + 1, 1)
 
     sql = """
         SELECT
             e.event_id,
             e.description            AS title,
-            e.abstract               AS abstract,
+            e.seo_abstract           AS abstract,
             e.goodafter              AS start_time,
             e.goodtill               AS end_time,
             e.event_type             AS event_type,
@@ -101,7 +101,7 @@ async def get_calendar_event(event_id: int):
         SELECT
             e.event_id,
             e.description            AS title,
-            e.abstract               AS abstract,
+            e.seo_abstract           AS abstract,
             e.goodafter              AS start_time,
             e.goodtill               AS end_time,
             e.event_type             AS event_type,

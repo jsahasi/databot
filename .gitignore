@@ -36,3 +36,10 @@ pgdata/
 htmlcov/
 .coverage
 coverage.xml
+
+# Data / runtime
+data/chromadb/
+data/improvement-inbox-*.txt
+
+# Claude
+.claude/ralph-loop.local.md

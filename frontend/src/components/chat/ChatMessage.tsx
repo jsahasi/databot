@@ -196,9 +196,8 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
         </span>
       )}
 
-      {/* Message bubble + hover buttons row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.375rem', maxWidth: '90%' }}>
-        {/* Message bubble */}
+      {/* Message bubble */}
+      <div style={{ maxWidth: '90%' }}>
         <div style={{
           padding: '0.625rem 0.875rem',
           borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
@@ -206,8 +205,6 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
           color: isUser ? '#fff' : 'var(--color-text)',
           fontSize: '0.85rem', lineHeight: 1.5,
           wordBreak: 'break-word',
-          minWidth: 0,
-          flex: 1,
         }}>
           {message.isLoading ? (
             <span role="status" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
@@ -225,38 +222,36 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
           )}
         </div>
 
-        {/* Thumbs up/down — visible on hover for assistant messages */}
+        {/* Thumbs up/down — below the assistant response, visible on hover */}
         {!isUser && (
           <div style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem',
-            paddingTop: '0.25rem',
+            gap: '0.375rem',
+            paddingTop: '0.375rem',
+            paddingLeft: '0.25rem',
             opacity: showButtons ? 1 : 0,
             transition: 'opacity 0.15s',
             pointerEvents: showButtons ? 'auto' : 'none',
-            flexShrink: 0,
           }}>
             <button
               aria-label="Thumbs up — good response"
               title="Good response"
               onClick={handleThumbsUp}
               style={{
-                width: 26, height: 26,
+                width: 24, height: 24,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--color-card)',
+                background: 'transparent',
                 border: '1px solid var(--color-border)',
                 borderRadius: 6,
                 cursor: 'pointer',
                 color: 'var(--color-text-secondary)',
-                fontSize: '0.8rem',
                 padding: 0,
                 transition: 'color 0.12s, border-color 0.12s',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#10b981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10b981' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
             >
-              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
                 <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
               </svg>
@@ -266,21 +261,20 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
               title="Something's wrong"
               onClick={handleThumbsDown}
               style={{
-                width: 26, height: 26,
+                width: 24, height: 24,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--color-card)',
+                background: 'transparent',
                 border: '1px solid var(--color-border)',
                 borderRadius: 6,
                 cursor: 'pointer',
                 color: 'var(--color-text-secondary)',
-                fontSize: '0.8rem',
                 padding: 0,
                 transition: 'color 0.12s, border-color 0.12s',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#ef4444' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
             >
-              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/>
                 <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
               </svg>
