@@ -1,13 +1,28 @@
-import { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 import { useChat } from '../hooks/useChat'
 
-type ChatContextValue = ReturnType<typeof useChat>
+interface CalendarContextValue {
+  isCalendarOpen: boolean
+  openCalendar: () => void
+  closeCalendar: () => void
+}
+
+type ChatContextValue = ReturnType<typeof useChat> & CalendarContextValue
 
 const ChatContext = createContext<ChatContextValue | null>(null)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const chat = useChat()
-  return <ChatContext.Provider value={chat}>{children}</ChatContext.Provider>
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+
+  const value: ChatContextValue = {
+    ...chat,
+    isCalendarOpen,
+    openCalendar: () => setIsCalendarOpen(true),
+    closeCalendar: () => setIsCalendarOpen(false),
+  }
+
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
 }
 
 export function useChatContext(): ChatContextValue {

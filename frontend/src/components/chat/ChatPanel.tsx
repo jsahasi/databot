@@ -4,18 +4,18 @@ import ChatMessage from './ChatMessage'
 import AgentIndicator from './AgentIndicator'
 
 const SUGGESTIONS = [
+  'Show event calendar',
   'Show attendance trends',
   'Which events had the best engagement?',
   'How many events ran this month?',
   'Top audience companies',
   'Average engagement score',
   'Event registration rates',
-  'Poll results overview',
   'Content performance insights',
 ]
 
 export default function ChatPanel() {
-  const { messages, isProcessing, activeAgent, sendMessage } = useChatContext()
+  const { messages, isProcessing, activeAgent, sendMessage, openCalendar } = useChatContext()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -113,7 +113,7 @@ export default function ChatPanel() {
                 <button
                   key={i}
                   aria-label={`Suggest: ${s}`}
-                  onClick={() => { sendMessage(s); setInput('') }}
+                  onClick={() => { if (s === 'Show event calendar') { openCalendar() } else { sendMessage(s); setInput('') } }}
                   style={{
                     padding: '0.875rem 1rem',
                     background: 'var(--color-chip-bg)',
