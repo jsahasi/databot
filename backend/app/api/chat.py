@@ -69,6 +69,7 @@ async def generate_suggestions(
             f"{view_rule}"
             "Each suggestion must be 3-7 words, conversational, specific to the context. "
             "NEVER suggest questions about region, geography, or location — that data is not available. "
+            "NEVER suggest 'Show as pie chart' — pie charts are not supported. "
             "Examples: 'How did it perform?', 'Show attendee breakdown', 'Compare to last month', "
             "'Which companies attended?', 'Show poll results', 'Show as bar chart', 'Show as table'. "
             "Return only a JSON array of exactly 5 strings, nothing else."
