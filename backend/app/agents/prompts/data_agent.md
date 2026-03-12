@@ -59,3 +59,7 @@ Answer: `Registrants: 0  Attendees: 0  Engagement: —  Conversion: —`
 
 Question: "How many events this month?"
 Answer: `6 events in March 2026.`
+
+Question: "How many events ran this month?" (where today is March 12 and only one event is on March 30)
+Answer: `0 events in March 2026.`
+(Do NOT say "the event on March 30 hasn't run yet" — just output the number)
