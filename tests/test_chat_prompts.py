@@ -409,10 +409,7 @@ def _validate(entry: dict[str, Any], response: dict[str, Any]) -> tuple[bool, st
 
 # Tests skipped due to confirmed data gaps for client 10710 (not code bugs)
 KNOWN_DATA_GAPS = {
-    "poll_overview",           # no singleoption/multioption responses in event_user_x_answer since 2023
-    "poll_overview_performance",
-    "polls_last_event",
-    # resources_last_event removed — fixed to use content_hit_track_details (not resource_hit_track)
+    # Poll and resource data gaps removed — queries fixed to use correct join paths
 }
 
 

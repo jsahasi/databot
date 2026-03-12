@@ -163,6 +163,20 @@ async def websocket_chat(websocket: WebSocket):
                             "data": result["chart_data"],
                         })
 
+                    # Send event card if available
+                    if result.get("event_card"):
+                        await websocket.send_json({
+                            "type": "event_card",
+                            "data": result["event_card"],
+                        })
+
+                    # Send poll cards if available
+                    if result.get("poll_cards"):
+                        await websocket.send_json({
+                            "type": "poll_cards",
+                            "data": result["poll_cards"],
+                        })
+
                     # Send confirmation request if a destructive operation is pending
                     if result.get("requires_confirmation"):
                         await websocket.send_json({

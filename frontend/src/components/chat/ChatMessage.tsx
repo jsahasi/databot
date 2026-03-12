@@ -132,6 +132,129 @@ async function postFeedback(payload: {
   })
 }
 
+const POLL_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6']
+
+function PollCardsInline({ polls }: { polls: any[] }) {
+  if (!polls?.length) return null
+  return (
+    <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 500 }}>
+      {polls.map((poll: any, pi: number) => {
+        const isOpenText = poll.question_type_cd === 'singletext' || poll.question_type_cd === 'singleanswer'
+        return (
+          <div key={poll.question_id || pi} style={{
+            borderRadius: 10, border: '1px solid var(--color-border)',
+            background: 'var(--color-card)', overflow: 'hidden',
+          }}>
+            <div style={{ height: 3, background: POLL_COLORS[pi % POLL_COLORS.length] }} />
+            <div style={{ padding: '0.65rem 0.85rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.5rem', lineHeight: 1.35 }}>
+                {poll.question_text}
+              </div>
+              {!isOpenText && poll.answers?.length > 0 && (() => {
+                const total = poll.answers.reduce((s: number, a: any) => s + (a.response_count || 0), 0)
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {poll.answers.map((a: any, ai: number) => {
+                      const pct = total > 0 ? Math.round((a.response_count / total) * 100) : 0
+                      return (
+                        <div key={a.answer_cd || ai}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginBottom: 2 }}>
+                            <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{a.answer_text}</span>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>{pct}% ({a.response_count})</span>
+                          </div>
+                          <div style={{ height: 16, background: 'var(--color-bg)', borderRadius: 4, overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', width: `${pct}%`,
+                              background: POLL_COLORS[ai % POLL_COLORS.length],
+                              borderRadius: 4, transition: 'width 0.3s ease',
+                              minWidth: pct > 0 ? 4 : 0,
+                            }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', marginTop: '0.15rem' }}>
+                      {total} total response{total !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                )
+              })()}
+              {isOpenText && (
+                <div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginBottom: '0.3rem' }}>
+                    {poll.response_count} response{poll.response_count !== 1 ? 's' : ''} — sample answers:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                    {(poll.sample_answers || []).map((ans: string, ai: number) => (
+                      <span key={ai} style={{
+                        padding: '0.2rem 0.5rem', borderRadius: 12,
+                        background: 'var(--color-bg)', border: '1px solid var(--color-border)',
+                        fontSize: '0.65rem', color: 'var(--color-text)',
+                      }}>
+                        {ans}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function EventCardInline({ card }: { card: any }) {
+  if (!card) return null
+  const kpis: { label: string; value: string }[] = []
+  if (card.registrant_count) kpis.push({ label: 'Registrants', value: Number(card.registrant_count).toLocaleString() })
+  if (card.attendee_count) kpis.push({ label: 'Attendees', value: Number(card.attendee_count).toLocaleString() })
+  if (card.conversion_rate) kpis.push({ label: 'Conversion', value: `${card.conversion_rate}%` })
+  if (card.engagement_score_avg) kpis.push({ label: 'Avg Engagement', value: String(card.engagement_score_avg) })
+  if (card.poll_response_count) kpis.push({ label: 'Poll Responses', value: Number(card.poll_response_count).toLocaleString() })
+  if (card.survey_response_count) kpis.push({ label: 'Survey Responses', value: Number(card.survey_response_count).toLocaleString() })
+  if (card.resource_download_count) kpis.push({ label: 'Downloads', value: Number(card.resource_download_count).toLocaleString() })
+
+  return (
+    <div style={{
+      marginTop: '0.75rem', borderRadius: 10, border: '1px solid var(--color-border)',
+      background: 'var(--color-card)', overflow: 'hidden', maxWidth: 420,
+    }}>
+      <div style={{ height: 4, background: '#4f46e5' }} />
+      <div style={{ padding: '0.75rem 1rem' }}>
+        <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.15rem' }}>
+          Event {card.event_id}{card.event_type ? ` · ${card.event_type}` : ''}
+        </div>
+        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35, marginBottom: '0.4rem' }}>
+          {card.title}
+        </div>
+        {card.start_time && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+            {new Date(card.start_time).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            {' '}
+            {new Date(card.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {card.end_time ? ` – ${new Date(card.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+          </div>
+        )}
+        {kpis.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.4rem' }}>
+            {kpis.map(k => (
+              <div key={k.label} style={{
+                background: 'var(--color-bg)', borderRadius: 6, padding: '0.4rem 0.6rem',
+                border: '1px solid var(--color-border)',
+              }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)' }}>{k.label}</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>{k.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function ChatMessage({ message, userQuestion = '' }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const [hovered, setHovered] = useState(false)
@@ -285,6 +408,12 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
 
       {/* Chart */}
       {message.chartData && <ChatChart data={message.chartData} />}
+
+      {/* Event Card */}
+      {message.eventCard && <EventCardInline card={message.eventCard} />}
+
+      {/* Poll Cards */}
+      {message.pollCards && <PollCardsInline polls={message.pollCards} />}
 
       {/* Thumbs-up confirmation */}
       {!isUser && feedbackState === 'thumbs_up' && (

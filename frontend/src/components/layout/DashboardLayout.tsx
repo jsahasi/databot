@@ -5,7 +5,7 @@ import ChatSidebar from './ChatSidebar'
 import EventCalendar from '../calendar/EventCalendar'
 
 function LayoutInner() {
-  const { isCalendarOpen, closeCalendar } = useChatContext()
+  const { isCalendarOpen, closeCalendar, sendMessage } = useChatContext()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <TopNav />
@@ -15,7 +15,10 @@ function LayoutInner() {
           <Outlet />
         </main>
       </div>
-      <EventCalendar isOpen={isCalendarOpen} onClose={closeCalendar} />
+      <EventCalendar isOpen={isCalendarOpen} onClose={closeCalendar} onEventToChat={(ev) => {
+        sendMessage(`Tell me about event ${ev.event_id} — ${ev.title}`)
+        closeCalendar()
+      }} />
     </div>
   )
 }

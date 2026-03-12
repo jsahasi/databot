@@ -37,6 +37,17 @@ class OrchestratorAgent:
     # Tool for routing to sub-agents
     ROUTING_TOOLS = [
         {
+            "name": "search_knowledge_base",
+            "description": "Search the ON24 knowledge base (Zendesk help articles) for platform how-to questions, feature explanations, and configuration guides. Use this for ANY question about how to do something on the ON24 platform (e.g. 'how do I add speakers', 'how to set up polls', 'how to configure registration').",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "The search query about an ON24 platform feature or how-to"},
+                },
+                "required": ["query"],
+            },
+        },
+        {
             "name": "route_to_data_agent",
             "description": "Route the user's question to the Data Agent for database queries, analytics, KPIs, and chart generation.",
             "input_schema": {
@@ -134,7 +145,58 @@ class OrchestratorAgent:
                     tool_name = block.name
                     query = block.input.get("query", user_message)
 
-                    if tool_name == "route_to_data_agent":
+                    if tool_name == "search_knowledge_base":
+                        logger.info(f"Searching knowledge base: {query}")
+                        try:
+                            from app.db.knowledge_base import query_knowledge
+                            articles = await query_knowledge(query, n_results=5)
+                        except Exception:
+                            self.conversation_history.pop()
+                            self.conversation_history.pop()
+                            raise
+
+                        # Feed results back to orchestrator for a grounded response
+                        self.conversation_history.append({
+                            "role": "user",
+                            "content": [{
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps({
+                                    "articles": articles,
+                                    "note": "ONLY use information from these articles. If none are relevant, say you don't have information about that and suggest contacting ON24 support or checking the ON24 Help Center.",
+                                }, default=str),
+                            }],
+                        })
+
+                        # Let the orchestrator generate a grounded response
+                        try:
+                            followup = await self.client.messages.create(
+                                model=self.model,
+                                max_tokens=2048,
+                                system=_build_orchestrator_prompt(),
+                                tools=self.ROUTING_TOOLS,
+                                messages=self.conversation_history,
+                            )
+                        except Exception:
+                            self.conversation_history.pop()  # tool_result
+                            self.conversation_history.pop()  # assistant tool_use
+                            self.conversation_history.pop()  # user message
+                            raise
+
+                        text = "\n".join(b.text for b in followup.content if hasattr(b, "text"))
+                        self.conversation_history.append({"role": "assistant", "content": text})
+
+                        return {
+                            "text": text,
+                            "agent_used": "knowledge_base",
+                            "chart_data": None,
+                            "event_card": None,
+                            "poll_cards": None,
+                            "requires_confirmation": False,
+                            "confirmation_summary": None,
+                        }
+
+                    elif tool_name == "route_to_data_agent":
                         logger.info(f"Routing to Data Agent: {query}")
                         try:
                             result = await self.data_agent.run(query, conversation_history=self._text_history())
@@ -168,6 +230,8 @@ class OrchestratorAgent:
                             "text": text,
                             "agent_used": "data_agent",
                             "chart_data": result.get("chart_data"),
+                            "event_card": result.get("event_card"),
+                            "poll_cards": result.get("poll_cards"),
                             "requires_confirmation": False,
                             "confirmation_summary": None,
                         }

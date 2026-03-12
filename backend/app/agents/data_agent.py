@@ -92,6 +92,8 @@ class DataAgent:
         messages.append({"role": "user", "content": user_message})
 
         chart_data = None
+        event_card = None
+        poll_cards = None
         tool_calls_made = []
 
         system_prompt = _build_system_prompt()
@@ -127,6 +129,31 @@ class DataAgent:
                                 # Capture chart data if this was a chart generation call
                                 if tool_name == "generate_chart_data":
                                     chart_data = result
+
+                                # Capture poll cards for visual display
+                                if tool_name == "get_polls" and isinstance(result, list) and len(result) > 0:
+                                    poll_cards = result
+
+                                # Capture event card for single-event queries
+                                if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
+                                    eid = result["event_id"]
+                                    try:
+                                        from app.agents.tools.on24_query_tools import get_event_detail
+                                        detail = await get_event_detail(eid)
+                                        if detail:
+                                            event_card = {
+                                                "event_id": eid,
+                                                "title": detail.get("description") or detail.get("title") or "",
+                                                "start_time": detail.get("goodafter") or detail.get("start_time"),
+                                                "end_time": detail.get("goodtill") or detail.get("end_time"),
+                                                "event_type": detail.get("event_type") or "",
+                                                "registrant_count": result.get("total_registrants"),
+                                                "attendee_count": result.get("total_attendees"),
+                                                "conversion_rate": result.get("conversion_rate"),
+                                                "engagement_score_avg": result.get("avg_engagement"),
+                                            }
+                                    except Exception:
+                                        pass  # event card is best-effort
 
                                 asyncio.create_task(
                                     self._write_audit_log(session_id, tool_name, tool_input, result)
@@ -165,6 +192,8 @@ class DataAgent:
                 return {
                     "text": cleaned_text,
                     "chart_data": extracted_chart or chart_data,
+                    "event_card": event_card,
+                    "poll_cards": poll_cards,
                     "tool_calls": tool_calls_made,
                 }
 

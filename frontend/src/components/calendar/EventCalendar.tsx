@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +21,7 @@ interface CalendarEvent {
 interface Props {
   isOpen: boolean
   onClose: () => void
+  onEventToChat?: (event: CalendarEvent) => void
 }
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
@@ -51,6 +52,47 @@ function sameDay(a: Date, b: Date) {
 
 function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
+}
+
+// ─── Tooltip (fixed-position, never clipped) ─────────────────────────────────
+
+function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={e => {
+        const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        setPos({ x: r.left + r.width / 2, y: r.top })
+      }}
+      onMouseLeave={() => setPos(null)}
+      style={{ display: 'contents' }}
+    >
+      {children}
+      {pos && (
+        <div style={{
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y - 4,
+          transform: 'translate(-50%, -100%)',
+          background: 'rgba(15,23,42,0.92)',
+          color: '#f1f5f9',
+          padding: '5px 10px',
+          borderRadius: 6,
+          fontSize: '0.7rem',
+          lineHeight: 1.4,
+          whiteSpace: 'pre-line',
+          maxWidth: 300,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+        }}>
+          {text}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Event Detail Panel ───────────────────────────────────────────────────────
@@ -209,9 +251,9 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
 // ─── Month View ───────────────────────────────────────────────────────────────
 
 function MonthView({
-  year, month, events, onSelectEvent,
+  year, month, events, onSelectEvent, onDoubleClickEvent,
 }: {
-  year: number; month: number; events: CalendarEvent[]; onSelectEvent: (e: CalendarEvent) => void
+  year: number; month: number; events: CalendarEvent[]; onSelectEvent: (e: CalendarEvent) => void; onDoubleClickEvent?: (e: CalendarEvent) => void
 }) {
   const today = new Date()
   const firstDay = new Date(year, month, 1).getDay() // 0=Sun
@@ -230,71 +272,85 @@ function MonthView({
 
   const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+  const totalRows = Math.ceil(cells.length / 7)
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '1px solid var(--color-border)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
         {DAY_LABELS.map(d => (
           <div key={d} style={{
-            padding: '0.375rem 0', textAlign: 'center',
-            fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-text-secondary)',
+            padding: '0.25rem 0', textAlign: 'center',
+            fontSize: '0.65rem', fontWeight: 600, color: 'var(--color-text-secondary)',
           }}>{d}</div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gridAutoRows: 'minmax(100px, 1fr)' }}>
-          {cells.map((day, idx) => {
-            const isToday = day !== null && today.getFullYear() === year && today.getMonth() === month && today.getDate() === day
-            const dayEvents = day !== null ? eventsForDay(day) : []
-            return (
-              <div key={idx} style={{
-                borderRight: (idx + 1) % 7 === 0 ? 'none' : '1px solid var(--color-border)',
-                borderBottom: '1px solid var(--color-border)',
-                padding: '0.25rem',
-                background: day === null ? 'var(--color-bg)' : 'var(--color-card)',
-                minHeight: 100,
-              }}>
-                {day !== null && (
-                  <>
-                    <div style={{
-                      fontSize: '0.75rem', fontWeight: isToday ? 700 : 400,
-                      color: isToday ? '#fff' : 'var(--color-text)',
-                      background: isToday ? 'var(--color-primary)' : 'transparent',
-                      width: 22, height: 22, borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      marginBottom: '0.2rem',
-                    }}>{day}</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {dayEvents.slice(0, 3).map(ev => (
-                        <button key={ev.event_id} onClick={() => onSelectEvent(ev)}
-                          title={ev.title}
-                          style={{
-                            display: 'block', width: '100%', textAlign: 'left',
-                            padding: '1px 4px', borderRadius: 3,
-                            background: eventColor(ev.event_id),
-                            color: '#fff', fontSize: '0.65rem', fontWeight: 500,
-                            border: 'none', cursor: 'pointer',
-                            overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                            lineHeight: 1.5,
-                          }}
+      {/* Calendar grid — fills available space, no scroll */}
+      <div style={{
+        flex: 1, display: 'grid',
+        gridTemplateColumns: 'repeat(7,1fr)',
+        gridTemplateRows: `repeat(${totalRows}, 1fr)`,
+      }}>
+        {cells.map((day, idx) => {
+          const isToday = day !== null && today.getFullYear() === year && today.getMonth() === month && today.getDate() === day
+          const dayEvents = day !== null ? eventsForDay(day) : []
+          const maxPills = totalRows > 5 ? 2 : 3
+          return (
+            <div key={idx} style={{
+              borderRight: (idx + 1) % 7 === 0 ? 'none' : '1px solid var(--color-border)',
+              borderBottom: '1px solid var(--color-border)',
+              padding: '2px 3px',
+              background: day === null ? 'var(--color-bg)' : 'var(--color-card)',
+              overflow: 'hidden',
+            }}>
+              {day !== null && (
+                <>
+                  <div style={{
+                    fontSize: '0.7rem', fontWeight: isToday ? 700 : 400,
+                    color: isToday ? '#fff' : 'var(--color-text)',
+                    background: isToday ? 'var(--color-primary)' : 'transparent',
+                    width: 20, height: 20, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '1px',
+                  }}>{day}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1, overflow: 'hidden' }}>
+                    {dayEvents.slice(0, maxPills).map(ev => {
+                      const t = fmtTime(toLocal(ev.start_time))
+                      const tooltipText = `${ev.title}\n${t}${ev.event_type ? ' · ' + ev.event_type : ''}`
+                      return (
+                        <Tooltip key={ev.event_id} text={tooltipText}>
+                          <button onClick={() => onSelectEvent(ev)} onDoubleClick={() => onDoubleClickEvent?.(ev)}
+                            style={{
+                              display: 'block', width: '100%', textAlign: 'left',
+                              padding: '0px 3px', borderRadius: 3,
+                              background: eventColor(ev.event_id),
+                              color: '#fff', fontSize: '0.6rem', fontWeight: 500,
+                              border: 'none', cursor: 'pointer',
+                              overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {t} {ev.title}
+                          </button>
+                        </Tooltip>
+                      )
+                    })}
+                    {dayEvents.length > maxPills && (
+                      <Tooltip text={dayEvents.slice(maxPills).map(e => e.title).join('\n')}>
+                        <span
+                          style={{ fontSize: '0.55rem', color: 'var(--color-text-secondary)', paddingLeft: 2, cursor: 'default' }}
                         >
-                          {fmtTime(toLocal(ev.start_time))} {ev.title}
-                        </button>
-                      ))}
-                      {dayEvents.length > 3 && (
-                        <span style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', paddingLeft: 4 }}>
-                          +{dayEvents.length - 3} more
+                          +{dayEvents.length - maxPills} more…
                         </span>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                      </Tooltip>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -303,9 +359,9 @@ function MonthView({
 // ─── Week View ────────────────────────────────────────────────────────────────
 
 function WeekView({
-  weekStart, events, onSelectEvent,
+  weekStart, events, onSelectEvent, onDoubleClickEvent,
 }: {
-  weekStart: Date; events: CalendarEvent[]; onSelectEvent: (e: CalendarEvent) => void
+  weekStart: Date; events: CalendarEvent[]; onSelectEvent: (e: CalendarEvent) => void; onDoubleClickEvent?: (e: CalendarEvent) => void
 }) {
   const HOUR_START = 7
   const HOUR_END = 21
@@ -403,10 +459,10 @@ function WeekView({
                 pointerEvents: 'none',
               }}>
                 {dayEvs.map(ev => (
+                  <Tooltip key={ev.event_id} text={`${ev.title}\n${fmtTime(toLocal(ev.start_time))}${ev.event_type ? ' · ' + ev.event_type : ''}`}>
                   <button
-                    key={ev.event_id}
                     onClick={() => onSelectEvent(ev)}
-                    title={ev.title}
+                    onDoubleClick={() => onDoubleClickEvent?.(ev)}
                     style={{
                       position: 'absolute',
                       top: eventTop(ev),
@@ -414,19 +470,19 @@ function WeekView({
                       height: eventHeight(ev),
                       background: eventColor(ev.event_id),
                       color: '#fff', fontSize: '0.65rem', fontWeight: 500,
-                      borderRadius: 4, padding: '2px 5px',
+                      borderRadius: 4, padding: '3px 5px',
                       border: 'none', cursor: 'pointer', pointerEvents: 'auto',
                       textAlign: 'left', overflow: 'hidden',
-                      display: 'flex', flexDirection: 'column', gap: 1,
                     }}
                   >
-                    <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {ev.title}
-                    </span>
-                    <span style={{ opacity: 0.85, fontSize: '0.6rem' }}>
+                    <div style={{ fontSize: '0.6rem', opacity: 0.85, flexShrink: 0 }}>
                       {fmtTime(toLocal(ev.start_time))}
-                    </span>
+                    </div>
+                    <div style={{ fontWeight: 600, lineHeight: 1.3, overflow: 'hidden', wordBreak: 'break-word' }}>
+                      {ev.title}
+                    </div>
                   </button>
+                  </Tooltip>
                 ))}
               </div>
             )
@@ -437,11 +493,109 @@ function WeekView({
   )
 }
 
+// ─── Day View ────────────────────────────────────────────────────────────────
+
+function DayView({
+  date, events, onSelectEvent, onDoubleClickEvent,
+}: {
+  date: Date; events: CalendarEvent[]; onSelectEvent: (e: CalendarEvent) => void; onDoubleClickEvent?: (e: CalendarEvent) => void
+}) {
+  const HOUR_START = 7
+  const HOUR_END = 21
+  const HOURS = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i)
+  const CELL_HEIGHT = 60
+
+  function eventTop(e: CalendarEvent): number {
+    const d = toLocal(e.start_time)
+    if (!d) return 0
+    return ((d.getHours() + d.getMinutes() / 60) - HOUR_START) * CELL_HEIGHT
+  }
+
+  function eventHeight(e: CalendarEvent): number {
+    const s = toLocal(e.start_time)
+    const t = toLocal(e.end_time)
+    if (!s || !t) return CELL_HEIGHT * 0.75
+    const dur = (t.getTime() - s.getTime()) / 3600000
+    return Math.max(CELL_HEIGHT * Math.min(dur, HOUR_END - HOUR_START), 28)
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Day header */}
+      <div style={{
+        padding: '0.5rem 1rem', borderBottom: '1px solid var(--color-border)', flexShrink: 0,
+        fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text)',
+      }}>
+        {fmtDate(date)} — {events.length} event{events.length !== 1 ? 's' : ''}
+      </div>
+
+      {/* Time grid */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr', position: 'relative', minHeight: HOURS.length * CELL_HEIGHT }}>
+          {/* Hour labels + rows */}
+          {HOURS.map(h => (
+            <div key={`h${h}`} style={{ display: 'contents' }}>
+              <div style={{
+                height: CELL_HEIGHT, borderBottom: '1px solid var(--color-border)',
+                fontSize: '0.7rem', color: 'var(--color-text-secondary)',
+                paddingTop: '2px', paddingRight: '8px', textAlign: 'right',
+              }}>
+                {h === 12 ? '12 PM' : h > 12 ? `${h - 12} PM` : `${h} AM`}
+              </div>
+              <div style={{
+                height: CELL_HEIGHT,
+                borderBottom: '1px solid var(--color-border)',
+                borderLeft: '1px solid var(--color-border)',
+              }} />
+            </div>
+          ))}
+
+          {/* Event blocks */}
+          <div style={{
+            position: 'absolute', top: 0, left: 56, right: 0,
+            height: HOURS.length * CELL_HEIGHT,
+            pointerEvents: 'none',
+          }}>
+            {events.map(ev => (
+              <Tooltip key={ev.event_id} text={`${ev.title}\n${fmtTime(toLocal(ev.start_time))}${ev.event_type ? ' · ' + ev.event_type : ''}`}>
+                <button
+                  onClick={() => onSelectEvent(ev)}
+                  onDoubleClick={() => onDoubleClickEvent?.(ev)}
+                  style={{
+                    position: 'absolute',
+                    top: eventTop(ev),
+                    left: 4, right: 4,
+                    height: eventHeight(ev),
+                    background: eventColor(ev.event_id),
+                    color: '#fff', fontSize: '0.8rem', fontWeight: 500,
+                    borderRadius: 6, padding: '4px 10px',
+                    border: 'none', cursor: 'pointer', pointerEvents: 'auto',
+                    textAlign: 'left', overflow: 'hidden',
+                  }}
+                >
+                  <div style={{ fontSize: '0.7rem', opacity: 0.85, marginBottom: 2 }}>
+                    {fmtTime(toLocal(ev.start_time))}{toLocal(ev.end_time) ? ` – ${fmtTime(toLocal(ev.end_time))}` : ''}
+                    {ev.event_type ? ` · ${ev.event_type}` : ''}
+                  </div>
+                  <div style={{ fontWeight: 700, lineHeight: 1.35, wordBreak: 'break-word' }}>
+                    {ev.title}
+                  </div>
+                </button>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
-export default function EventCalendar({ isOpen, onClose }: Props) {
+export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props) {
   const today = new Date()
-  const [view, setView] = useState<'month' | 'week'>('month')
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month')
+  const [dayDate, setDayDate] = useState(today)
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())          // 0-indexed
   const [weekStart, setWeekStart] = useState(() => {
@@ -483,6 +637,7 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
     const d = new Date()
     setYear(d.getFullYear())
     setMonth(d.getMonth())
+    setDayDate(d)
     const ws = new Date(d)
     ws.setDate(d.getDate() - d.getDay())
     ws.setHours(0, 0, 0, 0)
@@ -493,8 +648,10 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
     if (view === 'month') {
       if (month === 0) { setYear(y => y - 1); setMonth(11) }
       else setMonth(m => m - 1)
-    } else {
+    } else if (view === 'week') {
       setWeekStart(w => { const d = new Date(w); d.setDate(d.getDate() - 7); return d })
+    } else {
+      setDayDate(d => { const n = new Date(d); n.setDate(n.getDate() - 1); return n })
     }
   }
 
@@ -502,15 +659,29 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
     if (view === 'month') {
       if (month === 11) { setYear(y => y + 1); setMonth(0) }
       else setMonth(m => m + 1)
-    } else {
+    } else if (view === 'week') {
       setWeekStart(w => { const d = new Date(w); d.setDate(d.getDate() + 7); return d })
+    } else {
+      setDayDate(d => { const n = new Date(d); n.setDate(n.getDate() + 1); return n })
     }
+  }
+
+  const VIEWS: ('month' | 'week' | 'day')[] = ['month', 'week', 'day']
+  const zoomIn = () => {
+    const idx = VIEWS.indexOf(view)
+    if (idx < VIEWS.length - 1) setView(VIEWS[idx + 1])
+  }
+  const zoomOut = () => {
+    const idx = VIEWS.indexOf(view)
+    if (idx > 0) setView(VIEWS[idx - 1])
   }
 
   const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
   const headerLabel = view === 'month'
     ? `${MONTH_NAMES[month]} ${year}`
+    : view === 'day'
+    ? fmtDate(dayDate)
     : (() => {
         const wEnd = new Date(weekStart); wEnd.setDate(weekStart.getDate() + 6)
         if (weekStart.getMonth() === wEnd.getMonth())
@@ -518,12 +689,23 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
         return `${MONTH_NAMES[weekStart.getMonth()]} ${weekStart.getDate()} – ${MONTH_NAMES[wEnd.getMonth()]} ${wEnd.getDate()}, ${wEnd.getFullYear()}`
       })()
 
-  // Filter events for week view
-  const weekEvents = view === 'week' ? events.filter(e => {
+  // Sync month/year when day view changes month
+  useEffect(() => {
+    if (view === 'day' && (dayDate.getMonth() !== month || dayDate.getFullYear() !== year)) {
+      setMonth(dayDate.getMonth())
+      setYear(dayDate.getFullYear())
+    }
+  }, [view, dayDate])
+
+  // Filter events for current view
+  const filteredEvents = view === 'week' ? events.filter(e => {
     const d = toLocal(e.start_time)
     if (!d) return false
     const wEnd = new Date(weekStart); wEnd.setDate(weekStart.getDate() + 7)
     return d >= weekStart && d < wEnd
+  }) : view === 'day' ? events.filter(e => {
+    const d = toLocal(e.start_time)
+    return d ? sameDay(d, dayDate) : false
   }) : events
 
   if (!isOpen) return null
@@ -535,8 +717,8 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{
-        width: '92vw', maxWidth: 1200,
-        height: '90vh',
+        width: '96vw', maxWidth: 1600,
+        height: '95vh',
         background: 'var(--color-card)',
         borderRadius: 12,
         boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
@@ -550,9 +732,13 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
           borderBottom: '1px solid var(--color-border)',
           flexShrink: 0,
         }}>
+          {/* Zoom out / in */}
+          <button onClick={zoomOut} aria-label="Zoom out" disabled={view === 'month'} style={{ ...navBtnStyle, opacity: view === 'month' ? 0.3 : 1 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
           {/* View toggle */}
           <div style={{ display: 'flex', background: 'var(--color-bg)', borderRadius: 6, padding: 2 }}>
-            {(['month', 'week'] as const).map(v => (
+            {(['month', 'week', 'day'] as const).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: '0.25rem 0.75rem', fontSize: '0.775rem', fontWeight: 500,
                 borderRadius: 4, border: 'none', cursor: 'pointer',
@@ -563,6 +749,9 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
               }}>{v}</button>
             ))}
           </div>
+          <button onClick={zoomIn} aria-label="Zoom in" disabled={view === 'day'} style={{ ...navBtnStyle, opacity: view === 'day' ? 0.3 : 1 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
 
           {/* Navigation */}
           <button onClick={navigatePrev} aria-label="Previous" style={navBtnStyle}>
@@ -595,8 +784,10 @@ export default function EventCalendar({ isOpen, onClose }: Props) {
         {/* ── Body ── */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {view === 'month'
-            ? <MonthView year={year} month={month} events={weekEvents} onSelectEvent={setSelectedEvent} />
-            : <WeekView weekStart={weekStart} events={weekEvents} onSelectEvent={setSelectedEvent} />
+            ? <MonthView year={year} month={month} events={filteredEvents} onSelectEvent={setSelectedEvent} onDoubleClickEvent={onEventToChat} />
+            : view === 'week'
+            ? <WeekView weekStart={weekStart} events={filteredEvents} onSelectEvent={setSelectedEvent} onDoubleClickEvent={onEventToChat} />
+            : <DayView date={dayDate} events={filteredEvents} onSelectEvent={setSelectedEvent} onDoubleClickEvent={onEventToChat} />
           }
 
           {selectedEvent && (

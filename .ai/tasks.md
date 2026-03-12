@@ -165,6 +165,21 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - **Presenters**: wcc.on24.com/webcast/funnelpresenters
 - **Benchmarking**: wcc.on24.com/webcast/benchmarking
 
+## Phase 8 Addendum 7: Poll Fix + Event Cards + Knowledge Base + Calendar Day View — COMPLETE (2026-03-12)
+- [x] Poll query fix: removed broken event_x_media_url + SESSION_ID=1 join chain; simplified to event_user_x_answer → event_user → media_url (matches working calendar.py pattern)
+- [x] query_top_events_by_polls: now ranks by actual poll respondents (not just questions)
+- [x] query_poll_overview: uses response-based join (not question table alone)
+- [x] All poll tests removed from KNOWN_DATA_GAPS (data exists with fixed queries)
+- [x] Poll display cards: PollCardsInline component — horizontal bars for multiple-choice (% + count), sample answer tags for freetext
+- [x] Event card in chat: EventCardInline component — inline KPI card when data agent queries single event via compute_event_kpis
+- [x] Calendar double-click to chat: double-click event → sends "Tell me about event {id}" to chat + closes calendar
+- [x] Calendar Day view: single-column timeline with full event detail, zoom +/- icons (Month ↔ Week ↔ Day)
+- [x] Custom tooltips: fixed-position Tooltip component (z-index 9999, never clipped by overflow:hidden)
+- [x] Calendar modal enlarged: 96vw x 95vh, maxWidth 1600
+- [x] Knowledge base tool: orchestrator's search_knowledge_base queries ChromaDB for "how do I" questions
+- [x] No-hallucination rule: orchestrator MUST only cite knowledge base articles; if none found, redirect to ON24 Help Center
+- [x] ON24 speakers: documented — added as card on registration page + Speaker Bio tool on Audience Console via Console Builder
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
