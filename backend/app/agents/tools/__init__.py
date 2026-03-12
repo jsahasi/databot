@@ -17,6 +17,7 @@ from app.agents.tools.on24_query_tools import (
     query_poll_overview,
     query_attendance_trends,
     query_audience_companies,
+    query_audience_sources,
     query_resources,
     generate_chart_data,
 )
@@ -199,6 +200,23 @@ DATA_AGENT_TOOLS = [
         },
     },
     {
+        "name": "get_audience_sources",
+        "description": (
+            "Return audience traffic sources (partnerref) showing where registrants came from — "
+            "campaign links, source sites, or UTM-style tags embedded in the registration URL. "
+            "Returns registrant and attendee count per source. "
+            "ONLY call this if the user asks about traffic sources, referral sources, campaigns, or where registrants came from. "
+            "If the result is empty, do NOT show a chart — respond with 'None found.' instead."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "Scope to a single event (omit for all events)"},
+                "limit": {"type": "integer", "description": "Max sources to return (default 20)"},
+            },
+        },
+    },
+    {
         "name": "get_resources",
         "description": (
             "Retrieve resource download/hit activity for a specific ON24 event. "
@@ -265,6 +283,7 @@ TOOL_HANDLERS = {
     "get_poll_overview": query_poll_overview,
     "get_attendance_trends": query_attendance_trends,
     "get_audience_companies": query_audience_companies,
+    "get_audience_sources": query_audience_sources,
     "get_resources": query_resources,
     "generate_chart_data": generate_chart_data,
 }

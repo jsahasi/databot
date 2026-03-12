@@ -516,6 +516,68 @@ async def query_audience_companies(
     return results
 
 
+async def query_audience_sources(
+    event_id: int | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """Audience traffic sources via partnerref on event_user.
+
+    partnerref is a URL parameter embedded in the registration link that identifies
+    the campaign or source site that drove the registrant.
+
+    If event_id is given, scopes to that event. Otherwise returns sources across
+    all client events. Returns empty list if no partnerref data exists.
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+
+    if event_id is not None:
+        sql = f"""
+            SELECT
+                eu.partnerref       AS source,
+                COUNT(eu.event_user_id)             AS registrant_count,
+                COUNT(da.event_user_id)             AS attendee_count
+            FROM on24master.event_user eu
+            JOIN on24master.event e
+              ON eu.event_id = e.event_id
+             AND e.client_id = ANY($1::bigint[])
+             AND e.event_id = $3
+            LEFT JOIN on24master.dw_attendee da
+              ON da.event_user_id = eu.event_user_id
+             AND da.event_id = eu.event_id
+            WHERE eu.partnerref IS NOT NULL
+              AND TRIM(eu.partnerref) <> ''
+            GROUP BY eu.partnerref
+            ORDER BY registrant_count DESC
+            LIMIT $2
+        """
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, client_ids, limit, event_id, timeout=_QUERY_TIMEOUT)
+    else:
+        sql = f"""
+            SELECT
+                eu.partnerref       AS source,
+                COUNT(eu.event_user_id)             AS registrant_count,
+                COUNT(da.event_user_id)             AS attendee_count
+            FROM on24master.event_user eu
+            JOIN on24master.event e
+              ON eu.event_id = e.event_id
+             AND e.client_id = ANY($1::bigint[])
+            LEFT JOIN on24master.dw_attendee da
+              ON da.event_user_id = eu.event_user_id
+             AND da.event_id = eu.event_id
+            WHERE eu.partnerref IS NOT NULL
+              AND TRIM(eu.partnerref) <> ''
+            GROUP BY eu.partnerref
+            ORDER BY registrant_count DESC
+            LIMIT $2
+        """
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, client_ids, limit, timeout=_QUERY_TIMEOUT)
+
+    return [_serialize(dict(row)) for row in rows]
+
+
 async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
     """Resource click/download activity for an event.
 
