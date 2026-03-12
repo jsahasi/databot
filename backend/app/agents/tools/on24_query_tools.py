@@ -7,9 +7,13 @@ All queries use parameterised $N placeholders — never string interpolation.
 
 PERFORMANCE RULES:
 - Default window: 1 month (30 days). Max window: 24 months (2 years).
-- Never join event_user (585M rows) for aggregates — use dw_event_session.
-- All aggregate fetches use timeout=8.0s to keep chat responses under 10s.
-- Flat JOIN+GROUP BY preferred over nested subqueries.
+- dw_event_session: event-level aggregate (one row per session, NOT per attendee).
+  Columns: registrant_count, attendee_count, engagement_score_avg, live_attendee_count, etc.
+  No event_user_id column — do NOT join to it for per-attendee lookups.
+- dw_attendee: per-attendee row. Has event_user_id, engagement_score, live_minutes.
+  Use for per-attendee queries and company breakdowns.
+- Never join event_user (585M rows) for aggregates — use dw_event_session counts.
+- All aggregate fetches use timeout=8.0s.
 """
 
 import logging
@@ -19,11 +23,10 @@ from app.db.on24_db import get_pool, get_tenant_client_ids
 
 logger = logging.getLogger(__name__)
 
-_QUERY_TIMEOUT = 8.0  # seconds — hard cap so chat always responds within 10s
+_QUERY_TIMEOUT = 8.0
 
 
 def _clamp_months(months: int, max_months: int = 24) -> int:
-    """Clamp a month window to [1, max_months]. Max is 24 (2 years)."""
     return max(1, min(months, min(max_months, 24)))
 
 
@@ -31,8 +34,8 @@ async def query_events(
     limit: int = 20,
     offset: int = 0,
     event_type: str | None = None,
-    is_active: str | None = None,  # 'Y' or 'N'
-    search: str | None = None,     # searches event_name with ILIKE
+    is_active: str | None = None,
+    search: str | None = None,
 ) -> list[dict]:
     """List events for the current client."""
     client_ids = await get_tenant_client_ids()
@@ -84,32 +87,25 @@ async def query_attendees(
     limit: int = 100,
     offset: int = 0,
 ) -> list[dict]:
-    """Get attendees for an event — verifies the event belongs to the current client."""
+    """Get attendees for an event using dw_attendee — verifies client ownership."""
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
         SELECT
-            eu.event_user_id,
-            eu.firstname,
-            eu.lastname,
-            eu.email,
-            eu.company,
-            eu.job_title,
-            eu.country,
-            eu.utm_source,
-            eu.create_timestamp,
+            da.event_user_id,
             da.engagement_score,
             da.live_minutes,
-            da.archive_minutes
-        FROM on24master.event_user eu
+            da.archive_minutes,
+            da.answered_polls,
+            da.asked_questions,
+            da.resources_downloaded
+        FROM on24master.dw_attendee da
         JOIN on24master.event e
-          ON eu.event_id = e.event_id
-        LEFT JOIN on24master.dw_attendee da
-          ON da.event_user_id = eu.event_user_id
-         AND da.event_id = eu.event_id
-        WHERE eu.event_id = $1
-          AND e.client_id = ANY($2::bigint[])
+          ON da.event_id = e.event_id
+         AND e.client_id = ANY($2::bigint[])
+        WHERE da.event_id = $1
+        ORDER BY da.engagement_score DESC NULLS LAST
         LIMIT $3 OFFSET $4
     """
     async with pool.acquire() as conn:
@@ -119,33 +115,34 @@ async def query_attendees(
 
 
 async def compute_event_kpis(event_id: int) -> dict:
-    """Compute KPIs for one event — verifies client ownership.
+    """Compute KPIs for one event using dw_event_session (pre-aggregated).
 
-    Uses dw_event_session for attendee metrics (avoids event_user 585M rows).
-    Registrant count from event.num_registered.
+    dw_event_session has registrant_count, attendee_count, engagement_score_avg,
+    conversion_percent per event session. Aggregate across sessions for the event.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
         SELECT
-            e.num_registered                                           AS total_registrants,
-            COUNT(des.event_user_id)                                   AS total_attendees,
-            AVG(des.engagement_score)                                  AS avg_engagement,
-            AVG(des.live_duration)                                     AS avg_live_minutes,
-            COUNT(des.event_user_id)::float
-              / NULLIF(e.num_registered, 0) * 100                      AS conversion_rate
-        FROM on24master.event e
-        LEFT JOIN on24master.dw_event_session des
+            SUM(des.registrant_count)                    AS total_registrants,
+            SUM(des.attendee_count)                      AS total_attendees,
+            AVG(des.engagement_score_avg)                AS avg_engagement,
+            ROUND(
+                SUM(des.attendee_mins)::numeric
+                / NULLIF(SUM(des.attendee_count), 0), 1
+            )                                            AS avg_live_minutes,
+            AVG(des.conversion_percent)                  AS conversion_rate
+        FROM on24master.dw_event_session des
+        JOIN on24master.event e
           ON des.event_id = e.event_id
-        WHERE e.event_id = $1
-          AND e.client_id = ANY($2::bigint[])
-        GROUP BY e.num_registered
+         AND e.client_id = ANY($2::bigint[])
+        WHERE des.event_id = $1
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
 
-    if row is None:
+    if row is None or row["total_registrants"] is None:
         return {
             "event_id": event_id,
             "total_registrants": 0,
@@ -164,11 +161,9 @@ async def compute_event_kpis(event_id: int) -> dict:
 
 
 async def compute_client_kpis(months: int = 1) -> dict:
-    """Compute platform-wide KPIs for the current client.
+    """Compute platform-wide KPIs. Default window: last 1 month. Max: 24 months.
 
-    Default window: last 1 month. Max: 24 months (2 years).
-    Uses dw_event_session — avoids the 585M-row event_user table.
-    Registrant totals summed from event.num_registered.
+    Uses dw_event_session pre-aggregated counts — avoids event_user scan.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
@@ -177,9 +172,9 @@ async def compute_client_kpis(months: int = 1) -> dict:
     sql = """
         SELECT
             COUNT(DISTINCT e.event_id)           AS total_events,
-            COALESCE(SUM(e.num_registered), 0)   AS total_registrants,
-            COUNT(des.event_user_id)             AS total_attendees,
-            AVG(des.engagement_score)            AS avg_engagement
+            COALESCE(SUM(des.registrant_count), 0) AS total_registrants,
+            COALESCE(SUM(des.attendee_count), 0)   AS total_attendees,
+            AVG(des.engagement_score_avg)          AS avg_engagement
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session des
           ON des.event_id = e.event_id
@@ -190,12 +185,7 @@ async def compute_client_kpis(months: int = 1) -> dict:
         row = await conn.fetchrow(sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
 
     if row is None:
-        return {
-            "total_events": 0,
-            "total_registrants": 0,
-            "total_attendees": 0,
-            "avg_engagement": None,
-        }
+        return {"total_events": 0, "total_registrants": 0, "total_attendees": 0, "avg_engagement": None}
 
     result = dict(row)
     if result.get("avg_engagement") is not None:
@@ -204,12 +194,16 @@ async def compute_client_kpis(months: int = 1) -> dict:
 
 
 async def query_polls(event_id: int) -> list[dict]:
-    """Get poll questions and answer distributions for an event."""
+    """Get poll questions and answer distributions for an event.
+
+    Note: question.description holds the question text (not question_text).
+    Poll answers are in question_x_answer joined to event_user_x_answer.
+    """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     questions_sql = """
-        SELECT q.question_id, q.question_text, q.question_type_cd, q.create_timestamp
+        SELECT q.question_id, q.description AS question_text, q.question_type_cd, q.create_timestamp
         FROM on24master.question q
         JOIN on24master.event e
           ON q.event_id = e.event_id
@@ -269,14 +263,12 @@ async def query_polls(event_id: int) -> list[dict]:
 
 async def query_top_events(
     limit: int = 10,
-    sort_by: str = "attendees",  # "attendees" | "engagement"
+    sort_by: str = "attendees",
     months: int = 1,
 ) -> list[dict]:
-    """Top events for the current client by chosen metric.
+    """Top events by attendee count or engagement. Default: last 1 month, max 24.
 
-    Default window: last 1 month (30 days). Max: 24 months (2 years).
-    Uses a flat JOIN+GROUP BY against dw_event_session — no nested subquery,
-    no event_user scan.
+    Uses dw_event_session aggregate columns (attendee_count, engagement_score_avg).
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
@@ -296,8 +288,8 @@ async def query_top_events(
             e.event_type,
             e.goodafter,
             e.is_active,
-            COUNT(des.event_user_id)  AS total_attendees,
-            AVG(des.engagement_score) AS avg_engagement
+            COALESCE(SUM(des.attendee_count), 0)   AS total_attendees,
+            AVG(des.engagement_score_avg)           AS avg_engagement
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session des
           ON des.event_id = e.event_id
@@ -306,11 +298,10 @@ async def query_top_events(
         GROUP BY e.event_id, e.event_name, e.event_type, e.goodafter, e.is_active
         ORDER BY {order_col} DESC NULLS LAST
         LIMIT $3
-    """  # order_col comes from allow-list above
+    """  # order_col from allow-list above
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, str(months), limit,
-                                timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, client_ids, str(months), limit, timeout=_QUERY_TIMEOUT)
 
     results = []
     for row in rows:
@@ -322,11 +313,9 @@ async def query_top_events(
 
 
 async def query_attendance_trends(months: int = 1) -> list[dict]:
-    """Monthly attendance and registration trends for the current client.
+    """Monthly attendance and registration trends. Default: last 1 month, max 24.
 
-    Default window: last 1 month. Max: 24 months (2 years).
-    Uses dw_event_session for attendee counts and event.num_registered for
-    registration totals — avoids the 585M-row event_user table.
+    Uses dw_event_session registrant_count / attendee_count per event.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
@@ -334,11 +323,11 @@ async def query_attendance_trends(months: int = 1) -> list[dict]:
 
     sql = """
         SELECT
-            DATE_TRUNC('month', e.goodafter)       AS period,
-            COUNT(DISTINCT e.event_id)              AS event_count,
-            COALESCE(SUM(e.num_registered), 0)      AS total_registrants,
-            COUNT(des.event_user_id)                AS total_attendees,
-            AVG(des.engagement_score)               AS avg_engagement
+            DATE_TRUNC('month', e.goodafter)             AS period,
+            COUNT(DISTINCT e.event_id)                   AS event_count,
+            COALESCE(SUM(des.registrant_count), 0)       AS total_registrants,
+            COALESCE(SUM(des.attendee_count), 0)         AS total_attendees,
+            AVG(des.engagement_score_avg)                AS avg_engagement
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session des
           ON des.event_id = e.event_id
@@ -364,11 +353,10 @@ async def query_audience_companies(
     limit: int = 20,
     months: int = 1,
 ) -> list[dict]:
-    """Top companies attending the current client's events (cross-event).
+    """Top companies by attendance. Default: last 1 month, max 24.
 
-    Default window: last 1 month. Max: 24 months (2 years).
-    Scoped date window reduces event_user scan to a manageable size.
-    Uses dw_event_session for attendee engagement metrics.
+    Uses dw_attendee (has event_user_id + engagement_score) joined to event_user
+    for company name. Date-scoped to limit event_user scan.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
@@ -379,16 +367,16 @@ async def query_audience_companies(
             eu.company,
             COUNT(DISTINCT eu.event_id)         AS events_attended,
             COUNT(eu.event_user_id)             AS total_registrants,
-            COUNT(des.event_user_id)            AS total_attendees,
-            AVG(des.engagement_score)           AS avg_engagement
+            COUNT(da.event_user_id)             AS total_attendees,
+            AVG(da.engagement_score)            AS avg_engagement
         FROM on24master.event_user eu
         JOIN on24master.event e
           ON eu.event_id = e.event_id
          AND e.client_id = ANY($1::bigint[])
          AND e.goodafter >= NOW() - ($3 || ' months')::INTERVAL
-        LEFT JOIN on24master.dw_event_session des
-          ON des.event_user_id = eu.event_user_id
-         AND des.event_id = eu.event_id
+        LEFT JOIN on24master.dw_attendee da
+          ON da.event_user_id = eu.event_user_id
+         AND da.event_id = eu.event_id
         WHERE eu.company IS NOT NULL
           AND eu.company <> ''
         GROUP BY eu.company
@@ -397,8 +385,7 @@ async def query_audience_companies(
     """
 
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, limit, str(months),
-                                timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, client_ids, limit, str(months), timeout=_QUERY_TIMEOUT)
 
     results = []
     for row in rows:
@@ -410,24 +397,25 @@ async def query_audience_companies(
 
 
 async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
-    """Resource download activity for an event — verifies client ownership."""
+    """Resource click/download activity for an event.
+
+    resource_hit_track columns: event_id, event_user_id, resource_id, timestamp, partnerref.
+    """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
     sql = """
         SELECT
-            rht.resource_hit_track_id,
             rht.resource_id,
-            rht.resource_name,
             rht.event_user_id,
-            rht.hit_timestamp,
-            rht.resource_type
+            rht.timestamp        AS hit_timestamp,
+            rht.partnerref
         FROM on24master.resource_hit_track rht
         JOIN on24master.event e
           ON rht.event_id = e.event_id
          AND e.client_id = ANY($2::bigint[])
         WHERE rht.event_id = $1
-        ORDER BY rht.hit_timestamp DESC NULLS LAST
+        ORDER BY rht.timestamp DESC NULLS LAST
         LIMIT $3
     """
 
