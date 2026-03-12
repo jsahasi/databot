@@ -1,11 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useChatContext } from '../../context/ChatContext'
 
-const WHAT_IS_NEW = [
-  { label: 'Release Notes 2025' },
-  { label: 'ACE 2.0' },
-]
-
 export default function ChatSidebar() {
   const { resetChat } = useChatContext()
   const navigate = useNavigate()
@@ -67,26 +62,6 @@ export default function ChatSidebar() {
             <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
           </svg>
         </button>
-      </div>
-
-      {/* What's New */}
-      <div>
-        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-          What&apos;s New?
-        </p>
-        {WHAT_IS_NEW.map(item => (
-          <div key={item.label} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0.375rem 0',
-            fontSize: '0.8rem', color: '#374151',
-            cursor: 'pointer',
-          }}>
-            <span>{item.label}</span>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 17L17 7M7 7h10v10" />
-            </svg>
-          </div>
-        ))}
       </div>
 
       {/* Recent Chats */}
