@@ -214,6 +214,7 @@ export default function ChatPanel() {
             onKeyDown={handleKeyDown}
             placeholder="Or type your message to chat here..."
             disabled={isProcessing}
+            autoFocus
             rows={1}
             style={{
               flex: 1,
