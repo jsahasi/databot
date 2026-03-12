@@ -20,24 +20,26 @@ _sessions: dict[str, OrchestratorAgent] = {}
 
 
 async def generate_suggestions(user_message: str, response_text: str, agent_used: str | None) -> list[str]:
-    """Generate 3 short follow-up question suggestions using Haiku."""
+    """Generate 5 short follow-up question suggestions using Haiku."""
     client = anthropic.AsyncAnthropic()
     prompt = f"User asked: {user_message}\nAssistant answered: {response_text}"
     response = await client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=200,
+        max_tokens=300,
         system=(
-            "You generate follow-up suggestions for a webinar analytics chatbot. "
-            "Given what the user asked and what the assistant answered, return exactly 3 natural "
-            "follow-up questions a user might click next. "
-            "Each suggestion must be 3-6 words, e.g. 'Show trends for this year' or 'Break down by event type'. "
-            "Return only a JSON array of 3 strings, nothing else."
+            "You anticipate the next 5 questions a user would naturally ask next in a "
+            "webinar analytics chatbot conversation. Think ahead: if they just saw one event, "
+            "they'll want KPIs, attendees, polls, trends, comparisons, etc. "
+            "Each suggestion must be 3-7 words, conversational, specific to the context. "
+            "Examples: 'How did it perform?', 'Show attendee breakdown', 'Compare to last month', "
+            "'Which companies attended?', 'Show poll results'. "
+            "Return only a JSON array of exactly 5 strings, nothing else."
         ),
         messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
     suggestions: list[str] = json.loads(text)
-    return suggestions[:3]
+    return suggestions[:5]
 
 
 def _get_or_create_agent(session_id: str) -> OrchestratorAgent:
