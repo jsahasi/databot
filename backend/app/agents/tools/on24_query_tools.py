@@ -237,18 +237,19 @@ async def compute_client_kpis(months: int = 1) -> dict:
 async def query_polls(event_id: int) -> list[dict]:
     """Get poll questions and answer distributions for an event.
 
-    Note: question.description holds the question text (not question_text).
-    Poll answers are in question_x_answer joined to event_user_x_answer.
+    Tenant isolation: all rows traced back to client_id via
+      event_user_x_answer → question → event → client_id = ANY(client_ids)
+    eua.answer holds the answer text directly; question_x_answer not needed.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
 
-    # Single-event query: _MIN_REGS_SUBQ omitted (redundant for explicit event_id lookup)
+    # Fetch poll questions scoped to this client
     questions_sql = f"""
         SELECT q.question_id, q.description AS question_text, q.question_type_cd, q.create_timestamp
         FROM on24master.question q
         JOIN on24master.event e
-          ON q.event_id = e.event_id
+          ON e.event_id = q.event_id
          AND e.client_id = ANY($2::bigint[])
         WHERE q.event_id = $1
           AND q.question_type_cd IN ('singleoption', 'multioption')
@@ -256,26 +257,25 @@ async def query_polls(event_id: int) -> list[dict]:
         ORDER BY q.question_id
     """
 
+    # Fetch responses: eua → question → event → client scoping ensures tenant isolation
+    # eua.answer contains the answer text directly (no need for question_x_answer)
     answers_sql = f"""
         SELECT
-            qa.question_id,
-            qa.answer_cd,
-            qa.answer,
-            COUNT(eua.event_user_id) AS response_count
-        FROM on24master.question_x_answer qa
+            eua.question_id,
+            eua.answer_cd,
+            eua.answer                    AS answer_text,
+            COUNT(eua.event_user_id)      AS response_count
+        FROM on24master.event_user_x_answer eua
         JOIN on24master.question q
-          ON qa.question_id = q.question_id
+          ON q.question_id = eua.question_id
+         AND q.question_type_cd IN ('singleoption', 'multioption')
         JOIN on24master.event e
-          ON q.event_id = e.event_id
+          ON e.event_id = q.event_id
          AND e.client_id = ANY($2::bigint[])
-        LEFT JOIN on24master.event_user_x_answer eua
-          ON eua.answer_cd = qa.answer_cd
-         AND eua.question_id = qa.question_id
         WHERE q.event_id = $1
-          AND q.question_type_cd IN ('singleoption', 'multioption')
           {_EXCL_TEST}
-        GROUP BY qa.question_id, qa.answer_cd, qa.answer
-        ORDER BY qa.question_id, qa.answer_cd
+        GROUP BY eua.question_id, eua.answer_cd, eua.answer
+        ORDER BY eua.question_id, response_count DESC
     """
 
     async with pool.acquire() as conn:
@@ -287,20 +287,20 @@ async def query_polls(event_id: int) -> list[dict]:
         qid = a["question_id"]
         answers_by_question.setdefault(qid, []).append({
             "answer_cd": a["answer_cd"],
-            "answer_text": a["answer"],
+            "answer_text": a["answer_text"],
             "response_count": a["response_count"],
         })
 
     results = []
     for q in q_rows:
         qid = q["question_id"]
-        results.append({
+        results.append(_serialize({
             "question_id": qid,
             "question_text": q["question_text"],
             "question_type_cd": q["question_type_cd"],
             "create_timestamp": q["create_timestamp"],
             "answers": answers_by_question.get(qid, []),
-        })
+        }))
 
     return results
 
