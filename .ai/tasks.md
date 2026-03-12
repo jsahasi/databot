@@ -81,6 +81,13 @@
 - [x] OWASP security hardening: message length limit (4000), session ID sanitization, generic error messages
 - [x] Data quality filters: _EXCL_TEST (no "test" in name) + _MIN_REGS_SUBQ (>5 registrants); single-event queries use _EXCL_TEST only to avoid correlated subquery timeout
 
+## Phase 8 Addendum 3: Dark Mode Color Tuning — COMPLETE (2026-03-11)
+- [x] --color-text: #e2e8f0 → #c9cfe0 (softer off-white, less glare)
+- [x] --color-primary: #6366f1 → #a5b4fc (lighter indigo, legible on dark cards)
+- [x] --color-primary-hover: #818cf8 → #c7d2fe
+- [x] --color-sidebar-active: #ffffff → #c9cfe0 (matches body text)
+- [x] --color-text-secondary: #94a3b8 → #7b8599 (maintains hierarchy without washing out)
+
 ## Local Setup Notes
 - **App URL**: http://localhost:3001 (via `docker compose up --build`)
 - **Postgres host port**: 5433 (internal container port remains 5432; only host mapping changed)
