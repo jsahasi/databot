@@ -308,13 +308,49 @@ async def query_top_events_by_polls(limit: int = 10) -> list[dict]:
          AND q.question_type_cd IN ('singleoption', 'multioption')
         WHERE e.client_id = ANY($1::bigint[])
           {_EXCL_TEST}
-          {_MIN_REGS_SUBQ}
         GROUP BY e.event_id, e.description, e.goodafter
         ORDER BY poll_count DESC NULLS LAST
         LIMIT $2
     """
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, limit, timeout=_QUERY_TIMEOUT)
+    return [dict(row) for row in rows]
+
+
+async def query_poll_overview(months: int = 6) -> list[dict]:
+    """Cross-event poll summary: events with polls, question count, and total responses.
+
+    Scoped to past N months. Sorted by total responses descending.
+    Avoids correlated subquery on large tables by using a date filter.
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    months = _clamp_months(months)
+
+    sql = f"""
+        SELECT
+            e.event_id,
+            e.description,
+            e.goodafter,
+            COUNT(DISTINCT q.question_id)    AS poll_count,
+            COUNT(eua.event_user_id)         AS total_responses
+        FROM on24master.event e
+        JOIN on24master.question q
+          ON q.event_id = e.event_id
+         AND q.question_type_cd IN ('singleoption', 'multioption')
+        LEFT JOIN on24master.event_user_x_answer eua
+          ON eua.question_id = q.question_id
+        WHERE e.client_id = ANY($1::bigint[])
+          AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
+          AND e.goodafter <= NOW()
+          {_EXCL_TEST}
+        GROUP BY e.event_id, e.description, e.goodafter
+        HAVING COUNT(DISTINCT q.question_id) > 0
+        ORDER BY total_responses DESC NULLS LAST
+        LIMIT 20
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
     return [dict(row) for row in rows]
 
 

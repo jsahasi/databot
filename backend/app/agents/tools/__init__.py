@@ -14,6 +14,7 @@ from app.agents.tools.on24_query_tools import (
     query_polls,
     query_top_events,
     query_top_events_by_polls,
+    query_poll_overview,
     query_attendance_trends,
     query_audience_companies,
     query_resources,
@@ -157,6 +158,20 @@ DATA_AGENT_TOOLS = [
         },
     },
     {
+        "name": "get_poll_overview",
+        "description": (
+            "Cross-event poll summary: lists recent events that ran polls, with poll question count "
+            "and total attendee responses per event. Use for 'poll overview', 'poll results overview', "
+            "'how are polls performing', or any request for a summary of poll activity across events."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "months": {"type": "integer", "description": "How many past months to include (default 6)"},
+            },
+        },
+    },
+    {
         "name": "get_attendance_trends",
         "description": (
             "Return monthly attendance and registration trend data for the current client "
@@ -210,6 +225,7 @@ TOOL_HANDLERS = {
     "get_polls": query_polls,
     "get_top_events": query_top_events,
     "get_top_events_by_polls": query_top_events_by_polls,
+    "get_poll_overview": query_poll_overview,
     "get_attendance_trends": query_attendance_trends,
     "get_audience_companies": query_audience_companies,
     "get_resources": query_resources,
