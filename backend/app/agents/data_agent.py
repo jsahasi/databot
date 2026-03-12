@@ -22,7 +22,7 @@ class DataAgent:
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         self.model = "claude-sonnet-4-6"
-        self.max_tool_rounds = 5
+        self.max_tool_rounds = 10
 
     async def _write_audit_log(
         self,
@@ -139,9 +139,22 @@ class DataAgent:
                     "tool_calls": tool_calls_made,
                 }
 
-        # If we hit max rounds, return what we have
+        # Hit max rounds — force a final text response with tool_choice=none
+        messages.append({
+            "role": "user",
+            "content": "Summarize the data you have gathered and give a final answer. Do not call any more tools.",
+        })
+        final = await self.client.messages.create(
+            model=self.model,
+            max_tokens=2048,
+            system=SYSTEM_PROMPT,
+            tools=DATA_AGENT_TOOLS,
+            tool_choice={"type": "none"},
+            messages=messages,
+        )
+        text_parts = [block.text for block in final.content if hasattr(block, "text")]
         return {
-            "text": "I've gathered the data but hit the analysis limit. Here's what I found so far.",
+            "text": "\n".join(text_parts),
             "chart_data": chart_data,
             "tool_calls": tool_calls_made,
         }
