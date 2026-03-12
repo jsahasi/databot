@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import re
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,24 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 _PROMPT_TEMPLATE = (Path(__file__).parent / "prompts" / "data_agent.md").read_text()
+
+
+def _extract_chart(text: str) -> tuple[str, dict | None]:
+    """Pull ```chart JSON blocks out of the agent text response.
+
+    Returns (cleaned_text, chart_dict_or_None).
+    The chart block is removed from the text so it's not shown as raw JSON.
+    """
+    pattern = re.compile(r'```chart\s*\n(.*?)\n```', re.DOTALL)
+    match = pattern.search(text)
+    if not match:
+        return text, None
+    try:
+        chart = json.loads(match.group(1))
+        cleaned = (text[:match.start()].rstrip() + "\n" + text[match.end():].lstrip()).strip()
+        return cleaned, chart
+    except Exception:
+        return text, None
 
 
 def _build_system_prompt() -> str:
@@ -141,9 +160,11 @@ class DataAgent:
             else:
                 # Model returned a final text response
                 text_parts = [block.text for block in response.content if hasattr(block, "text")]
+                raw_text = "\n".join(text_parts)
+                cleaned_text, extracted_chart = _extract_chart(raw_text)
                 return {
-                    "text": "\n".join(text_parts),
-                    "chart_data": chart_data,
+                    "text": cleaned_text,
+                    "chart_data": extracted_chart or chart_data,
                     "tool_calls": tool_calls_made,
                 }
 
@@ -161,8 +182,10 @@ class DataAgent:
             messages=messages,
         )
         text_parts = [block.text for block in final.content if hasattr(block, "text")]
+        raw_text = "\n".join(text_parts)
+        cleaned_text, extracted_chart = _extract_chart(raw_text)
         return {
-            "text": "\n".join(text_parts),
-            "chart_data": chart_data,
+            "text": cleaned_text,
+            "chart_data": extracted_chart or chart_data,
             "tool_calls": tool_calls_made,
         }

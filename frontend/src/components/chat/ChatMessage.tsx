@@ -1,4 +1,42 @@
+import {
+  BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
 import type { ChatMessage as ChatMessageType } from '../../hooks/useChat'
+
+const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+
+function ChatChart({ data }: { data: any }) {
+  if (!data?.data?.length) return null
+  const keys = Object.keys(data.data[0])
+  const xKey = keys[0]
+  const seriesKeys = keys.slice(1)
+  const ChartComponent = data.type === 'line' ? LineChart : BarChart
+
+  return (
+    <div style={{ marginTop: '0.75rem', width: '100%', maxWidth: 560 }}>
+      {data.title && (
+        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+          {data.title}
+        </p>
+      )}
+      <ResponsiveContainer width="100%" height={220}>
+        <ChartComponent data={data.data} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} label={data.yLabel ? { value: data.yLabel, angle: -90, position: 'insideLeft', style: { fontSize: 11 } } : undefined} />
+          <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
+          {seriesKeys.length > 1 && <Legend wrapperStyle={{ fontSize: '0.75rem' }} />}
+          {seriesKeys.map((key, i) =>
+            data.type === 'line'
+              ? <Line key={key} type="monotone" dataKey={key} stroke={CHART_COLORS[i % CHART_COLORS.length]} dot={false} strokeWidth={2} />
+              : <Bar key={key} dataKey={key} fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[3, 3, 0, 0]} />
+          )}
+        </ChartComponent>
+      </ResponsiveContainer>
+    </div>
+  )
+}
 
 interface ChatMessageProps {
   message: ChatMessageType
@@ -155,17 +193,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         )}
       </div>
 
-      {/* Chart data indicator */}
-      {message.chartData && (
-        <div style={{
-          marginTop: '0.5rem', padding: '0.5rem 0.75rem',
-          background: '#f0fdf4', border: '1px solid #bbf7d0',
-          borderRadius: 'var(--radius)', fontSize: '0.75rem', color: '#166534',
-          maxWidth: '85%',
-        }}>
-          Chart: {message.chartData.title || 'Visualization data attached'}
-        </div>
-      )}
+      {/* Chart */}
+      {message.chartData && <ChatChart data={message.chartData} />}
 
       {/* Timestamp */}
       <span style={{

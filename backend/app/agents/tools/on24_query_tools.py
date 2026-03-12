@@ -186,6 +186,7 @@ async def compute_client_kpis(months: int = 1) -> dict:
           ON des.event_id = e.event_id
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
+          AND e.goodafter <= NOW()
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
@@ -301,6 +302,7 @@ async def query_top_events(
           ON des.event_id = e.event_id
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
+          AND e.goodafter <= NOW()
         GROUP BY e.event_id, e.event_name, e.event_type, e.goodafter, e.is_active
         ORDER BY {order_col} DESC NULLS LAST
         LIMIT $3
@@ -339,6 +341,7 @@ async def query_attendance_trends(months: int = 1) -> list[dict]:
           ON des.event_id = e.event_id
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
+          AND e.goodafter <= NOW()
         GROUP BY DATE_TRUNC('month', e.goodafter)
         ORDER BY period ASC
     """
