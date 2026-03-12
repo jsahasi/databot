@@ -19,22 +19,25 @@ router = APIRouter()
 _sessions: dict[str, OrchestratorAgent] = {}
 
 
-async def generate_suggestions(response_text: str, agent_used: str | None) -> list[str]:
-    """Generate 4 short follow-up question suggestions using Haiku."""
+async def generate_suggestions(user_message: str, response_text: str, agent_used: str | None) -> list[str]:
+    """Generate 3 short follow-up question suggestions using Haiku."""
     client = anthropic.AsyncAnthropic()
+    prompt = f"User asked: {user_message}\nAssistant answered: {response_text}"
     response = await client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=256,
+        max_tokens=200,
         system=(
-            "You generate follow-up question suggestions for a webinar analytics chatbot. "
-            "Given the assistant's response, return exactly 4 short follow-up questions the user "
-            "might ask next. Return only a JSON array of strings, nothing else."
+            "You generate follow-up suggestions for a webinar analytics chatbot. "
+            "Given what the user asked and what the assistant answered, return exactly 3 natural "
+            "follow-up questions a user might click next. "
+            "Each suggestion must be 3-6 words, e.g. 'Show trends for this year' or 'Break down by event type'. "
+            "Return only a JSON array of 3 strings, nothing else."
         ),
-        messages=[{"role": "user", "content": response_text}],
+        messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
     suggestions: list[str] = json.loads(text)
-    return suggestions[:4]
+    return suggestions[:3]
 
 
 def _get_or_create_agent(session_id: str) -> OrchestratorAgent:
@@ -115,10 +118,12 @@ async def websocket_chat(websocket: WebSocket):
                     })
 
                     # Fire suggestions asynchronously — non-blocking, skip on timeout/error
-                    async def _send_suggestions(ws: WebSocket, text: str, agent: str | None) -> None:
+                    async def _send_suggestions(
+                        ws: WebSocket, user_msg: str, text: str, agent: str | None
+                    ) -> None:
                         try:
                             suggestions = await asyncio.wait_for(
-                                generate_suggestions(text, agent), timeout=5.0
+                                generate_suggestions(user_msg, text, agent), timeout=8.0
                             )
                             await ws.send_json({"type": "suggestions", "suggestions": suggestions})
                         except Exception:
@@ -126,6 +131,7 @@ async def websocket_chat(websocket: WebSocket):
 
                     asyncio.create_task(_send_suggestions(
                         websocket,
+                        content,
                         result.get("text", ""),
                         result.get("agent_used"),
                     ))
