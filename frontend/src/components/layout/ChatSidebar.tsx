@@ -18,8 +18,8 @@ export default function ChatSidebar() {
       width: 200,
       flexShrink: 0,
       height: '100%',
-      background: '#fff',
-      borderRight: '1px solid #e5e7eb',
+      background: 'var(--color-card)',
+      borderRight: '1px solid var(--color-border)',
       display: 'flex',
       flexDirection: 'column',
       padding: '0.875rem 0.75rem',
@@ -52,10 +52,10 @@ export default function ChatSidebar() {
           width: 34, height: 34, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'transparent',
-          border: '1px solid #e5e7eb',
+          border: '1px solid var(--color-border)',
           borderRadius: 8,
           cursor: 'pointer',
-          color: '#6b7280',
+          color: 'var(--color-text-secondary)',
         }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
@@ -66,10 +66,10 @@ export default function ChatSidebar() {
 
       {/* Recent Chats */}
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
           Recent Chats
         </p>
-        <p style={{ fontSize: '0.775rem', color: '#9ca3af', fontStyle: 'italic' }}>
+        <p style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
           No recent chats
         </p>
       </div>
