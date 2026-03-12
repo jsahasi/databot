@@ -630,26 +630,58 @@ async def query_audience_sources(
 
 
 async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
-    """Resource click/download activity for an event.
+    """Resource download activity for an event, grouped by resource name.
 
-    resource_hit_track columns: event_id, event_user_id, resource_id, timestamp, partnerref.
+    Uses content_hit_track_details (action='TotalHits') scoped to resources that
+    appear in the event's resource-list widget (display_element_value_cd='resourcelist')
+    or are PDF portal resources (video_library).
+    Returns per-resource download counts (COUNT DISTINCT event_user_id for dedup).
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
+    limit = max(1, min(limit, 100))
 
-    sql = f"""
+    sql = """
         SELECT
-            rht.resource_id,
-            rht.event_user_id,
-            rht.timestamp        AS hit_timestamp,
-            rht.partnerref
-        FROM on24master.resource_hit_track rht
+            ct.content_name                           AS resource_name,
+            COUNT(DISTINCT ct.event_user_id)          AS downloader_count,
+            COUNT(*)                                  AS total_hits
+        FROM on24master.content_hit_track_details ct
         JOIN on24master.event e
-          ON rht.event_id = e.event_id
+          ON e.event_id = ct.event_id
          AND e.client_id = ANY($2::bigint[])
-        WHERE rht.event_id = $1
-          {_EXCL_TEST}
-        ORDER BY rht.timestamp DESC NULLS LAST
+        WHERE ct.event_id = $1
+          AND ct.action = 'TotalHits'
+          AND COALESCE(ct.media_url_id, 0) != 0
+          AND COALESCE(ct.media_category_cd, 'xxx') NOT LIKE 'custom_icon%'
+          AND ct.event_user_id != 305999
+          AND (
+            -- Resource is in a valid (not deleted) resource-list widget for this event
+            EXISTS (
+                SELECT 1
+                FROM on24master.display_profile_x_event dpxe
+                JOIN on24master.display_profile dp
+                  ON dp.display_profile_id = dpxe.display_profile_id
+                JOIN on24master.display_element de
+                  ON de.display_element_id = dp.display_element_id
+                WHERE dpxe.event_id = ct.event_id
+                  AND dpxe.display_type_cd = 'player'
+                  AND de.display_element_value_cd = 'resourcelist'
+                  AND de.display_element_value ~ '<param name="persistenceStatus" type="String">PersistenceStatusSaveComplete</param>'
+                  AND de.display_element_value !~ '<param name="persistenceState" type="String">PersistenceStateDelete</param>'
+                  AND dp.display_element_id = ct.display_element_id
+            )
+            OR
+            -- Resource is a PDF in the portal video library
+            EXISTS (
+                SELECT 1
+                FROM on24master.video_library vl
+                WHERE vl.portal_event_id = ct.event_id
+                  AND vl.type = 'pdf'
+            )
+          )
+        GROUP BY ct.content_name
+        ORDER BY downloader_count DESC
         LIMIT $3
     """
 

@@ -412,7 +412,7 @@ KNOWN_DATA_GAPS = {
     "poll_overview",           # no singleoption/multioption responses in event_user_x_answer since 2023
     "poll_overview_performance",
     "polls_last_event",
-    "resources_last_event",    # zero rows in resource_hit_track for this client
+    # resources_last_event removed — fixed to use content_hit_track_details (not resource_hit_track)
 }
 
 

@@ -142,6 +142,8 @@
 - [x] Poll query rewrite: proper join chain event_x_media_url → media_url → media_url_x_question → question → question_x_answer → event_user_x_answer; EXMU.SESSION_ID=1; excludes test/survey URLs; supports open-text questions with sample answers
 - [x] Orchestrator history rollback: if agent call fails after tool_use is appended, pop dangling entries to prevent corrupt history on subsequent calls
 - [x] Per-test session IDs in regression tests: each test uses `test-{prompt_id}` to isolate conversation history
+- [x] Resource downloads fix: switched from `resource_hit_track` (zero rows) to `content_hit_track_details` (action='TotalHits') with display_profile/display_element filter for resource-list widgets; also updates calendar event detail
+- [x] `resources_last_event` removed from KNOWN_DATA_GAPS (now expected to have data)
 
 ## ON24 Platform Analytics Sections (Reference)
 Built-in ON24 reporting for context on what data exists and what users expect:

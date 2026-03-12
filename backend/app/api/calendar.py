@@ -159,10 +159,39 @@ async def get_calendar_event(event_id: int):
                 result["survey_response_count"] = 0
 
             try:
-                resource_row = await conn.fetchrow(
-                    "SELECT COUNT(*) AS cnt FROM on24master.resource_hit_track WHERE event_id = $1",
-                    event_id, timeout=_QUERY_TIMEOUT,
-                )
+                resource_sql = """
+                    SELECT COUNT(DISTINCT ct.event_user_id) AS cnt
+                    FROM on24master.content_hit_track_details ct
+                    WHERE ct.event_id = $1
+                      AND ct.action = 'TotalHits'
+                      AND COALESCE(ct.media_url_id, 0) != 0
+                      AND COALESCE(ct.media_category_cd, 'xxx') NOT LIKE 'custom_icon%'
+                      AND ct.event_user_id != 305999
+                      AND (
+                        EXISTS (
+                            SELECT 1
+                            FROM on24master.display_profile_x_event dpxe
+                            JOIN on24master.display_profile dp
+                              ON dp.display_profile_id = dpxe.display_profile_id
+                            JOIN on24master.display_element de
+                              ON de.display_element_id = dp.display_element_id
+                            WHERE dpxe.event_id = ct.event_id
+                              AND dpxe.display_type_cd = 'player'
+                              AND de.display_element_value_cd = 'resourcelist'
+                              AND de.display_element_value ~ '<param name="persistenceStatus" type="String">PersistenceStatusSaveComplete</param>'
+                              AND de.display_element_value !~ '<param name="persistenceState" type="String">PersistenceStateDelete</param>'
+                              AND dp.display_element_id = ct.display_element_id
+                        )
+                        OR
+                        EXISTS (
+                            SELECT 1
+                            FROM on24master.video_library vl
+                            WHERE vl.portal_event_id = ct.event_id
+                              AND vl.type = 'pdf'
+                        )
+                      )
+                """
+                resource_row = await conn.fetchrow(resource_sql, event_id, timeout=_QUERY_TIMEOUT)
                 result["resource_download_count"] = int(resource_row["cnt"]) if resource_row else 0
             except Exception:
                 result["resource_download_count"] = 0

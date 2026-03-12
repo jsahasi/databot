@@ -100,6 +100,11 @@ Implementation:
 **Decision:** Calendar API uses `event.goodafter` as start time and `event.goodtill` as end time.
 **Rationale:** ON24 DB has no `starttime`/`endtime` columns on the `event` table. `goodafter` = earliest time event is accessible; `goodtill` = expiry. These are the correct start/end columns confirmed via information_schema.
 
+## 2026-03-11: Resource Downloads Table — content_hit_track_details
+**Decision:** Resource download queries use `content_hit_track_details` with `action='TotalHits'`, NOT `resource_hit_track`.
+**Rationale:** `resource_hit_track` returned zero rows for client 10710. The correct table is `content_hit_track_details` which tracks content widget interactions. Must join to `display_profile_x_event` → `display_profile` → `display_element` (value_cd='resourcelist') to scope to only resource-list widget items (not other content hits). OR condition handles PDF portal resources via `video_library`.
+**Key filters:** `action='TotalHits'`, `media_url_id != 0`, `media_category_cd NOT LIKE 'custom_icon%'`, `event_user_id != 305999` (system user exclusion), `persistenceStatus=PersistenceStatusSaveComplete` and NOT `PersistenceStateDelete`.
+
 ## 2026-03-11: Poll Query Join Chain
 **Decision:** `query_polls` uses the full join chain: `event_x_media_url (EXMU)` → `media_url (MU)` → `media_url_x_question (MUQ)` → `question (Q)` → `question_x_answer (QA)` → `event_user_x_answer (EUA)` → `event_user (EU)` → `event (E)`.
 **Key constraints:** `EXMU.SESSION_ID = 1`, `MU.MEDIA_URL_CD = 'poll'`, join condition: `EUA.ANSWER_CD = QA.ANSWER_CD OR Q.QUESTION_TYPE_CD = 'npsrating'`.
