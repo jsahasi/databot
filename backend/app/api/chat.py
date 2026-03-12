@@ -20,10 +20,29 @@ router = APIRouter()
 _sessions: dict[str, OrchestratorAgent] = {}
 
 
-async def generate_suggestions(user_message: str, response_text: str, agent_used: str | None) -> list[str]:
+async def generate_suggestions(
+    user_message: str,
+    response_text: str,
+    agent_used: str | None,
+    has_chart: bool = False,
+    has_table: bool = False,
+) -> list[str]:
     """Generate 5 short follow-up question suggestions using Haiku."""
     client = anthropic.AsyncAnthropic()
     prompt = f"User asked: {user_message}\nAssistant answered: {response_text}"
+
+    view_rule = ""
+    if has_chart:
+        view_rule = (
+            "The response included a chart. Include 1 suggestion offering an alternative view "
+            "such as 'Show as table' or 'Show as pie chart'. "
+        )
+    elif has_table:
+        view_rule = (
+            "The response included a data table. Include 1-2 suggestions offering alternative "
+            "chart views such as 'Show as bar chart', 'Show as line chart', or 'Show as pie chart'. "
+        )
+
     response = await client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=300,
@@ -31,9 +50,10 @@ async def generate_suggestions(user_message: str, response_text: str, agent_used
             "You anticipate the next 5 questions a user would naturally ask next in a "
             "webinar analytics chatbot conversation. Think ahead: if they just saw one event, "
             "they'll want KPIs, attendees, polls, trends, comparisons, etc. "
+            f"{view_rule}"
             "Each suggestion must be 3-7 words, conversational, specific to the context. "
             "Examples: 'How did it perform?', 'Show attendee breakdown', 'Compare to last month', "
-            "'Which companies attended?', 'Show poll results'. "
+            "'Which companies attended?', 'Show poll results', 'Show as bar chart', 'Show as table'. "
             "Return only a JSON array of exactly 5 strings, nothing else."
         ),
         messages=[{"role": "user", "content": prompt}],
@@ -124,12 +144,18 @@ async def websocket_chat(websocket: WebSocket):
                     })
 
                     # Fire suggestions asynchronously — non-blocking, skip on timeout/error
+                    _has_chart = bool(result.get("chart_data"))
+                    _response_text = result.get("text", "")
+                    _has_table = "|" in _response_text and "---" in _response_text
+
                     async def _send_suggestions(
-                        ws: WebSocket, user_msg: str, text: str, agent: str | None
+                        ws: WebSocket, user_msg: str, text: str, agent: str | None,
+                        has_chart: bool, has_table: bool,
                     ) -> None:
                         try:
                             suggestions = await asyncio.wait_for(
-                                generate_suggestions(user_msg, text, agent), timeout=8.0
+                                generate_suggestions(user_msg, text, agent, has_chart, has_table),
+                                timeout=8.0,
                             )
                             await ws.send_json({"type": "suggestions", "suggestions": suggestions})
                         except Exception:
@@ -138,8 +164,10 @@ async def websocket_chat(websocket: WebSocket):
                     asyncio.create_task(_send_suggestions(
                         websocket,
                         content,
-                        result.get("text", ""),
+                        _response_text,
                         result.get("agent_used"),
+                        _has_chart,
+                        _has_table,
                     ))
 
                 except Exception as e:

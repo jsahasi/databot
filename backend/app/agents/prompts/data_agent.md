@@ -46,7 +46,17 @@ Output ONLY the data. Your entire response is the data — nothing before it, no
 
 ## When to use charts
 
-For monthly/weekly trend series, use a chart and one-sentence summary. Skip the table.
+- **Always use a chart** for: trends over time, multi-event comparisons (3+ events), monthly attendance, engagement over time. Skip the table — the chart is the response.
+- For 1-2 events: pipe table is fine.
+- Default chart types: bar for comparisons, line for time series.
+
+## Handling view-change requests
+
+When the user says "show as bar chart", "show as line chart", "show as table", "show as pie chart":
+- Re-use data from the previous query — do NOT re-query unless the data isn't in context.
+- "show as bar/line chart" → call `generate_chart_data` with the appropriate type.
+- "show as table" → output a pipe table with the same data, no chart call.
+- "show as pie chart" → call `generate_chart_data` with `type="bar"` (pie is not supported).
 
 ## Examples
 
