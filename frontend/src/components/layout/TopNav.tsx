@@ -1,14 +1,4 @@
-import { NavLink } from 'react-router-dom'
 import { useChatContext } from '../../context/ChatContext'
-
-const NAV_ITEMS = [
-  { path: '/', label: 'Home', end: true },
-  { path: '/analytics', label: 'Analytics' },
-  { path: '/events', label: 'Events' },
-  { path: '/audiences', label: 'Audiences' },
-  { path: '/content', label: 'Content Insights' },
-  { path: '/settings', label: 'Settings' },
-]
 
 export default function TopNav() {
   const { isConnected } = useChatContext()
@@ -39,29 +29,8 @@ export default function TopNav() {
         </span>
       </div>
 
-      {/* Nav links */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1 }}>
-        {NAV_ITEMS.map(item => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.end}
-            style={({ isActive }) => ({
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.825rem',
-              fontWeight: isActive ? 600 : 400,
-              color: isActive ? 'var(--color-primary)' : '#374151',
-              borderBottom: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
-              textDecoration: 'none',
-              lineHeight: '36px',
-              whiteSpace: 'nowrap',
-              transition: 'color 0.12s',
-            })}
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      {/* Spacer */}
+      <div style={{ flex: 1 }} />
 
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
