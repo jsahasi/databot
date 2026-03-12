@@ -38,7 +38,7 @@ DATA_AGENT_TOOLS = [
         "description": (
             "List and search events for the current client. "
             "Use past_only=true when the user asks for their 'last' or 'most recent' event "
-            "to exclude future-dated events. Returns event_id, event_name, goodafter (date), type, status."
+            "to exclude future-dated events. Returns event_id, description (title), goodafter (date), type, status."
         ),
         "input_schema": {
             "type": "object",

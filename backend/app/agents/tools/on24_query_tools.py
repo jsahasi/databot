@@ -49,7 +49,7 @@ async def query_events(
     sql = """
         SELECT
             event_id,
-            event_name,
+            description,
             event_type,
             goodafter,
             goodtill,
@@ -61,7 +61,7 @@ async def query_events(
         WHERE client_id = ANY($1::bigint[])
           AND ($2::text IS NULL OR event_type = $2)
           AND ($3::text IS NULL OR is_active = $3)
-          AND ($4::text IS NULL OR event_name ILIKE '%' || $4 || '%')
+          AND ($4::text IS NULL OR description ILIKE '%' || $4 || '%')
           AND ($5 = false OR goodafter <= NOW())
         ORDER BY goodafter DESC NULLS LAST
         LIMIT $6 OFFSET $7
@@ -291,7 +291,7 @@ async def query_top_events(
     sql = f"""
         SELECT
             e.event_id,
-            e.event_name,
+            e.description,
             e.event_type,
             e.goodafter,
             e.is_active,
@@ -303,7 +303,7 @@ async def query_top_events(
         WHERE e.client_id = ANY($1::bigint[])
           AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
           AND e.goodafter <= NOW()
-        GROUP BY e.event_id, e.event_name, e.event_type, e.goodafter, e.is_active
+        GROUP BY e.event_id, e.description, e.event_type, e.goodafter, e.is_active
         ORDER BY {order_col} DESC NULLS LAST
         LIMIT $3
     """  # order_col from allow-list above
