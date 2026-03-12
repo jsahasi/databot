@@ -11,7 +11,7 @@ const SUGGESTIONS = [
   'How many events ran this month?',
   'Top audience companies',
   'Event registration rates',
-  'Poll results overview',
+  'Show poll results for last event',
 ]
 
 export default function ChatPanel() {

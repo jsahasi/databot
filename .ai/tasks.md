@@ -104,13 +104,13 @@
 - [x] resources_last_event: moved to KNOWN_DATA_GAPS (zero rows in resource_hit_track for client 10710)
 - [x] Ralph loop complete: 22 passed, 4 skipped (all non-data-gap tests pass)
 
-## Poll Schema Findings (2026-03-12)
-- question_type_cd values: singleoption/multioption (polls, stopped 2023), singletext (Q&A, active)
+## Poll Schema Findings (2026-03-12, REVISED)
+- question_type_cd values: singleoption/multioption (polls — active, running regularly), singletext (Q&A)
 - question_subtype_cd: userquestion / useranswer (Q&A self-join: answer_id → question_id)
 - event_user_x_answer.answer contains answer text directly (question_x_answer not needed for responses)
-- Client 10710 has 86 poll questions (2021-2023) with zero responses in event_user_x_answer
+- Client 10710 has active poll data — polls happen regularly across events
 - dw_event_session.answered_polls is a Y/N flag, not a count; answered_surveys and asked_questions same pattern
-- Full dw_event_session columns documented in schema section above
+- CRITICAL: Cross-table poll queries MUST use event-first CTE pattern (find events by goodafter first, then join to poll data) — starting from event_user_x_answer (334M rows) causes 8s timeout
 
 ## Local Setup Notes
 - **App URL**: http://localhost:3001 (via `docker compose up --build`)

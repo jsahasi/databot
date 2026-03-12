@@ -54,7 +54,7 @@ _MIN_REGS_SUBQ = """
 
 
 def _clamp_months(months: int, max_months: int = 24) -> int:
-    return max(1, min(months, min(max_months, 24)))
+    return max(1, min(months, max_months))
 
 
 async def query_events(
@@ -386,12 +386,11 @@ async def query_questions(event_id: int, limit: int = 50) -> list[dict]:
     return _serialize([dict(r) for r in rows])
 
 
-async def query_top_events_by_polls(limit: int = 10, months: int = 24) -> list[dict]:
-    """Top events ranked by number of poll responses (not just questions).
+async def query_top_events_by_polls(limit: int = 10, months: int = 6) -> list[dict]:
+    """Top events ranked by number of poll responses.
 
-    Uses the working join chain: event_user_x_answer → event_user → media_url.
-    Only returns events that actually have poll responses.
-    Date-scoped to avoid full-table scan on 334M-row event_user_x_answer.
+    Event-first approach: find events in the date window first (indexed on client_id + goodafter),
+    then look up their poll responses. Avoids scanning 334M-row event_user_x_answer.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
@@ -399,26 +398,31 @@ async def query_top_events_by_polls(limit: int = 10, months: int = 24) -> list[d
     months = _clamp_months(months)
 
     sql = f"""
+        WITH candidate_events AS (
+            SELECT e.event_id, e.description, e.goodafter
+            FROM on24master.event e
+            WHERE e.client_id = ANY($1::bigint[])
+              AND e.goodafter >= NOW() - ($3 || ' months')::INTERVAL
+              AND e.goodafter <= NOW()
+              {_EXCL_TEST}
+        )
         SELECT
-            e.event_id,
-            e.description,
-            e.goodafter,
+            ce.event_id,
+            ce.description,
+            ce.goodafter,
             COUNT(DISTINCT eua.question_id)    AS poll_count,
             COUNT(DISTINCT eua.event_user_id)  AS respondent_count
-        FROM on24master.event_user_x_answer eua
+        FROM candidate_events ce
         JOIN on24master.event_user eu
-          ON eu.event_user_id = eua.event_user_id
-        JOIN on24master.event e
-          ON e.event_id = eu.event_id
-         AND e.client_id = ANY($1::bigint[])
+          ON eu.event_id = ce.event_id
+        JOIN on24master.event_user_x_answer eua
+          ON eua.event_user_id = eu.event_user_id
         JOIN on24master.media_url mu
           ON mu.media_url_id = eua.media_url_id
          AND mu.media_url_cd = 'poll'
          AND mu.media_url_name NOT LIKE '%<!--##test##-->%'
          AND mu.media_url_name NOT LIKE '%<!--##survey##-->%'
-        WHERE e.goodafter >= NOW() - ($3 || ' months')::INTERVAL
-          {_EXCL_TEST}
-        GROUP BY e.event_id, e.description, e.goodafter
+        GROUP BY ce.event_id, ce.description, ce.goodafter
         ORDER BY respondent_count DESC NULLS LAST
         LIMIT $2
     """
@@ -427,38 +431,42 @@ async def query_top_events_by_polls(limit: int = 10, months: int = 24) -> list[d
     return [_serialize(dict(row)) for row in rows]
 
 
-async def query_poll_overview(months: int = 24) -> list[dict]:
+async def query_poll_overview(months: int = 6) -> list[dict]:
     """Cross-event poll summary: events with poll responses, question count, respondent count.
 
-    Uses the working join chain: event_user_x_answer → event_user → media_url.
-    Scoped to past N months. Sorted by respondent count descending.
+    Event-first approach: find events in the date window first (indexed), then look up
+    their poll responses. This avoids scanning the 334M-row event_user_x_answer table.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
     months = _clamp_months(months)
 
     sql = f"""
+        WITH candidate_events AS (
+            SELECT e.event_id, e.description, e.goodafter
+            FROM on24master.event e
+            WHERE e.client_id = ANY($1::bigint[])
+              AND e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
+              AND e.goodafter <= NOW()
+              {_EXCL_TEST}
+        )
         SELECT
-            e.event_id,
-            e.description,
-            e.goodafter,
+            ce.event_id,
+            ce.description,
+            ce.goodafter,
             COUNT(DISTINCT eua.question_id)    AS poll_count,
             COUNT(DISTINCT eua.event_user_id)  AS respondent_count
-        FROM on24master.event_user_x_answer eua
+        FROM candidate_events ce
         JOIN on24master.event_user eu
-          ON eu.event_user_id = eua.event_user_id
-        JOIN on24master.event e
-          ON e.event_id = eu.event_id
-         AND e.client_id = ANY($1::bigint[])
+          ON eu.event_id = ce.event_id
+        JOIN on24master.event_user_x_answer eua
+          ON eua.event_user_id = eu.event_user_id
         JOIN on24master.media_url mu
           ON mu.media_url_id = eua.media_url_id
          AND mu.media_url_cd = 'poll'
          AND mu.media_url_name NOT LIKE '%<!--##test##-->%'
          AND mu.media_url_name NOT LIKE '%<!--##survey##-->%'
-        WHERE e.goodafter >= NOW() - ($2 || ' months')::INTERVAL
-          AND e.goodafter <= NOW()
-          {_EXCL_TEST}
-        GROUP BY e.event_id, e.description, e.goodafter
+        GROUP BY ce.event_id, ce.description, ce.goodafter
         ORDER BY respondent_count DESC NULLS LAST
         LIMIT 20
     """

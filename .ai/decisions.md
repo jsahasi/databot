@@ -106,9 +106,9 @@ Implementation:
 **Key filters:** `action='TotalHits'`, `media_url_id != 0`, `media_category_cd NOT LIKE 'custom_icon%'`, `event_user_id != 305999` (system user exclusion), `persistenceStatus=PersistenceStatusSaveComplete` and NOT `PersistenceStateDelete`.
 
 ## 2026-03-11: Poll Query Join Chain
-**Decision:** `query_polls` uses the full join chain: `event_x_media_url (EXMU)` → `media_url (MU)` → `media_url_x_question (MUQ)` → `question (Q)` → `question_x_answer (QA)` → `event_user_x_answer (EUA)` → `event_user (EU)` → `event (E)`.
-**Key constraints:** `EXMU.SESSION_ID = 1`, `MU.MEDIA_URL_CD = 'poll'`, join condition: `EUA.ANSWER_CD = QA.ANSWER_CD OR Q.QUESTION_TYPE_CD = 'npsrating'`.
-**Rationale:** Previous implementation joined directly through `question.event_id` (skipping EXMU/MU/MUQ), which was the wrong schema path. The correct path goes through `event_x_media_url` to scope to the live session and properly link poll definitions to answers.
+**Decision:** `query_polls` (per-event) uses simplified join: `event_user_x_answer → event_user → media_url (cd='poll') → question → question_x_answer`.
+**Cross-event poll queries** (`query_poll_overview`, `query_top_events_by_polls`) MUST use event-first CTE pattern: find candidate events by `goodafter` date range first (indexed), then join to poll data. Starting from `event_user_x_answer` (334M rows) causes 8s timeout.
+**Rationale:** The event table is indexed on `client_id + goodafter`. Narrowing to a small set of events first dramatically reduces the join scan on the massive answer table.
 
 ## 2026-03-11: Orchestrator History Rollback
 **Decision:** Wrap agent calls in orchestrator try/except; on failure, pop the dangling tool_use assistant message and user message from conversation history before re-raising.
