@@ -189,6 +189,12 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Thumbs-down feedback form: added footer text — "Your suggestion will inform LLM refinement. Saved to improvement-inbox.txt"
 - [x] Knowledge base coverage verified: 6/8 options have strong ChromaDB article coverage
 
+## Phase 8 Addendum 9: Help Mode Suggestions + Empty Poll Handling — COMPLETE (2026-03-11)
+- [x] Help mode suggestions: when agent_used="knowledge_base", generate help-center-focused follow-up chips (how-to questions) instead of data/analytics suggestions
+- [x] Data escape chip: always append "Explore my event data" as the last suggestion chip in help mode to let users switch back to data mode
+- [x] Empty poll handling: data agent responds "No poll results for [event title]." instead of generic "None found." when get_polls returns empty for a specific event
+- [x] Guaranteed poll chip: when response contains "no poll results for", inject "Show polls for the most recent event that had polls" as first suggestion
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)

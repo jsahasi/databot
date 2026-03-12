@@ -65,10 +65,34 @@ async def generate_suggestions(
             "Do NOT suggest 'Show as table'."
         )
 
-    response = await client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=300,
-        system=(
+    # Branch the system prompt for knowledge-base (help) mode vs data mode
+    if agent_used == "knowledge_base":
+        system_prompt = (
+            "The user just asked a platform how-to question and got an answer from the ON24 knowledge base. "
+            "They are in 'help mode' — anticipate the next 4-5 related platform how-to questions they would naturally ask. "
+            "Think about what someone learning the ON24 platform would want to know next. "
+            f"User asked: {user_message}\n"
+            "Generate suggestions that stay in the help/how-to domain. "
+            "Each suggestion must start with 'How do I' or be a short how-to phrase (3-8 words). "
+            "\n\nAvailable help topics (suggest ONLY from these areas):\n"
+            "- Setting up webinars and events\n"
+            "- Configuring registration pages\n"
+            "- Setting up and managing polls\n"
+            "- Setting up integrations (HubSpot, Salesforce, Marketo, Eloqua, etc.)\n"
+            "- Preparing as a presenter\n"
+            "- Viewing event analytics and reports\n"
+            "- Creating Engagement Hubs\n"
+            "- Using Connect integrations\n"
+            "- Console Builder and audience console tools\n"
+            "- Breakout rooms\n"
+            "- Q&A and chat configuration\n"
+            "- SimLive and on-demand events\n"
+            "\nDo NOT suggest data/analytics queries (attendance trends, KPIs, etc.) — "
+            "the last item in the array will be replaced with a data exploration chip automatically. "
+            "\nReturn only a JSON array of exactly 5 strings, nothing else."
+        )
+    else:
+        system_prompt = (
             "You anticipate the next 5 questions a user would naturally ask next in a "
             "webinar analytics chatbot conversation. Think ahead: if they just saw one event, "
             "they'll want KPIs, attendees, polls, trends, comparisons, etc. "
@@ -100,7 +124,12 @@ async def generate_suggestions(
             "\nExamples: 'How did it perform?', 'Show attendee breakdown', 'Compare to last month', "
             "'Which companies attended?', 'Show poll results', 'Show as bar chart', 'Show as pie chart', 'Show as table'. "
             "Return only a JSON array of exactly 5 strings, nothing else."
-        ),
+        )
+
+    response = await client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=300,
+        system=system_prompt,
         messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
@@ -108,7 +137,13 @@ async def generate_suggestions(
     match = re.search(r'\[.*\]', text, re.DOTALL)
     raw = match.group() if match else text
     suggestions: list[str] = json.loads(raw)
-    return suggestions[:5]
+    suggestions = suggestions[:5]
+
+    # In help mode, always replace the last chip with a data exploration escape
+    if agent_used == "knowledge_base":
+        suggestions = suggestions[:4] + ["Explore my event data"]
+
+    return suggestions
 
 
 def _get_or_create_agent(session_id: str) -> OrchestratorAgent:
@@ -229,6 +264,10 @@ async def websocket_chat(websocket: WebSocket):
                                 generate_suggestions(user_msg, text, agent, has_chart, has_table, chart_type),
                                 timeout=8.0,
                             )
+                            # Guarantee a "find event with polls" chip when polls were empty
+                            if "no poll results for" in text.lower():
+                                poll_chip = "Show polls for the most recent event that had polls"
+                                suggestions = [poll_chip] + [s for s in suggestions if s != poll_chip][:4]
                             await ws.send_json({"type": "suggestions", "suggestions": suggestions})
                         except Exception:
                             pass  # Suggestions are best-effort; never block the user
