@@ -216,7 +216,7 @@ async def query_polls(event_id: int) -> list[dict]:
           ON q.event_id = e.event_id
          AND e.client_id = ANY($2::bigint[])
         WHERE q.event_id = $1
-          AND q.question_type_cd = 'POLL'
+          AND q.question_type_cd IN ('singleoption', 'multioption')
         ORDER BY q.question_id
     """
 
@@ -236,7 +236,7 @@ async def query_polls(event_id: int) -> list[dict]:
           ON eua.answer_id = qa.answer_id
          AND eua.question_id = qa.question_id
         WHERE q.event_id = $1
-          AND q.question_type_cd = 'POLL'
+          AND q.question_type_cd IN ('singleoption', 'multioption')
         GROUP BY qa.question_id, qa.answer_id, qa.answer_text
         ORDER BY qa.question_id, qa.answer_id
     """

@@ -53,8 +53,8 @@ export default function ChatPanel() {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      background: '#f9fafb',
-      backgroundImage: 'radial-gradient(#d1d5db 1px, transparent 1px)',
+      background: 'var(--color-bg)',
+      backgroundImage: 'radial-gradient(var(--color-border) 1px, transparent 1px)',
       backgroundSize: '20px 20px',
       position: 'relative',
     }}>
@@ -98,7 +98,7 @@ export default function ChatPanel() {
               marginBottom: '2rem',
               textAlign: 'center',
             }}>
-              Hi, Jayesh! What would you like to do today?
+              Hi, Jayesh! What would you like to explore?
             </h2>
 
             {/* Suggestion tiles — 2-column grid */}
@@ -115,7 +115,7 @@ export default function ChatPanel() {
                   onClick={() => { sendMessage(s); setInput('') }}
                   style={{
                     padding: '0.875rem 1rem',
-                    background: '#fff',
+                    background: 'var(--color-card)',
                     border: '1px solid #c7d2fe',
                     borderRadius: 8,
                     color: 'var(--color-primary-hover, #4338ca)',
@@ -132,7 +132,7 @@ export default function ChatPanel() {
                     ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = '#fff'
+                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-card)'
                     ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#c7d2fe'
                   }}
                 >
@@ -162,7 +162,7 @@ export default function ChatPanel() {
                         style={{
                           padding: '0.35rem 0.875rem',
                           fontSize: '0.775rem',
-                          background: '#fff',
+                          background: 'var(--color-card)',
                           border: '1px solid #c7d2fe',
                           borderRadius: 20,
                           color: '#4338ca',
@@ -187,8 +187,8 @@ export default function ChatPanel() {
       {/* Input bar — pinned to bottom */}
       <div style={{
         flexShrink: 0,
-        background: '#fff',
-        borderTop: '1px solid #e5e7eb',
+        background: 'var(--color-card)',
+        borderTop: '1px solid var(--color-border)',
         padding: '0.875rem 2rem',
       }}>
         {activeAgent && (

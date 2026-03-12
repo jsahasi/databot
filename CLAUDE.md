@@ -43,6 +43,14 @@ frontend/
 docker compose up --build   # Starts all services; runs alembic upgrade head before uvicorn
 # App:      http://localhost:3001
 # API docs: http://localhost:8000/docs
+# WebSocket: ws://localhost:8000/ws/chat
+#
+# NOTE: postgres host port is 5433 (not 5432) — host 5432 is taken by agentic-video-db-1.
+#   Internal container port is still 5432; backend connects via Docker network (unaffected).
+#   Local psql/pgAdmin: use port 5433.
+#
+# NOTE: ON24_DB_URL points to 10.3.7.233 (ON24 internal network).
+#   Queries to on24master will fail if not on VPN or the ON24 corporate network.
 
 # Backend (local dev)
 cd backend && pip install -e ".[dev]"
@@ -111,7 +119,7 @@ Server sends message types: `agent_start`, `agent_routing`, `text`, `chart_data`
 # Docker compose loads via env_file: .env.local; environment: block overrides DATABASE_URL
 
 DATABASE_URL=postgresql+asyncpg://databot:<password>@postgres:5432/databot  # overridden in compose
-ON24_DB_URL=postgresql+asyncpg://ON24_RO:<pass>@10.3.7.233:5459/on24master  # ON24 master (read-only)
+ON24_DB_URL=postgresql+asyncpg://ON24_RO:<pass>@10.3.7.233:5458/on24master  # ON24 PROD master (read-only); requires VPN/internal network
 DB_PG_SSL_ROOT_CERT_CONTENT=<ca pem content>
 DB_PG_SSL_CERT_CONTENT=<client cert content>
 DB_PG_SSL_KEY_CONTENT=<client key content>

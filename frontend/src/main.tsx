@@ -14,6 +14,9 @@ const queryClient = new QueryClient({
   },
 })
 
+const saved = localStorage.getItem('theme')
+if (saved) document.documentElement.setAttribute('data-theme', saved)
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

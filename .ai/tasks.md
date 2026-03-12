@@ -58,6 +58,21 @@
 - [x] Chat input autofocus on page load
 - [x] Git remote: GitHub only (https://github.com/jsahasi/databot, private)
 
+## Phase 8: UI Polish + Markdown — COMPLETE (2026-03-11)
+- [x] TopNav renamed: "DataBot" → "ON24 Data Agent", logo "DB" → "ON24"
+- [x] Light/dark mode toggle (pill switch) in TopNav, persisted via localStorage
+- [x] Dark mode via `[data-theme="dark"]` CSS attribute on `<html>`; variables in global.css
+- [x] ChatPanel + ChatMessage: all hardcoded colors replaced with CSS variables
+- [x] react-markdown + remark-gfm for proper markdown rendering in chat
+- [x] Agent prompts: no-emoji rule, no markdown headers, use bold sparingly (content_agent.md + data_agent.md)
+- [x] Port conflict fix: postgres host port 5432 → 5433 (conflict with agentic-video-db-1 container)
+
+## Local Setup Notes
+- **App URL**: http://localhost:3001 (via `docker compose up --build`)
+- **Postgres host port**: 5433 (internal container port remains 5432; only host mapping changed)
+- **ON24 DB**: requires VPN or ON24 internal network (10.3.7.233 not reachable externally)
+- **Active ON24 DB**: PROD — 10.3.7.233:5458/on24master (not QA port 5459)
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Explore question_x_answer + event_user_x_answer for poll response counts

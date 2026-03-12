@@ -71,6 +71,18 @@ Implementation:
 **Decision:** Fire-and-forget `asyncio.create_task` writes to `agent_audit_logs` after each tool call.
 **Rationale:** Logging must not block the agent response. Errors in audit writes are swallowed.
 
+## 2026-03-11: Postgres Host Port 5433
+**Decision:** Changed the Docker Compose host port mapping for the postgres container from `5432:5432` to `5433:5432`.
+**Rationale:** The host machine had another project's postgres container (agentic-video-db-1) already bound to host port 5432, causing a bind conflict on `docker compose up`. The internal container port remains 5432; backend connects via Docker network using the service name `postgres:5432` — unaffected by this change. Connection tools and local psql clients must use port 5433.
+
+## 2026-03-11: react-markdown for Chat Rendering
+**Decision:** Use `react-markdown` + `remark-gfm` for rendering agent responses in ChatMessage, replacing the custom pipe-table regex parser.
+**Rationale:** Custom parser only handled tables; agent responses now include bold text, lists, and inline code. react-markdown handles the full CommonMark + GFM spec (tables, strikethrough, task lists) with minimal bundle impact. All markdown elements are styled via CSS variables to support dark mode.
+
+## 2026-03-11: Dark Mode via data-theme CSS Attribute
+**Decision:** Dark mode is toggled by setting `data-theme="dark"` on the `<html>` element. CSS variables for both themes are declared in `global.css` under `:root` (light) and `[data-theme="dark"]` selectors. Preference is persisted to `localStorage`.
+**Rationale:** Attribute-based theming is zero-JS at render time, works with SSR, and avoids flash-of-wrong-theme if applied before paint. Storing in localStorage ensures the toggle survives page reloads. All components use CSS variables (`var(--color-*)`) so no component-level JS is needed to respond to theme changes.
+
 ## 2026-03-11: ON24 Client Hierarchy
 **Decision:** Queries must scope to full sub-client tree, not just root client_id.
 **Finding:** client 10710 has 9 sub-clients (22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909). Using only client_id=10710 misses ~13% of events (1,776 of 13,293 total).

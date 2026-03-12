@@ -1,14 +1,21 @@
+import { useEffect, useState } from 'react'
 import { useChatContext } from '../../context/ChatContext'
 
 export default function TopNav() {
   const { isConnected } = useChatContext()
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+    localStorage.setItem('theme', dark ? 'dark' : 'light')
+  }, [dark])
 
   return (
     <header style={{
       height: 52,
       flexShrink: 0,
-      background: '#fff',
-      borderBottom: '1px solid #e5e7eb',
+      background: 'var(--color-card)',
+      borderBottom: '1px solid var(--color-border)',
       display: 'flex',
       alignItems: 'center',
       paddingLeft: '1.25rem',
@@ -22,10 +29,10 @@ export default function TopNav() {
           width: 28, height: 28, borderRadius: 6,
           background: 'var(--color-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '-0.02em',
-        }}>DB</div>
-        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>
-          DataBot
+          color: '#fff', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '-0.02em',
+        }}>ON24</div>
+        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
+          ON24 Data Agent
         </span>
       </div>
 
@@ -34,12 +41,41 @@ export default function TopNav() {
 
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+        {/* Dark mode toggle */}
+        <button
+          onClick={() => setDark(d => !d)}
+          title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{
+            width: 36, height: 20,
+            borderRadius: 10,
+            background: dark ? 'var(--color-primary)' : '#d1d5db',
+            border: 'none',
+            cursor: 'pointer',
+            position: 'relative',
+            transition: 'background 0.2s',
+            flexShrink: 0,
+          }}
+        >
+          <span style={{
+            position: 'absolute',
+            top: 2, left: dark ? 18 : 2,
+            width: 16, height: 16,
+            borderRadius: '50%',
+            background: '#fff',
+            transition: 'left 0.2s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.6rem',
+          }}>
+            {dark ? '🌙' : '☀️'}
+          </span>
+        </button>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
           <div style={{
             width: 6, height: 6, borderRadius: '50%',
             background: isConnected ? '#10b981' : '#ef4444',
           }} />
-          <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
             {isConnected ? 'Connected' : 'Reconnecting'}
           </span>
         </div>
@@ -47,18 +83,18 @@ export default function TopNav() {
           padding: '0.3rem 0.75rem',
           fontSize: '0.775rem',
           background: 'transparent',
-          border: '1px solid #d1d5db',
+          border: '1px solid var(--color-border)',
           borderRadius: 6,
-          color: '#374151',
+          color: 'var(--color-text)',
           cursor: 'pointer',
         }}>
           Get Help
         </button>
         <div style={{
           width: 30, height: 30, borderRadius: '50%',
-          background: '#e5e7eb',
+          background: 'var(--color-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.75rem', color: '#374151', fontWeight: 600,
+          fontSize: '0.75rem', color: 'var(--color-text)', fontWeight: 600,
           cursor: 'pointer',
         }}>
           JS

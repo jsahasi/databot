@@ -2,6 +2,8 @@ import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { ChatMessage as ChatMessageType } from '../../hooks/useChat'
 
 const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
@@ -42,112 +44,43 @@ interface ChatMessageProps {
   message: ChatMessageType
 }
 
-/** Detect whether a line is a markdown table separator (|---|---|) */
-function isSeparatorRow(line: string) {
-  return /^\s*\|[\s\-:|]+\|\s*$/.test(line)
-}
-
-/** Parse a markdown pipe-table line into cell strings */
-function parseCells(line: string): string[] {
-  return line
-    .split('|')
-    .slice(1, -1)          // drop before first | and after last |
-    .map(c => c.trim())
-}
-
-/**
- * Render assistant message content.
- * Splits content into text blocks and markdown tables and renders each appropriately.
- */
-function renderContent(content: string) {
-  const lines = content.split('\n')
-  const segments: Array<{ type: 'text'; text: string } | { type: 'table'; rows: string[][] }> = []
-
-  let i = 0
-  while (i < lines.length) {
-    const line = lines[i]
-    // A table block: current line has pipes AND next line (if any) is a separator
-    if (
-      line.trim().startsWith('|') &&
-      i + 1 < lines.length &&
-      isSeparatorRow(lines[i + 1])
-    ) {
-      const tableRows: string[][] = []
-      while (i < lines.length && lines[i].trim().startsWith('|')) {
-        if (!isSeparatorRow(lines[i])) {
-          tableRows.push(parseCells(lines[i]))
-        }
-        i++
-      }
-      segments.push({ type: 'table', rows: tableRows })
-    } else {
-      // Accumulate into a text block
-      const last = segments[segments.length - 1]
-      if (last?.type === 'text') {
-        last.text += '\n' + line
-      } else {
-        segments.push({ type: 'text', text: line })
-      }
-      i++
-    }
-  }
-
-  return segments.map((seg, idx) => {
-    if (seg.type === 'table') {
-      const [header, ...body] = seg.rows
-      return (
-        <div key={idx} style={{ overflowX: 'auto', margin: '0.5rem 0' }}>
-          <table style={{
-            borderCollapse: 'collapse',
-            fontSize: '0.8rem',
-            lineHeight: 1.5,
-            width: '100%',
-            minWidth: 'max-content',
-          }}>
-            {header && (
-              <thead>
-                <tr>
-                  {header.map((h, j) => (
-                    <th key={j} style={{
-                      padding: '0.3rem 0.75rem',
-                      textAlign: 'left',
-                      fontWeight: 600,
-                      borderBottom: '2px solid #cbd5e1',
-                      whiteSpace: 'nowrap',
-                      color: '#374151',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-            )}
-            <tbody>
-              {body.map((row, ri) => (
-                <tr key={ri} style={{ background: ri % 2 === 1 ? '#f8fafc' : 'transparent' }}>
-                  {row.map((cell, ci) => (
-                    <td key={ci} style={{
-                      padding: '0.3rem 0.75rem',
-                      borderBottom: '1px solid #e2e8f0',
-                      whiteSpace: 'nowrap',
-                      color: '#1a202c',
-                    }}>{cell}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )
-    }
-
-    // Plain text block — trim leading/trailing blank lines
-    const trimmed = seg.text.replace(/^\n+/, '').replace(/\n+$/, '')
-    if (!trimmed) return null
-    return (
-      <span key={idx} style={{ whiteSpace: 'pre-wrap', display: 'block' }}>
-        {trimmed}
-      </span>
-    )
-  })
+const mdComponents = {
+  h1: ({ children }: any) => <h1 style={{ fontSize: '1rem', fontWeight: 700, margin: '0.75rem 0 0.25rem' }}>{children}</h1>,
+  h2: ({ children }: any) => <h2 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0.75rem 0 0.25rem' }}>{children}</h2>,
+  h3: ({ children }: any) => <h3 style={{ fontSize: '0.875rem', fontWeight: 600, margin: '0.5rem 0 0.2rem' }}>{children}</h3>,
+  p: ({ children }: any) => <p style={{ margin: '0.3rem 0' }}>{children}</p>,
+  strong: ({ children }: any) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+  em: ({ children }: any) => <em>{children}</em>,
+  hr: () => <hr style={{ border: 'none', borderTop: '1px solid #cbd5e1', margin: '0.5rem 0' }} />,
+  blockquote: ({ children }: any) => (
+    <blockquote style={{ borderLeft: '3px solid #6366f1', paddingLeft: '0.75rem', margin: '0.4rem 0', color: '#4b5563', fontStyle: 'italic' }}>
+      {children}
+    </blockquote>
+  ),
+  ul: ({ children }: any) => <ul style={{ paddingLeft: '1.25rem', margin: '0.3rem 0' }}>{children}</ul>,
+  ol: ({ children }: any) => <ol style={{ paddingLeft: '1.25rem', margin: '0.3rem 0' }}>{children}</ol>,
+  li: ({ children }: any) => <li style={{ margin: '0.15rem 0' }}>{children}</li>,
+  code: ({ children, className }: any) => className
+    ? <pre style={{ background: '#1e293b', color: '#e2e8f0', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', fontSize: '0.78rem', overflowX: 'auto', margin: '0.4rem 0' }}><code>{children}</code></pre>
+    : <code style={{ background: '#e2e8f0', borderRadius: '0.2rem', padding: '0.1rem 0.3rem', fontSize: '0.8rem' }}>{children}</code>,
+  table: ({ children }: any) => (
+    <div style={{ overflowX: 'auto', margin: '0.5rem 0' }}>
+      <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem', lineHeight: 1.5, width: '100%', minWidth: 'max-content' }}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children }: any) => (
+    <th style={{ padding: '0.3rem 0.75rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #cbd5e1', whiteSpace: 'nowrap', color: '#374151' }}>
+      {children}
+    </th>
+  ),
+  td: ({ children }: any) => (
+    <td style={{ padding: '0.3rem 0.75rem', borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap', color: '#1a202c' }}>
+      {children}
+    </td>
+  ),
+  tr: ({ children }: any) => <tr>{children}</tr>,
 }
 
 export default function ChatMessage({ message }: ChatMessageProps) {
@@ -174,7 +107,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         maxWidth: isUser ? '75%' : '90%',
         padding: '0.625rem 0.875rem',
         borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
-        background: isUser ? 'var(--color-primary)' : '#f1f5f9',
+        background: isUser ? 'var(--color-primary)' : 'var(--color-card)',
         color: isUser ? '#fff' : 'var(--color-text)',
         fontSize: '0.85rem', lineHeight: 1.5,
         wordBreak: 'break-word',
@@ -189,7 +122,9 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         ) : isUser ? (
           <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
         ) : (
-          renderContent(message.content)
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+            {message.content}
+          </ReactMarkdown>
         )}
       </div>
 
