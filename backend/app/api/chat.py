@@ -65,26 +65,32 @@ async def generate_suggestions(
             "Do NOT suggest 'Show as table'."
         )
 
-    # Branch the system prompt for knowledge-base (help) mode vs data mode
+    # Fixed agent-switch chips appended after LLM context chips.
+    # Keys = agent that just answered; values = switch chips for the other agents.
+    _AGENT_SWITCHES: dict[str | None, list[str]] = {
+        "concierge":     ["Explore my event data", "Content performance insights"],
+        "data_agent":    ["How do I...?",           "Content performance insights"],
+        "content_agent": ["Explore my event data",  "How do I...?"],
+        "admin_agent":   ["Explore my event data",  "How do I...?"],
+        None:            ["Explore my event data",  "How do I...?"],
+    }
+    switch_chips = _AGENT_SWITCHES.get(agent_used, _AGENT_SWITCHES[None])
+
+    # Branch the system prompt for concierge (help) mode vs data/content mode
     if agent_used == "concierge":
         system_prompt = (
             "The user just asked a how-to question about ON24 and got an answer. "
-            "Generate 4 follow-up questions that are DIRECTLY related to the specific topic just answered — "
-            "drill deeper into that same topic, cover adjacent sub-features, or address common next steps. "
-            "Do NOT generate generic ON24 how-to questions unrelated to the current answer. "
+            "Generate 2 follow-up questions DIRECTLY related to the specific topic just answered — "
+            "drill deeper, cover adjacent sub-features, or address common next steps. "
+            "Do NOT generate generic unrelated how-to questions. "
             f"User asked: {user_message}\n"
             f"The answer covered: {bot_response[:400]}\n"
-            "Example: if the answer was about registration pages, good follow-ups are about specific sections "
-            "(SEO settings, managing registrants, conditional fields, confirmation emails) — "
-            "NOT generic topics like 'How do I set up polls'.\n"
             "Each suggestion must be a short how-to phrase (3-8 words), conversational. "
-            "Do NOT suggest data/analytics queries — "
-            "the last chip is always 'Explore my event data' added automatically. "
-            "Return only a JSON array of exactly 4 strings, nothing else."
+            "Return only a JSON array of exactly 2 strings, nothing else."
         )
     else:
         system_prompt = (
-            "You anticipate the next 5 questions a user would naturally ask next in a "
+            "You anticipate the next 2 questions a user would naturally ask next in a "
             "webinar analytics chatbot conversation. Think ahead: if they just saw one event, "
             "they'll want KPIs, attendees, polls, trends, comparisons, etc. "
             f"{view_rule}"
@@ -103,38 +109,27 @@ async def generate_suggestions(
             "- Resource downloads for an event\n"
             "- Charts (bar, line, pie) of the above data\n"
             "- Content topic analysis and recommendations\n"
-            "- Platform how-to questions (searches knowledge base)\n"
             "\nDo NOT suggest anything outside this list. Specifically NEVER suggest:\n"
-            "- Speaker/presenter performance or metrics (not tracked per-speaker)\n"
-            "- Region, geography, or location data (not available)\n"
+            "- Speaker/presenter performance or metrics\n"
+            "- Region, geography, or location data\n"
             "- Individual attendee details or contact info\n"
             "- Revenue, ROI, or financial metrics\n"
-            "- Email campaign metrics\n"
-            "- A/B testing or experiments\n"
             "- Anything the response already said the system cannot do\n"
-            "\nExamples: 'How did it perform?', 'Show attendee breakdown', 'Compare to last month', "
-            "'Which companies attended?', 'Show poll results', 'Show as bar chart', 'Show as pie chart', 'Show as table'. "
-            "Return only a JSON array of exactly 5 strings, nothing else."
+            "\nReturn only a JSON array of exactly 2 strings, nothing else."
         )
 
     response = await client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=300,
+        max_tokens=150,
         system=system_prompt,
         messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
-    # Extract JSON array even if Haiku wraps it in prose
     match = re.search(r'\[.*\]', text, re.DOTALL)
     raw = match.group() if match else text
-    suggestions: list[str] = json.loads(raw)
-    suggestions = suggestions[:5]
+    context_chips: list[str] = json.loads(raw)[:2]
 
-    # In help mode, always replace the last chip with a data exploration escape
-    if agent_used == "concierge":
-        suggestions = suggestions[:4] + ["Explore my event data"]
-
-    return suggestions
+    return context_chips + switch_chips + ["Home"]
 
 
 def _get_or_create_agent(session_id: str) -> OrchestratorAgent:

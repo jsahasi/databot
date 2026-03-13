@@ -42,7 +42,7 @@ const CONFIG_LINKS = [
 ]
 
 export default function ChatPanel() {
-  const { messages, isProcessing, activeAgent, sendMessage, openCalendar } = useChatContext()
+  const { messages, isProcessing, activeAgent, sendMessage, openCalendar, resetChat } = useChatContext()
   const [input, setInput] = useState('')
   const [showHowDoI, setShowHowDoI] = useState(false)
   const [showExperiences, setShowExperiences] = useState(false)
@@ -374,7 +374,12 @@ export default function ChatPanel() {
                       <button
                         key={i}
                         aria-label={`Suggest: ${s}`}
-                        onClick={() => { sendMessage(s); setInput('') }}
+                        onClick={() => {
+                          if (s === 'Home') { resetChat() }
+                          else if (s === 'How do I...?') { setShowHowDoI(true) }
+                          else if (s === 'Recent events') { openCalendar() }
+                          else { sendMessage(s); setInput('') }
+                        }}
                         style={{
                           padding: '0.35rem 0.875rem',
                           fontSize: '0.775rem',
