@@ -205,33 +205,40 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
         {types.map(t => <option key={t} value={t}>{aiTypeLabel(t)}</option>)}
       </select>
 
-      {/* Section tabs — only for Key Takeaways */}
-      {selectedType === 'KEYTAKEAWAYS' && availableTabs.length > 1 && (
-        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+      {/* Section tabs — only for Key Takeaways when sections are found */}
+      {selectedType === 'KEYTAKEAWAYS' && availableTabs.length > 0 && (
+        <div style={{
+          display: 'flex', borderBottom: '2px solid var(--color-border)',
+          marginBottom: '0.6rem', gap: 0,
+        }}>
           {availableTabs.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              fontSize: '0.65rem', fontWeight: 500,
-              padding: '0.15rem 0.55rem', borderRadius: 20, cursor: 'pointer',
-              border: '1px solid rgba(16,185,129,0.35)',
-              background: activeTab === tab ? '#10b981' : 'rgba(16,185,129,0.08)',
-              color: activeTab === tab ? '#fff' : '#10b981',
+              fontSize: '0.7rem', fontWeight: activeTab === tab ? 600 : 400,
+              padding: '0.3rem 0.65rem',
+              border: 'none', borderBottom: activeTab === tab ? '2px solid #10b981' : '2px solid transparent',
+              marginBottom: -2,
+              background: 'transparent',
+              color: activeTab === tab ? '#10b981' : 'var(--color-text-secondary)',
+              cursor: 'pointer', whiteSpace: 'nowrap',
             }}>{tab}</button>
           ))}
         </div>
       )}
 
-      {/* Content */}
-      {content && (
-        <div
-          dangerouslySetInnerHTML={{ __html: content }}
-          style={{
-            maxHeight: 240, overflowY: 'auto',
-            background: 'var(--color-bg)', border: '1px solid var(--color-border)',
-            borderRadius: 6, padding: '0.625rem 0.75rem',
-            fontSize: '0.75rem', color: 'var(--color-text)', lineHeight: 1.6,
-          }}
-        />
-      )}
+      {/* Content — no inner scroll; outer panel scrolls */}
+      {(() => {
+        const html = content ?? (selectedType === 'KEYTAKEAWAYS' ? articles['KEYTAKEAWAYS'] : undefined)
+        return html ? (
+          <div
+            dangerouslySetInnerHTML={{ __html: html }}
+            style={{
+              background: 'var(--color-bg)', border: '1px solid var(--color-border)',
+              borderRadius: 6, padding: '0.625rem 0.75rem',
+              fontSize: '0.75rem', color: 'var(--color-text)', lineHeight: 1.6,
+            }}
+          />
+        ) : null
+      })()}
     </div>
   )
 }
@@ -268,11 +275,11 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
 
   return (
     <div style={{
-      width: 340, flexShrink: 0,
+      width: 360, flexShrink: 0,
       borderLeft: '1px solid var(--color-border)',
       background: 'var(--color-bg)',
       display: 'flex', flexDirection: 'column',
-      overflow: 'auto',
+      overflowY: 'auto', overflowX: 'hidden',
     }}>
       {/* Colour bar header */}
       <div style={{ height: 4, background: color, flexShrink: 0 }} />
