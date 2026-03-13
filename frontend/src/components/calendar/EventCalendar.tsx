@@ -106,80 +106,85 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
 
 // ─── Event Detail Panel ───────────────────────────────────────────────────────
 
+const KT_TABS = ['Executive Summary', 'Takeaways', 'Quote', 'Other'] as const
+type KtTab = typeof KT_TABS[number]
+
+// Map raw HTML section headings → display tab names
+const KT_HEADING_MAP: Record<string, KtTab> = {
+  'Executive Summary': 'Executive Summary',
+  'Key Takeaways': 'Takeaways',
+  'Key Quote': 'Quote',
+}
+
+function parseKtSections(html: string): Partial<Record<KtTab, string>> {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const raw: Record<string, string> = {}
+  let current = 'Other'
+  const buf: string[] = []
+  const flush = () => {
+    if (buf.length) { raw[current] = (raw[current] ?? '') + buf.join(''); buf.length = 0 }
+  }
+  for (const el of Array.from(doc.body.children)) {
+    const heading = (el as HTMLElement).querySelector('[style*="font-size: 18px"]')
+    if (heading) {
+      flush()
+      const headingText = heading.textContent?.trim() ?? ''
+      current = KT_HEADING_MAP[headingText] ?? 'Other'
+    } else buf.push((el as HTMLElement).outerHTML)
+  }
+  flush()
+  return raw as Partial<Record<KtTab, string>>
+}
+
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
-  const [expanded, setExpanded] = useState(true)
+  const sections = parseKtSections(ai.keytakeaways_text!)
+  const available = KT_TABS.filter(t => sections[t])
+  const [activeTab, setActiveTab] = useState<KtTab>(available[0] ?? 'Other')
   const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${ai.source_event_id}`
+
   return (
-    <div style={{
-      background: 'var(--color-card)', borderRadius: 10,
-      padding: '0.875rem 1rem',
-      border: '1px solid var(--color-border)',
-    }}>
-      <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-        AI-ACE Content
-      </div>
-
-      {/* Header row: link + expand badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <a
-          href={mmUrl}
-          target="_blank"
-          rel="noreferrer"
-          style={{ fontSize: '0.8rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}
-        >
-          Key Takeaways ↗
+    <div style={{ background: 'var(--color-card)', borderRadius: 10, padding: '0.875rem 1rem', border: '1px solid var(--color-border)' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+        <span style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          AI-ACE Content
+        </span>
+        <a href={mmUrl} target="_blank" rel="noreferrer"
+          style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}>
+          Open in Media Manager ↗
         </a>
-        <button
-          onClick={() => setExpanded(v => !v)}
-          style={{
-            fontSize: '0.7rem', fontWeight: 600,
-            background: 'rgba(16,185,129,0.1)', color: '#10b981',
-            border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20,
-            padding: '0.15rem 0.5rem', cursor: 'pointer', lineHeight: 1.4,
-          }}
-        >
-          {expanded ? '▲' : `+${ai.count}`}
-        </button>
       </div>
 
-      {/* Expanded: type chips + scrollable text */}
-      {expanded && (
-        <div style={{ marginTop: '0.6rem' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.6rem' }}>
-            {ai.types.map(type => (
-              <a
-                key={type}
-                href={mmUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  fontSize: '0.7rem', fontWeight: 500,
-                  background: 'rgba(16,185,129,0.1)', color: '#10b981',
-                  border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20,
-                  padding: '0.2rem 0.6rem', textDecoration: 'none', display: 'inline-block',
-                }}
-              >
-                {type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
-              </a>
-            ))}
-          </div>
-          {ai.keytakeaways_text && (
-            <div
-              dangerouslySetInnerHTML={{ __html: ai.keytakeaways_text }}
-              style={{
-                maxHeight: 220,
-                overflowY: 'auto',
-                background: 'var(--color-bg)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 6,
-                padding: '0.625rem 0.75rem',
-                fontSize: '0.75rem',
-                color: 'var(--color-text)',
-                lineHeight: 1.6,
-              }}
-            />
-          )}
-        </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+        {available.map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{
+            fontSize: '0.68rem', fontWeight: 500,
+            padding: '0.2rem 0.6rem', borderRadius: 20, cursor: 'pointer',
+            border: '1px solid rgba(16,185,129,0.4)',
+            background: activeTab === tab ? '#10b981' : 'rgba(16,185,129,0.08)',
+            color: activeTab === tab ? '#fff' : '#10b981',
+            transition: 'all 0.15s',
+          }}>{tab}</button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {sections[activeTab] && (
+        <div
+          dangerouslySetInnerHTML={{ __html: sections[activeTab]! }}
+          style={{
+            maxHeight: 240, overflowY: 'auto',
+            background: 'var(--color-bg)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 6,
+            padding: '0.625rem 0.75rem',
+            fontSize: '0.75rem',
+            color: 'var(--color-text)',
+            lineHeight: 1.6,
+          }}
+        />
       )}
     </div>
   )
