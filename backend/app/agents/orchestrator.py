@@ -188,7 +188,7 @@ class OrchestratorAgent:
 
                         return {
                             "text": text,
-                            "agent_used": "knowledge_base",
+                            "agent_used": "concierge",
                             "chart_data": None,
                             "event_card": None,
                             "poll_cards": None,

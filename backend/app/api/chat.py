@@ -66,7 +66,7 @@ async def generate_suggestions(
         )
 
     # Branch the system prompt for knowledge-base (help) mode vs data mode
-    if agent_used == "knowledge_base":
+    if agent_used == "concierge":
         system_prompt = (
             "The user just asked a platform how-to question and got an answer from the ON24 knowledge base. "
             "They are in 'help mode' — anticipate the next 4-5 related platform how-to questions they would naturally ask. "
@@ -140,7 +140,7 @@ async def generate_suggestions(
     suggestions = suggestions[:5]
 
     # In help mode, always replace the last chip with a data exploration escape
-    if agent_used == "knowledge_base":
+    if agent_used == "concierge":
         suggestions = suggestions[:4] + ["Explore my event data"]
 
     return suggestions
