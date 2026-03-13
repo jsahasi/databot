@@ -1,16 +1,33 @@
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useChatContext } from '../../context/ChatContext'
+
+const DOC_LINKS = [
+  { label: 'Market Requirements', href: '/docs/mrd.html' },
+  { label: 'Product Requirements', href: '/docs/prd.html' },
+  { label: 'Technical Specifications', href: '/docs/tech-spec.html' },
+]
 
 export default function ChatSidebar() {
   const { resetChat } = useChatContext()
   const navigate = useNavigate()
   const location = useLocation()
+  const [recentChanges, setRecentChanges] = useState<string>('')
+
+  useEffect(() => {
+    fetch('/docs/recent-changes.html')
+      .then(r => r.text())
+      .then(html => {
+        // Extract just the body content
+        const match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+        setRecentChanges(match ? match[1] : html)
+      })
+      .catch(() => {/* silent */})
+  }, [])
 
   const handleNewChat = () => {
     resetChat()
-    if (location.pathname !== '/') {
-      navigate('/')
-    }
+    if (location.pathname !== '/') navigate('/')
   }
 
   return (
@@ -26,6 +43,7 @@ export default function ChatSidebar() {
         flexDirection: 'column',
         padding: '0.875rem 0.75rem',
         gap: '1.25rem',
+        overflowY: 'auto',
       }}
     >
       {/* New Chat button + toggle */}
@@ -71,7 +89,7 @@ export default function ChatSidebar() {
       </div>
 
       {/* Recent Chats */}
-      <div style={{ flex: 1 }}>
+      <div>
         <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
           Recent Chats
         </p>
@@ -79,6 +97,59 @@ export default function ChatSidebar() {
           No recent chats
         </p>
       </div>
+
+      {/* Docs */}
+      <div>
+        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+          Docs
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {DOC_LINKS.map(({ label, href }) => (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                fontSize: '0.775rem',
+                color: 'var(--color-text-secondary)',
+                textDecoration: 'none',
+                padding: '0.3rem 0.5rem',
+                borderRadius: 6,
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLAnchorElement).style.background = 'var(--color-chip-hover-bg)'
+                ;(e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text)'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'
+                ;(e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)'
+              }}
+            >
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.6 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Changes */}
+      {recentChanges && (
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+            Recent Changes
+          </p>
+          <div
+            dangerouslySetInnerHTML={{ __html: recentChanges }}
+            style={{ fontSize: '0.72rem' }}
+          />
+        </div>
+      )}
     </aside>
   )
 }

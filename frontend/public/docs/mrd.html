@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — Market Requirements Document</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --text: #c9cfe0;
+    --text2: #7c8499;
+    --primary: #a5b4fc;
+    --accent: #6366f1;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; }
+  .badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); }
+  .meta strong { color: var(--text); }
+  .content { max-width: 860px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; margin: 1.5rem 0 0.5rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { color: var(--text); margin-bottom: 0.35rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .tag { display: inline-block; background: rgba(99,102,241,0.15); color: var(--primary); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; margin: 0.15rem; }
+  .tag.green { background: rgba(52,211,153,0.12); color: var(--green); }
+  .tag.amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .tag.red { background: rgba(248,113,113,0.12); color: var(--red); }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.85rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.875rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.875rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .priority-high { color: var(--red); font-weight: 600; }
+  .priority-med { color: var(--amber); font-weight: 600; }
+  .priority-low { color: var(--green); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">MRD — Market Requirements</div>
+  <h1>ON24 Nexus</h1>
+  <p class="subtitle">Conversational Analytics &amp; Platform Intelligence for ON24 Experiences</p>
+  <div class="meta">
+    <span><strong>Version</strong> 1.0</span>
+    <span><strong>Status</strong> Active</span>
+    <span><strong>Last Updated</strong> March 2026</span>
+    <span><strong>Owner</strong> Product</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>1. Executive Summary</h2>
+  <p>ON24 customers generate rich webinar and experience data, but extracting actionable insights requires navigating 15+ fragmented analytics screens and manually cross-referencing reports. ON24 Nexus addresses this by providing a conversational AI interface that lets marketers and program managers ask natural-language questions and receive immediate, visualized answers — without leaving a single screen.</p>
+
+  <h2>2. Market Problem</h2>
+  <h3>Pain Points</h3>
+  <ul>
+    <li><strong>Fragmentation:</strong> ON24 analytics are spread across Dashboard, Smart Tips, Webcast Elite, Engagement Hub, Power Leads, Polls &amp; Surveys, and more — each requiring separate navigation.</li>
+    <li><strong>Latency:</strong> Generating a cross-event attendance trend report requires manual data export and Excel work, taking 30–60 minutes.</li>
+    <li><strong>Low adoption of insights:</strong> Marketers know the data exists but can't easily access it mid-campaign or in executive reviews.</li>
+    <li><strong>Platform how-to barrier:</strong> New and occasional ON24 users frequently need to look up how to configure polls, registration pages, or integrations — disrupting their workflow.</li>
+  </ul>
+
+  <h3>Market Opportunity</h3>
+  <p>ON24 serves thousands of enterprise B2B marketing teams. Each team runs 10–200+ webinars annually. Even a 20% reduction in time-to-insight across the install base creates significant productivity value. Conversational analytics lowers the skill bar for data access, increasing the number of team members who can self-serve insights.</p>
+
+  <h2>3. Target Personas</h2>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Demand Generation Manager</div>
+      <p style="font-size:0.82rem;color:var(--text2)">Runs 4–8 webinars/month. Needs quick post-event performance summaries, top company attendance, and registration conversion rates for campaign reporting.</p>
+      <div><span class="tag">Weekly reports</span><span class="tag">ROI justification</span><span class="tag">Lead quality</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Webinar Program Manager</div>
+      <p style="font-size:0.82rem;color:var(--text2)">Owns the full webinar calendar. Needs attendance trends, engagement benchmarks across events, and scheduling optimization insights.</p>
+      <div><span class="tag">Calendar view</span><span class="tag">Trends</span><span class="tag">Scheduling</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Marketing Operations</div>
+      <p style="font-size:0.82rem;color:var(--text2)">Configures ON24 integrations, registration pages, and audience console. Frequently needs platform how-to guidance without leaving their workflow.</p>
+      <div><span class="tag green">Platform how-to</span><span class="tag green">Integrations</span><span class="tag green">Configuration</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Content Strategist</div>
+      <p style="font-size:0.82rem;color:var(--text2)">Decides what topics to cover next. Needs data on which event topics drove the highest engagement and what poll responses revealed about audience interests.</p>
+      <div><span class="tag amber">Topic analysis</span><span class="tag amber">Engagement</span><span class="tag amber">Poll insights</span></div>
+    </div>
+  </div>
+
+  <h2>4. Market Requirements</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Requirement</th><th>Priority</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td>MR-01</td><td>Answer event performance questions in natural language (registrants, attendance, engagement)</td><td class="priority-high">High</td><td>Core daily use case for all personas</td></tr>
+      <tr><td>MR-02</td><td>Show attendance and engagement trends over time as charts</td><td class="priority-high">High</td><td>Required for executive reporting</td></tr>
+      <tr><td>MR-03</td><td>Identify top attending companies across events</td><td class="priority-high">High</td><td>Account-based marketing intelligence</td></tr>
+      <tr><td>MR-04</td><td>Answer platform how-to questions without sending users to external docs</td><td class="priority-high">High</td><td>Reduces support burden; keeps users in flow</td></tr>
+      <tr><td>MR-05</td><td>Visualize poll results and audience interaction data</td><td class="priority-high">High</td><td>Content and engagement insights</td></tr>
+      <tr><td>MR-06</td><td>Provide a calendar view of upcoming and past events with KPIs</td><td class="priority-med">Medium</td><td>Planning and operational oversight</td></tr>
+      <tr><td>MR-07</td><td>Surface AI-generated content (key takeaways, summaries) from past events</td><td class="priority-med">Medium</td><td>Content repurposing and post-event follow-up</td></tr>
+      <tr><td>MR-08</td><td>Support audience company exclusion for cleaner internal analytics</td><td class="priority-med">Medium</td><td>Internal orgs skew attendance data</td></tr>
+      <tr><td>MR-09</td><td>Provide content topic recommendations based on historical engagement</td><td class="priority-low">Low</td><td>Strategic planning support</td></tr>
+      <tr><td>MR-10</td><td>Enable event creation and registration management via chat</td><td class="priority-low">Low</td><td>Operational convenience for power users</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Success Metrics</h2>
+  <ul>
+    <li>Time-to-first-insight: user gets a post-event performance summary in &lt;30 seconds</li>
+    <li>Platform question deflection: &gt;80% of common how-to questions answered without external links</li>
+    <li>Adoption: &gt;3 queries per active user per week</li>
+    <li>Data accuracy: query results match ON24 platform reports within rounding margin</li>
+  </ul>
+
+  <h2>6. Constraints &amp; Assumptions</h2>
+  <ul>
+    <li>Data access is read-only against the ON24 master database (no ETL sync needed for reads)</li>
+    <li>Tenant isolation is mandatory — all queries scope to authorized client hierarchy only</li>
+    <li>ON24 write operations (create event, manage registrations) require explicit user confirmation</li>
+    <li>Knowledge base is sourced from ON24 Zendesk help articles (637 articles / 2,729 chunks)</li>
+    <li>Requires VPN or ON24 internal network access for the ON24 master database connection</li>
+  </ul>
+
+</div>
+</body>
+</html>

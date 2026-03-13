@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — Technical Specifications</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
+    --text: #c9cfe0; --text2: #7c8499;
+    --primary: #a5b4fc; --accent: #6366f1;
+    --green: #34d399; --amber: #fbbf24; --red: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; }
+  .badge { display: inline-block; background: #0284c7; color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); }
+  .meta strong { color: var(--text); }
+  .content { max-width: 920px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; margin: 1.5rem 0 0.5rem; }
+  h4 { font-size: 0.85rem; font-weight: 600; color: var(--primary); margin: 1.25rem 0 0.375rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { color: var(--text); margin-bottom: 0.35rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  code { background: rgba(99,102,241,0.12); color: var(--primary); font-size: 0.8rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-family: 'Fira Code', 'Cascadia Code', monospace; }
+  pre { background: #0d1021; border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; overflow-x: auto; }
+  pre code { background: none; padding: 0; font-size: 0.82rem; color: #c9cfe0; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.83rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.875rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.875rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; background: rgba(99,102,241,0.15); color: var(--primary); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; margin: 0.15rem; }
+  .tag.green { background: rgba(52,211,153,0.12); color: var(--green); }
+  .tag.amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 0.78rem; color: var(--text2); line-height: 1.9; margin-bottom: 1rem; white-space: pre; }
+  .note { background: rgba(99,102,241,0.07); border-left: 3px solid var(--accent); padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin-bottom: 0.75rem; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">Technical Specifications</div>
+  <h1>ON24 Nexus</h1>
+  <p class="subtitle">Architecture, Data Access, Agent System, and Deployment</p>
+  <div class="meta">
+    <span><strong>Version</strong> 1.0</span>
+    <span><strong>Status</strong> Production</span>
+    <span><strong>Last Updated</strong> March 2026</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>1. System Architecture</h2>
+  <div class="arch-diagram">Browser (React 18 + TypeScript)
+      │  WebSocket /ws/chat  │  REST /api/*
+      ▼                      ▼
+  FastAPI (Python 3.12) — Uvicorn
+      │
+      ├── Orchestrator Agent ──▶ Data Agent      (11 tools, analytics queries)
+      │                    ├──▶ Concierge        (KB search, how-to answers)
+      │                    ├──▶ Content Agent    (topic analysis, scheduling)
+      │                    └──▶ Admin Agent      (ON24 write operations)
+      │
+      ├── ON24 Master DB (asyncpg, read-only, SSL)  ← 10.3.7.233:5458
+      ├── App DB (PostgreSQL 16, asyncpg + SQLAlchemy async)
+      │       ├── knowledge_base_articles (OpenAI embeddings REAL[])
+      │       ├── agent_audit_logs
+      │       └── (12 app models via Alembic)
+      └── OpenAI API (text-embedding-3-small)  ← KB ingestion only</div>
+
+  <h2>2. Technology Stack</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Version</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Backend runtime</td><td>Python</td><td>3.12</td><td></td></tr>
+      <tr><td>API framework</td><td>FastAPI + Uvicorn</td><td>latest</td><td>Async-first; WebSocket support</td></tr>
+      <tr><td>ORM</td><td>SQLAlchemy (async)</td><td>2.x</td><td>App DB only; ON24 DB uses raw asyncpg</td></tr>
+      <tr><td>DB migrations</td><td>Alembic</td><td>latest</td><td>Runs on container start</td></tr>
+      <tr><td>AI SDK</td><td>Anthropic Python SDK</td><td>latest</td><td><code>messages.create()</code> with <code>tools</code> — NOT Agent SDK</td></tr>
+      <tr><td>AI model</td><td>claude-sonnet-4-6</td><td>—</td><td>All 4 agents; Haiku for chip generation</td></tr>
+      <tr><td>Embeddings</td><td>OpenAI text-embedding-3-small</td><td>1536-dim</td><td>KB article chunks; numpy cosine similarity</td></tr>
+      <tr><td>ON24 DB driver</td><td>asyncpg</td><td>latest</td><td>Read-only; SSL with client cert</td></tr>
+      <tr><td>HTML parsing</td><td>BeautifulSoup4</td><td>4.12+</td><td>Key takeaways section extraction</td></tr>
+      <tr><td>Frontend framework</td><td>React 18 + TypeScript</td><td>—</td><td>Vite build, nginx production serve</td></tr>
+      <tr><td>Server state</td><td>TanStack Query</td><td>v5</td><td>No Redux/Zustand</td></tr>
+      <tr><td>Charts</td><td>Recharts + Plotly</td><td>—</td><td>Plotly lazy-loaded (~3MB)</td></tr>
+      <tr><td>App database</td><td>PostgreSQL 16</td><td>—</td><td>Host port 5433 (5432 taken by another service)</td></tr>
+      <tr><td>Container</td><td>Docker Compose</td><td>—</td><td>3 services: postgres, backend, frontend</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Data Access</h2>
+  <h3>ON24 Master Database</h3>
+  <div class="note">Connection: <code>asyncpg</code> pool, SSL (Google Cloud SQL certs), read-only user <code>ON24_RO</code>, host <code>10.3.7.233:5458</code>. Requires VPN or ON24 internal network.</div>
+
+  <h4>Key Tables</h4>
+  <table>
+    <thead><tr><th>Table</th><th>Rows (approx)</th><th>Primary Use</th></tr></thead>
+    <tbody>
+      <tr><td><code>on24master.event</code></td><td>~13,000</td><td>Event metadata; join point for client scoping</td></tr>
+      <tr><td><code>on24master.dw_attendee</code></td><td>large</td><td>Per-attendee engagement scores, live/archive minutes</td></tr>
+      <tr><td><code>on24master.dw_event_session</code></td><td>medium</td><td>Per-session registrant/attendee counts (aggregate)</td></tr>
+      <tr><td><code>on24master.event_user</code></td><td>~585M rows / 404GB</td><td>Raw registrant records; avoid full scans</td></tr>
+      <tr><td><code>on24master.event_user_x_answer</code></td><td>~334M rows</td><td>Poll/survey responses; always filter via events CTE first</td></tr>
+      <tr><td><code>on24master.question</code></td><td>medium</td><td>Poll questions; type_cd: singleoption/multioption/singletext</td></tr>
+      <tr><td><code>on24master.video_library</code></td><td>medium</td><td>AI-ACE generated content (source LIKE 'AUTOGEN_%')</td></tr>
+      <tr><td><code>on24master.content_hit_track_details</code></td><td>large</td><td>Resource download tracking (action='TotalHits')</td></tr>
+      <tr><td><code>on24master.client_hierarchy</code></td><td>small</td><td>Sub-client tree; recursive CTE for tenant scoping</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tenant Isolation (Critical)</h4>
+  <p>All queries use <code>WHERE client_id = ANY($N::bigint[])</code> with the full sub-client hierarchy array. Root client <code>10710</code> has 9 sub-clients. The hierarchy is resolved once at startup via a cycle-safe recursive CTE and cached in-process.</p>
+  <div class="note"><strong>Never</strong> accept <code>client_id</code> as input from agents or users. Always sourced from server-side config (<code>ON24_CLIENT_ID</code> env var).</div>
+
+  <h3>Query Performance Rules</h3>
+  <ul>
+    <li>Cross-event poll queries: always filter to candidate events by <code>goodafter</code> date first (indexed), then join to <code>event_user_x_answer</code> — never start from the answer table (334M rows → 8s+ timeout)</li>
+    <li>Per-query timeout: 10 seconds</li>
+    <li>Default look-back windows: attendance trends = 12 months; audience companies = 1 month</li>
+    <li>Test event filter: <code>LOWER(description) NOT LIKE '%test%'</code> + <code>HAVING registrant_count &gt;= 6</code></li>
+  </ul>
+
+  <h2>4. Agent System</h2>
+  <h3>Tool-Use Loop</h3>
+  <p>Each agent uses the Anthropic SDK <code>messages.create()</code> with <code>tools</code> parameter — NOT the Claude Agent SDK package. Multi-round loop with max 5 iterations per request.</p>
+  <pre><code>while rounds &lt; 5:
+    response = await client.messages.create(model, tools, messages)
+    if response.stop_reason != "tool_use": break
+    for tool_call in response.content:
+        result = await dispatch_tool(tool_call.name, tool_call.input)
+        messages.append(tool_result)
+    rounds += 1</code></pre>
+
+  <h3>Data Agent Tools</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>list_events</code></td><td>Search/filter events by date, type, status, name</td></tr>
+      <tr><td><code>get_event_detail</code></td><td>Full record for one event</td></tr>
+      <tr><td><code>get_event_kpis</code> / <code>compute_event_kpis</code></td><td>Registrants, attendees, engagement, conversion for one event</td></tr>
+      <tr><td><code>get_client_kpis</code></td><td>Platform-wide KPIs across all events</td></tr>
+      <tr><td><code>get_top_events</code></td><td>Top N events by attendance or engagement</td></tr>
+      <tr><td><code>get_attendance_trends</code></td><td>Monthly registrant/attendee trends (default 12 months)</td></tr>
+      <tr><td><code>get_audience_companies</code></td><td>Top companies by attendance; event_id or cross-event (default 30 days); email domain fallback</td></tr>
+      <tr><td><code>get_audience_sources</code></td><td>Traffic sources via event_user.partnerref</td></tr>
+      <tr><td><code>get_polls</code></td><td>Poll questions + response distributions for one event</td></tr>
+      <tr><td><code>get_top_events_by_polls</code></td><td>Events ranked by poll question count</td></tr>
+      <tr><td><code>get_poll_overview</code></td><td>Cross-event poll summary (last N months)</td></tr>
+      <tr><td><code>get_questions</code></td><td>Q&amp;A questions and answers for one event</td></tr>
+      <tr><td><code>get_resources</code></td><td>Resource download activity for one event</td></tr>
+      <tr><td><code>generate_chart_data</code></td><td>Formats data for Recharts; types: bar, line, pie</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Orchestrator Safety</h3>
+  <ul>
+    <li><strong>History rollback:</strong> if a sub-agent throws after <code>tool_use</code> is appended to history, pop the dangling entries before re-raising (prevents "400 tool_use without tool_result" cascade)</li>
+    <li><strong>Overly-broad guard:</strong> orchestrator detects "list all / dump all" patterns and responds with focused alternatives rather than routing</li>
+    <li><strong>Prompt injection guard:</strong> reject messages containing "ignore previous instructions", "act as", "jailbreak", etc.</li>
+  </ul>
+
+  <h2>5. WebSocket Protocol</h2>
+  <pre><code>// Client → Server
+{ "type": "message", "content": "...", "confirmed": false }
+{ "type": "reset", "session_id": "..." }
+
+// Server → Client (streaming)
+{ "type": "agent_start",        "agent": "data_agent" }
+{ "type": "agent_routing",      "target": "data_agent" }
+{ "type": "text",               "content": "...",       "delta": true }
+{ "type": "chart_data",         "chart": { type, data, title, x_key, y_keys } }
+{ "type": "event_cards",        "cards": [...] }
+{ "type": "confirmation_required", "summary": "..." }
+{ "type": "message_complete",   "agent_used": "data_agent", "suggestions": [...] }
+{ "type": "error",              "message": "..." }
+{ "type": "reset" }</code></pre>
+
+  <h2>6. Knowledge Base</h2>
+  <ul>
+    <li><strong>Source:</strong> 637 ON24 Zendesk help articles chunked into 2,729 text segments</li>
+    <li><strong>Embeddings:</strong> OpenAI <code>text-embedding-3-small</code> (1536 dimensions), stored as <code>REAL[]</code> in <code>knowledge_base_articles</code> table</li>
+    <li><strong>Search:</strong> numpy cosine similarity over all chunks; top-5 results deduped by article title</li>
+    <li><strong>Ingestion:</strong> runs as async background task on app startup; batches 100 texts per OpenAI call</li>
+    <li><strong>No-hallucination rule:</strong> concierge answers only from retrieved article content; never extrapolates</li>
+  </ul>
+
+  <h2>7. Calendar API</h2>
+  <table>
+    <thead><tr><th>Endpoint</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /api/calendar?year=&amp;month=</code></td><td>All events for month with aggregated KPIs for past events. Filters: &gt;=6 registrants OR future date; excludes "test" events.</td></tr>
+      <tr><td><code>GET /api/calendar/event/{id}</code></td><td>Single event detail: KPIs + poll/survey/resource counts + AI-ACE content (video_library AUTOGEN_ rows) + key takeaways sections (server-side BeautifulSoup parsing).</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Key Takeaways Parsing</h4>
+  <p>ON24 key takeaways HTML is parsed server-side by <code>_parse_kt_sections()</code> in <code>calendar.py</code>. Section headings are identified by <code>font-size: 18px</code> spans with text length &lt; 80 chars (length guard prevents quote content from being misdetected as a heading). Sections map to: <code>summary</code>, <code>takeaways</code>, <code>quote</code>, <code>other</code>.</p>
+
+  <h2>8. Frontend Architecture</h2>
+  <h4>Key Components</h4>
+  <table>
+    <thead><tr><th>Component</th><th>Path</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td>ChatPanel</td><td>components/chat/ChatPanel.tsx</td><td>Main chat UI, home tiles, input bar, chip rendering</td></tr>
+      <tr><td>ChatMessage</td><td>components/chat/ChatMessage.tsx</td><td>Message rendering: markdown, tables, charts, event cards, poll cards</td></tr>
+      <tr><td>EventCalendar</td><td>components/calendar/EventCalendar.tsx</td><td>Month/Week/Day calendar modal with event detail side panel</td></tr>
+      <tr><td>ChatSidebar</td><td>components/layout/ChatSidebar.tsx</td><td>Left nav: New Chat, docs links, recent changes, recent chats</td></tr>
+      <tr><td>DashboardLayout</td><td>components/layout/DashboardLayout.tsx</td><td>Top-level layout shell; ChatProvider context</td></tr>
+    </tbody>
+  </table>
+
+  <h4>State Management</h4>
+  <ul>
+    <li>Chat state: <code>useChat.ts</code> hook (WebSocket connection, message array, <code>resetChat</code>)</li>
+    <li>Shared context: <code>ChatContext.tsx</code> — wraps useChat + calendar open/close state</li>
+    <li>Server state: TanStack Query for REST endpoints (analytics pages)</li>
+    <li>Theme: <code>data-theme="dark"</code> on <code>&lt;html&gt;</code>; CSS variables in <code>global.css</code></li>
+  </ul>
+
+  <h2>9. Deployment</h2>
+  <pre><code>docker compose up --build  # builds and starts all 3 containers
+
+# Services:
+#   postgres   → host port 5433 (internal 5432)
+#   backend    → host port 8000
+#   frontend   → host port 3001 (nginx serving Vite build)
+
+# App: http://localhost:3001
+# API docs: http://localhost:8000/docs</code></pre>
+
+  <h4>Environment Variables (required)</h4>
+  <pre><code>DATABASE_URL          # App PostgreSQL (overridden in compose to internal network)
+ON24_DB_URL           # ON24 master DB (asyncpg+ssl, requires VPN)
+DB_PG_SSL_ROOT_CERT_CONTENT   # CA cert PEM
+DB_PG_SSL_CERT_CONTENT        # Client cert PEM
+DB_PG_SSL_KEY_CONTENT         # Client key PEM
+ON24_CLIENT_ID        # Root client (10710)
+ANTHROPIC_API_KEY
+OPENAI_API_KEY        # For KB embedding ingestion
+POSTGRES_PASSWORD</code></pre>
+
+  <h2>10. Security</h2>
+  <ul>
+    <li>Tenant isolation: all queries parameterized with server-side client_id array; never from user input</li>
+    <li>Input validation: message length capped at 4,000 chars; session IDs sanitized (alphanumeric + hyphen)</li>
+    <li>Prompt injection guards in all 4 agent system prompts</li>
+    <li>Admin writes: always require explicit <code>confirmed: true</code> from application layer (not user message content)</li>
+    <li>Generic error messages to clients (no stack traces)</li>
+    <li>Audit logging: every tool call written to <code>agent_audit_logs</code> (fire-and-forget)</li>
+  </ul>
+
+</div>
+</body>
+</html>

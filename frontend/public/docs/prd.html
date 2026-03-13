@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — Product Requirements Document</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
+    --text: #c9cfe0; --text2: #7c8499;
+    --primary: #a5b4fc; --accent: #6366f1;
+    --green: #34d399; --amber: #fbbf24; --red: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; }
+  .badge { display: inline-block; background: #059669; color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); }
+  .meta strong { color: var(--text); }
+  .content { max-width: 860px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; margin: 1.5rem 0 0.5rem; }
+  h4 { font-size: 0.85rem; font-weight: 600; color: var(--primary); margin: 1.25rem 0 0.375rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { color: var(--text); margin-bottom: 0.35rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .story { background: var(--card); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 0.875rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.85rem; }
+  .story em { color: var(--text2); font-style: normal; font-size: 0.8rem; display: block; margin-top: 0.375rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.85rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.875rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.875rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; background: rgba(99,102,241,0.15); color: var(--primary); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; margin: 0.15rem; }
+  .tag.green { background: rgba(52,211,153,0.12); color: var(--green); }
+  .tag.amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  code { background: rgba(99,102,241,0.12); color: var(--primary); font-size: 0.8rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-family: 'Fira Code', 'Cascadia Code', monospace; }
+  .agent-row { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.875rem; }
+  .agent-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .dot-indigo { background: #6366f1; }
+  .dot-amber { background: #f59e0b; }
+  .dot-green { background: #10b981; }
+  .dot-pink { background: #ec4899; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">PRD — Product Requirements</div>
+  <h1>ON24 Nexus</h1>
+  <p class="subtitle">Conversational Analytics &amp; Platform Intelligence for ON24 Experiences</p>
+  <div class="meta">
+    <span><strong>Version</strong> 1.0</span>
+    <span><strong>Status</strong> Active</span>
+    <span><strong>Last Updated</strong> March 2026</span>
+    <span><strong>Owner</strong> Product</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>1. Product Vision</h2>
+  <p>ON24 Nexus is an AI-powered analytics co-pilot that lives inside the ON24 experience workflow. It answers natural-language questions about event performance, surfaces audience insights, explains the platform, and manages events — all from a single conversational interface backed by live ON24 data.</p>
+
+  <h2>2. Feature Areas</h2>
+
+  <h3>2.1 Conversational Analytics (Data Agent)</h3>
+  <p>Users ask questions in plain English and receive instant, visualized answers drawn directly from the ON24 master database.</p>
+  <div class="story">Show me attendance trends for the past year
+    <em>→ Renders a line chart of monthly registrants and attendees (12-month window)</em>
+  </div>
+  <div class="story">Which companies attended the last webinar?
+    <em>→ Returns a ranked bar chart of top companies with attendee and engagement data</em>
+  </div>
+  <div class="story">How did "Next Gen AI Summit" do?
+    <em>→ Shows an event KPI card: registrants, attendees, conversion rate, avg engagement</em>
+  </div>
+  <div class="story">Show me poll results for the last event
+    <em>→ Renders interactive poll cards with bar charts showing response distributions</em>
+  </div>
+
+  <h3>2.2 Concierge (Platform How-To)</h3>
+  <p>Users ask how to use ON24 and receive immediate, self-contained answers from a curated knowledge base of 637 help articles — no links to external documentation required for common questions.</p>
+  <div class="story">How do I configure a registration page?
+    <em>→ Delivers a complete step-by-step answer covering themes, fields, compliance, and next steps</em>
+  </div>
+  <div class="story">How do I set up polls?
+    <em>→ Explains poll creation in Elite Studio, widget placement, and where to review results</em>
+  </div>
+
+  <h3>2.3 Event Calendar</h3>
+  <p>An Outlook-style calendar modal showing all events for the current month with color-coded event types, KPI overlays, and a side panel for full event detail including AI-generated content.</p>
+  <ul>
+    <li>Month / Week / Day view switching</li>
+    <li>Side panel: registrants, attendees, conversion, avg engagement, poll/survey/resource counts</li>
+    <li>AI-ACE content tile: Key Takeaways (sectioned), Blog, eBook, FAQ, Follow-up Email, etc.</li>
+    <li>Double-click to send event to chat for deeper analysis</li>
+  </ul>
+
+  <h3>2.4 Content Intelligence (Content Agent)</h3>
+  <p>Analyzes historical event performance to surface topic recommendations and scheduling insights.</p>
+  <ul>
+    <li>Top-performing topics by engagement score</li>
+    <li>Optimal scheduling patterns by day/time</li>
+    <li>Topic gap analysis against past event history</li>
+  </ul>
+
+  <h3>2.5 Event Management (Admin Agent)</h3>
+  <p>Enables event creation, registration management, and updates via chat with explicit confirmation before any write operation.</p>
+  <ul>
+    <li>Create new events with title, date, description, type</li>
+    <li>Add or remove registrants</li>
+    <li>Update event details</li>
+    <li>All write operations require user confirmation dialog before execution</li>
+  </ul>
+
+  <h2>3. Agent Architecture</h2>
+  <div class="card">
+    <div class="agent-row"><div class="agent-dot dot-indigo"></div><div><strong>Data Agent</strong> — Handles all analytics queries. Has 11 tools covering events, KPIs, attendance trends, audience companies, poll results, Q&amp;A, resources, and chart generation.</div></div>
+    <div class="agent-row"><div class="agent-dot dot-amber"></div><div><strong>Concierge</strong> — Answers platform how-to questions using a Postgres-backed knowledge base (OpenAI embeddings, cosine similarity). Delivers complete answers without external links.</div></div>
+    <div class="agent-row"><div class="agent-dot dot-green"></div><div><strong>Content Agent</strong> — Provides content strategy recommendations via topic analysis, scheduling patterns, and performance comparison tools.</div></div>
+    <div class="agent-row"><div class="agent-dot dot-pink"></div><div><strong>Admin Agent</strong> — Executes ON24 write operations (create event, manage registrations) with mandatory user confirmation.</div></div>
+  </div>
+
+  <h2>4. Navigation &amp; UX</h2>
+  <h3>Home Page Tiles</h3>
+  <table>
+    <thead><tr><th>Tile</th><th>Agent</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>Event data exploration</td><td>Data</td><td>Prompts for event ID to start exploration</td></tr>
+      <tr><td>Attendance trends</td><td>Data</td><td>Sends trend query directly</td></tr>
+      <tr><td>Top events by engagement</td><td>Data</td><td>Sends top events query</td></tr>
+      <tr><td>Poll results overview</td><td>Data</td><td>Sends poll overview query</td></tr>
+      <tr><td>How do I...?</td><td>Concierge</td><td>Opens 8-option how-to sub-menu</td></tr>
+      <tr><td>Recent events</td><td>—</td><td>Opens event calendar modal</td></tr>
+      <tr><td>Experiences</td><td>—</td><td>Deep links to ON24 experience types</td></tr>
+      <tr><td>Configure environment</td><td>—</td><td>Deep links to ON24 admin tools</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Suggestion Chips</h3>
+  <p>Every response shows 5 contextual chips: <strong>2 content-relevant follow-ups</strong> + <strong>2 agent-switch chips</strong> (one per other main agent) + <strong>Home</strong>. "Home" resets the chat. "How do I...?" opens the help sub-menu.</p>
+
+  <h2>5. User Stories</h2>
+  <h4>Analytics</h4>
+  <ul>
+    <li>As a demand gen manager, I want to see last month's top attending companies so I can prioritize account outreach.</li>
+    <li>As a program manager, I want attendance trends for the past year so I can identify seasonal patterns.</li>
+    <li>As a content strategist, I want to see poll results for a specific event so I can understand audience sentiment.</li>
+  </ul>
+  <h4>Platform Help</h4>
+  <ul>
+    <li>As a marketing ops user, I want to ask how to configure a registration page and get an immediate answer without leaving the platform.</li>
+    <li>As a new ON24 user, I want to understand how polls work before my first event.</li>
+  </ul>
+  <h4>Calendar</h4>
+  <ul>
+    <li>As a program manager, I want to see all events for the current month with at-a-glance KPIs.</li>
+    <li>As a content team member, I want to view AI-generated key takeaways from a past event directly in the calendar.</li>
+  </ul>
+
+  <h2>6. Acceptance Criteria</h2>
+  <table>
+    <thead><tr><th>Feature</th><th>Criteria</th></tr></thead>
+    <tbody>
+      <tr><td>Event KPIs</td><td>Registrants, attendees, conversion rate, and avg engagement returned within 3s for any event in the client hierarchy</td></tr>
+      <tr><td>Attendance trends</td><td>Line chart renders monthly data for up to 24 months; no missing months</td></tr>
+      <tr><td>Concierge answers</td><td>Common how-to questions answered in &lt;5s without any external link as the primary answer</td></tr>
+      <tr><td>Tenant isolation</td><td>All queries return only data for client 10710 and its 9 sub-clients; no cross-tenant leakage</td></tr>
+      <tr><td>Admin confirmation</td><td>No ON24 write operation executes without an explicit user confirmation step</td></tr>
+      <tr><td>Calendar KPIs</td><td>Past events show correct aggregated registrant/attendee counts; future events show "data available after event"</td></tr>
+      <tr><td>Poll cards</td><td>Multiple-choice polls render as horizontal bar charts with %; free-text polls show sample answer tags</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. Out of Scope</h2>
+  <ul>
+    <li>Per-speaker performance metrics (not tracked at speaker level in ON24 DB)</li>
+    <li>Geographic / regional audience breakdown</li>
+    <li>Revenue, ROI, or financial attribution</li>
+    <li>Email campaign metrics</li>
+    <li>Real-time live event monitoring</li>
+    <li>Multi-tenant / multi-client switching (planned; not yet implemented)</li>
+  </ul>
+
+</div>
+</body>
+</html>
