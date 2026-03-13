@@ -7,7 +7,7 @@ interface AiContent {
   types: string[]
   source_event_id: number
   client_id: number
-  keytakeaways_text?: string | null
+  articles?: Record<string, string>
 }
 
 interface CalendarEvent {
@@ -106,10 +106,23 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
 
 // ─── Event Detail Panel ───────────────────────────────────────────────────────
 
+// Article type display names (keys match actual DB source values after AUTOGEN_ strip)
+const AI_TYPE_LABELS: Record<string, string> = {
+  BLOG: 'Blog',
+  EBOOK: 'eBook',
+  FAQ: 'FAQ',
+  FOLLOWUPEMAI: 'Follow-up Email',
+  KEYTAKEAWAYS: 'Key Takeaways',
+  SOCIALMEDIAP: 'Social Media Post',
+  TRANSCRIPT: 'Transcript',
+}
+function aiTypeLabel(t: string) {
+  return AI_TYPE_LABELS[t] ?? t.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// Section tabs for Key Takeaways content
 const KT_TABS = ['Executive Summary', 'Takeaways', 'Quote', 'Other'] as const
 type KtTab = typeof KT_TABS[number]
-
-// Map raw HTML section headings → display tab names
 const KT_HEADING_MAP: Record<string, KtTab> = {
   'Executive Summary': 'Executive Summary',
   'Key Takeaways': 'Takeaways',
@@ -129,8 +142,7 @@ function parseKtSections(html: string): Partial<Record<KtTab, string>> {
     const heading = (el as HTMLElement).querySelector('[style*="font-size: 18px"]')
     if (heading) {
       flush()
-      const headingText = heading.textContent?.trim() ?? ''
-      current = KT_HEADING_MAP[headingText] ?? 'Other'
+      current = KT_HEADING_MAP[heading.textContent?.trim() ?? ''] ?? 'Other'
     } else buf.push((el as HTMLElement).outerHTML)
   }
   flush()
@@ -138,11 +150,31 @@ function parseKtSections(html: string): Partial<Record<KtTab, string>> {
 }
 
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
-  const sections = parseKtSections(ai.keytakeaways_text!)
-  const available = KT_TABS.filter(t => sections[t])
-  const defaultTab: KtTab = available.includes('Takeaways') ? 'Takeaways' : (available[0] ?? 'Other')
+  const articles = ai.articles ?? {}
+  const types = ai.types.filter(t => articles[t])
+  const defaultType = types.includes('KEYTAKEAWAYS') ? 'KEYTAKEAWAYS' : (types[0] ?? '')
+  const [selectedType, setSelectedType] = useState(defaultType)
+
+  // Section tabs — only relevant for KEYTAKEAWAYS
+  const ktSections = selectedType === 'KEYTAKEAWAYS' ? parseKtSections(articles['KEYTAKEAWAYS'] ?? '') : {}
+  const availableTabs = KT_TABS.filter(t => ktSections[t])
+  const defaultTab: KtTab = availableTabs.includes('Takeaways') ? 'Takeaways' : (availableTabs[0] ?? 'Other')
   const [activeTab, setActiveTab] = useState<KtTab>(defaultTab)
-  const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${ai.source_event_id}`
+  // Reset tab when type changes
+  const prevType = useRef(selectedType)
+  if (prevType.current !== selectedType) {
+    prevType.current = selectedType
+    setActiveTab(availableTabs.includes('Takeaways') ? 'Takeaways' : (availableTabs[0] ?? 'Other'))
+  }
+
+  const MM_SUBTYPE: Record<string, string> = {
+    BLOG: 'autogen_blog', EBOOK: 'autogen_ebook', FAQ: 'autogen_faq',
+    KEYTAKEAWAYS: 'autogen_keytakeaways', FOLLOWUPEMAI: 'autogen_followupemail',
+    SOCIALMEDIAP: 'autogen_socialmediapost', TRANSCRIPT: 'autogen_transcript',
+  }
+  const subType = MM_SUBTYPE[selectedType] ?? 'autogen_' + selectedType.toLowerCase()
+  const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=${subType}&search=${ai.source_event_id}`
+  const content = selectedType === 'KEYTAKEAWAYS' ? ktSections[activeTab] : articles[selectedType]
 
   return (
     <div style={{ background: 'var(--color-card)', borderRadius: 10, padding: '0.875rem 1rem', border: '1px solid var(--color-border)' }}>
@@ -152,43 +184,51 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
           AI-ACE Content
         </span>
         <a href={mmUrl} target="_blank" rel="noreferrer"
-          style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}>
-          Open in Media Manager ↗
+          style={{ fontSize: '0.7rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}>
+          Media Manager ↗
         </a>
       </div>
 
-      {/* Section dropdown */}
+      {/* Article type dropdown */}
       <select
-        value={activeTab}
-        onChange={e => setActiveTab(e.target.value as KtTab)}
+        value={selectedType}
+        onChange={e => setSelectedType(e.target.value)}
         style={{
-          marginBottom: '0.6rem',
-          fontSize: '0.72rem', fontWeight: 500,
-          padding: '0.25rem 0.5rem',
-          borderRadius: 6,
+          width: '100%', marginBottom: '0.5rem',
+          fontSize: '0.75rem', fontWeight: 500,
+          padding: '0.3rem 0.5rem', borderRadius: 6,
           border: '1px solid rgba(16,185,129,0.4)',
-          background: 'rgba(16,185,129,0.08)',
-          color: '#10b981',
-          cursor: 'pointer',
-          outline: 'none',
+          background: 'rgba(16,185,129,0.08)', color: '#10b981',
+          cursor: 'pointer', outline: 'none',
         }}
       >
-        {available.map(tab => <option key={tab} value={tab}>{tab}</option>)}
+        {types.map(t => <option key={t} value={t}>{aiTypeLabel(t)}</option>)}
       </select>
 
+      {/* Section tabs — only for Key Takeaways */}
+      {selectedType === 'KEYTAKEAWAYS' && availableTabs.length > 1 && (
+        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+          {availableTabs.map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              fontSize: '0.65rem', fontWeight: 500,
+              padding: '0.15rem 0.55rem', borderRadius: 20, cursor: 'pointer',
+              border: '1px solid rgba(16,185,129,0.35)',
+              background: activeTab === tab ? '#10b981' : 'rgba(16,185,129,0.08)',
+              color: activeTab === tab ? '#fff' : '#10b981',
+            }}>{tab}</button>
+          ))}
+        </div>
+      )}
+
       {/* Content */}
-      {sections[activeTab] && (
+      {content && (
         <div
-          dangerouslySetInnerHTML={{ __html: sections[activeTab]! }}
+          dangerouslySetInnerHTML={{ __html: content }}
           style={{
             maxHeight: 240, overflowY: 'auto',
-            background: 'var(--color-bg)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 6,
-            padding: '0.625rem 0.75rem',
-            fontSize: '0.75rem',
-            color: 'var(--color-text)',
-            lineHeight: 1.6,
+            background: 'var(--color-bg)', border: '1px solid var(--color-border)',
+            borderRadius: 6, padding: '0.625rem 0.75rem',
+            fontSize: '0.75rem', color: 'var(--color-text)', lineHeight: 1.6,
           }}
         />
       )}
@@ -343,8 +383,10 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
           </div>
         )}
 
-        {/* AI-ACE Key Takeaways — only shown when text content is available */}
-        {event.ai_content?.keytakeaways_text && <KeyTakeawaysTile ai={event.ai_content} />}
+        {/* AI-ACE Key Takeaways — only shown when article content is available */}
+        {event.ai_content?.articles && Object.keys(event.ai_content.articles).length > 0 && (
+          <KeyTakeawaysTile ai={event.ai_content} />
+        )}
 
       </div>
     </div>

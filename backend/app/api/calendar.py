@@ -166,21 +166,21 @@ async def get_calendar_event(event_id: int):
                 """
                 ai_rows = await conn.fetch(ai_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
                 if ai_rows:
-                    # Collect unique types; grab text of the first KEYTAKEAWAYS row
+                    # Collect unique types + first text per type
                     seen_types: list[str] = []
-                    kt_text: str | None = None
+                    articles: dict[str, str] = {}
                     for r in ai_rows:
                         t = r["type"]
                         if t not in seen_types:
                             seen_types.append(t)
-                        if t == "KEYTAKEAWAYS" and kt_text is None:
-                            kt_text = r["text"]
+                        if t not in articles and r["text"]:
+                            articles[t] = r["text"]
                     result["ai_content"] = {
                         "count": len(ai_rows),
                         "types": seen_types,
                         "source_event_id": event_id,
                         "client_id": client_ids[0],
-                        "keytakeaways_text": kt_text,
+                        "articles": articles,
                     }
             except Exception:
                 pass
