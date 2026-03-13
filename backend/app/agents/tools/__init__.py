@@ -208,13 +208,14 @@ DATA_AGENT_TOOLS = [
         "description": (
             "Return the top companies attending events, ranked by total attendance. "
             "Pass event_id to scope to a single event (e.g. 'which companies attended this webinar?'). "
-            "Omit event_id for cross-event summary. Company falls back to email domain when company field is blank. "
+            "Omit event_id for cross-event summary (defaults to last 1 month). Company falls back to email domain when company field is blank. "
             "Pass exclude list to filter out internal/test companies (e.g. exclude=['on24', 'test'])."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "limit": {"type": "integer", "description": "Number of top companies to return (default 20)"},
+                "months": {"type": "integer", "description": "Look-back window in months for cross-event queries (default 1 = last 30 days). Ignored when event_id is provided."},
                 "event_id": {"type": "integer", "description": "Scope to a single event (omit for cross-event)"},
                 "exclude": {
                     "type": "array",
