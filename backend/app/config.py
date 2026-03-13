@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # Anthropic
     anthropic_api_key: str = ""
 
+    # OpenAI (embeddings)
+    openai_api_key: str = ""
+
     # App
     app_name: str = "DataBot"
     debug: bool = False

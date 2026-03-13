@@ -13,20 +13,25 @@ from app.db.on24_db import close_pool
 logger = logging.getLogger(__name__)
 
 
+_background_tasks: set = set()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: ingest knowledge base in background (non-blocking)
-    asyncio.get_event_loop().run_in_executor(None, _ingest_knowledge_base)
+    task = asyncio.create_task(_ingest_knowledge_base())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     yield
     # Shutdown
     await close_pool()
 
 
-def _ingest_knowledge_base():
-    """Ingest Zendesk articles into ChromaDB (runs in thread pool)."""
+async def _ingest_knowledge_base():
+    """Ingest Zendesk articles into Postgres (runs as background task)."""
     try:
         from app.db.knowledge_base import ingest_zendesk_articles
-        count = ingest_zendesk_articles()
+        count = await ingest_zendesk_articles()
         logger.info(f"Knowledge base: {count} articles ingested")
     except Exception as e:
         logger.warning(f"Knowledge base ingestion failed (non-fatal): {e}")
