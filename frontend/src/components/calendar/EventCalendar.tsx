@@ -140,7 +140,8 @@ function parseKtSections(html: string): Partial<Record<KtTab, string>> {
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
   const sections = parseKtSections(ai.keytakeaways_text!)
   const available = KT_TABS.filter(t => sections[t])
-  const [activeTab, setActiveTab] = useState<KtTab>(available[0] ?? 'Other')
+  const defaultTab: KtTab = available.includes('Takeaways') ? 'Takeaways' : (available[0] ?? 'Other')
+  const [activeTab, setActiveTab] = useState<KtTab>(defaultTab)
   const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${ai.source_event_id}`
 
   return (
@@ -156,19 +157,24 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
         </a>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
-        {available.map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{
-            fontSize: '0.68rem', fontWeight: 500,
-            padding: '0.2rem 0.6rem', borderRadius: 20, cursor: 'pointer',
-            border: '1px solid rgba(16,185,129,0.4)',
-            background: activeTab === tab ? '#10b981' : 'rgba(16,185,129,0.08)',
-            color: activeTab === tab ? '#fff' : '#10b981',
-            transition: 'all 0.15s',
-          }}>{tab}</button>
-        ))}
-      </div>
+      {/* Section dropdown */}
+      <select
+        value={activeTab}
+        onChange={e => setActiveTab(e.target.value as KtTab)}
+        style={{
+          marginBottom: '0.6rem',
+          fontSize: '0.72rem', fontWeight: 500,
+          padding: '0.25rem 0.5rem',
+          borderRadius: 6,
+          border: '1px solid rgba(16,185,129,0.4)',
+          background: 'rgba(16,185,129,0.08)',
+          color: '#10b981',
+          cursor: 'pointer',
+          outline: 'none',
+        }}
+      >
+        {available.map(tab => <option key={tab} value={tab}>{tab}</option>)}
+      </select>
 
       {/* Content */}
       {sections[activeTab] && (
