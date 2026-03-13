@@ -135,3 +135,23 @@ Implementation:
 **Decision:** Queries must scope to full sub-client tree, not just root client_id.
 **Finding:** client 10710 has 9 sub-clients (22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909). Using only client_id=10710 misses ~13% of events (1,776 of 13,293 total).
 **Implementation:** `client_hierarchy` table, recursive CTE with DISTINCT to handle cycles (table has self-referential rows).
+
+## 2026-03-13: ChromaDB → Postgres + OpenAI Embeddings
+**Decision:** Replaced ChromaDB with PostgreSQL `REAL[]` column for embeddings + OpenAI `text-embedding-3-small` + numpy cosine similarity.
+**Rationale:** ChromaDB downloaded a 79MB ONNX runtime on every container build. Postgres already deployed; storing embeddings there eliminates the extra dependency and cold-start delay. OpenAI embeddings are high quality and consistent. Numpy cosine similarity is sufficient at KB scale (637 articles / 2729 chunks).
+**Implementation:** `knowledge_base_articles` table (migration 0002); `app/db/knowledge_base.py` ingest + query; `OPENAI_API_KEY` env var added to Settings.
+
+## 2026-03-13: AI-ACE Content Tile in Calendar Event Detail
+**Decision:** Show AI-ACE content tile only when `articles` dict is non-empty (i.e., content exists). Hidden entirely when no AI-generated content is available. Default selected type is `KEYTAKEAWAYS`.
+**Rationale:** Showing an empty tile wastes space and confuses users. The KEYTAKEAWAYS default surfaces the highest-value content first.
+**Key finding:** ON24 DB stores truncated type names: `AUTOGEN_FOLLOWUPEMAI` (not FOLLOWUPEMAIL) and `AUTOGEN_SOCIALMEDIAP` (not SOCIALMEDIAPOST). Labels map these truncated values.
+
+## 2026-03-13: Key Takeaways Section Tabs (Server-Side Parsing)
+**Decision:** Parse KEYTAKEAWAYS HTML into named sections (summary/takeaways/quote/other) server-side in Python (BeautifulSoup), not client-side via DOMParser.
+**Rationale:** Browser DOMParser normalizes styles unpredictably. BeautifulSoup is deterministic. Sections identified by `font-size: 18px` spans with text length < 80 chars (length guard prevents Key Quote content from being misdetected as heading). Sections: Executive Summary → summary, Key Takeaways → takeaways, Key Quote → quote, anything else → other.
+**Implementation:** `_parse_kt_sections()` in `calendar.py`; critical: `isinstance(el, Tag)` check (strings also have `.find()`); `find(True, style=lambda s: ...)` API.
+
+## 2026-03-13: Calendar Event Detail — 4th KPI Tile (Avg Engagement)
+**Decision:** Add `avg_engagement_score` as a 4th KPI tile in the calendar event detail side panel.
+**Rationale:** Engagement score is a primary performance indicator. Adding it alongside registrants/attendees/conversion gives a complete performance picture.
+**Implementation:** Added `LEFT JOIN dw_attendee a ON a.event_id = e.event_id` to the `get_calendar_event` SQL; `dw_attendee` has no `client_id` column — scoped by event_id only (no explicit client filter needed here as event_id already scoped by client check above).

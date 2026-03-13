@@ -214,6 +214,23 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] data_agent.md: prompt rule — when list_events returns 2–4, output count line only; cards render automatically
 - [x] Explored smart_tips_benchmark: not found as table or materialized view via ON24_RO user (likely in a restricted schema or different DB)
 
+## Phase 9: AI-ACE Content + KB Migration + Agent Scope — COMPLETE (2026-03-13)
+- [x] ChromaDB → Postgres + OpenAI embeddings: knowledge_base_articles table (REAL[] embedding), text-embedding-3-small, numpy cosine similarity; migration 0002
+- [x] Removed chromadb dependency; added openai + numpy to pyproject.toml
+- [x] OPENAI_API_KEY added to Settings config; 637 articles / 2729 chunks ingested
+- [x] AI-ACE content (video_library WHERE source LIKE 'AUTO%') shown in calendar event detail and chat event card
+- [x] Calendar AI-ACE tile: article type dropdown (Blog/eBook/FAQ/Key Takeaways/etc.), Key Takeaways → 4 section tabs (Summary/Takeaways/Quote/Other), Media Manager deep link per type
+- [x] Backend parses keytakeaways HTML into sections using BeautifulSoup (server-side, reliable)
+- [x] Calendar: avg_engagement_score KPI tile (dw_attendee AVG); scrollbar only inside key takeaways content
+- [x] Home page tile "Event data exploration" → sends "What is the event ID?" to chat
+- [x] Scope enforcement added to all 4 agent system prompts (politely refuse off-topic)
+- [x] Home page: 8 color-coded tiles by agent (data=indigo, concierge=amber, config=emerald)
+- [x] "Experiences" tile: chip sub-menu with ON24 experience deep links (Elite, Hub, Target, GoLive)
+- [x] "Configure environment" tile: chip sub-menu (Media Manager, Segment Builder, Connect, Branding, Users)
+- [x] data_agent.md: event card rule — output only identifier line when card renders (no text narration)
+- [x] Orchestrator routing: route_to_config + route_to_concierge stubs added
+- [x] ON24_Grounding.docx added to repo (data/)
+
 ## Backlog / Next Steps
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
