@@ -37,31 +37,48 @@ Surfaces deep links to ON24 product creation and configuration UIs. Stubbed now;
 - System prompt: `backend/app/agents/prompts/config_agent.md`
 
 ### Experience links (`get_experience_links`)
-| Product | Description | URL |
-|---------|-------------|-----|
-| Elite (Webcast Elite) | Create and manage webinars, forums, and breakout rooms | https://wcc.on24.com/webcast/webcasts |
-| Engagement Hub | Build on-demand content hubs with searchable assets | https://wccv.on24.com/webcast/managemychannel |
-| Target (Landing Pages) | Assemble targeted landing pages from your content library | https://wccv.on24.com/webcast/gatewayexperience |
-| GoLive (Virtual Events) | Scaffold multi-session virtual events with agenda builder | https://wccgl.on24.com/webcast/events |
+| Label | URL |
+|-------|-----|
+| Elite — Webinars | https://wcc.on24.com/webcast/webcasts |
+| Engagement Hub | https://wccv.on24.com/webcast/managemychannel |
+| Target — Landing Pages | https://wccv.on24.com/webcast/gatewayexperience |
+| GoLive — Virtual Events | https://wccgl.on24.com/webcast/events |
 
 ### Config links (`get_config_links`)
-| Surface | Description | URL |
-|---------|-------------|-----|
-| Media Manager | Upload and manage your content library | https://wccv.on24.com/webcast/mediamanager |
-| Segment Builder | Define audience segments for personalized experiences | https://segment.on24.com/segments/segments |
-| Connect / Integrations | Configure integrations with Marketo, Eloqua, and others | https://wcc.on24.com/webcast/integrations |
-| Account Dashboard | Admin overview of account activity | https://wcc.on24.com/webcast/accountdashboard |
-| Manage Users | Add, edit, and remove platform users | https://wcc.on24.com/webcast/manageusers |
+| Label | URL |
+|-------|-----|
+| Media Manager | https://wccv.on24.com/webcast/mediamanager |
+| Segment Builder | https://segment.on24.com/segments/segments |
+| Connect / Integrations | https://wcc.on24.com/webcast/integrations |
+| Branding | https://wcc.on24.com/webcast/accountdashboard?tab=branding&clientId=10710 |
+| Manage Users | https://wcc.on24.com/webcast/manageusers |
 
 ### Frontend: `frontend/src/components/chat/ChatPanel.tsx`
-Two new tiles added to `SUGGESTIONS`: `"Create experiences"` and `"Configure environment"`.
+Two new tiles added to `SUGGESTIONS`: `"Experiences"` and `"Configure environment"`.
 
 These tiles **bypass the chat/agent pipeline** — same pattern as the existing "How do I...?" sub-menu:
-- Clicking "Create experiences" → sets `showCreateExperiences(true)`, renders inline card panel (replaces tile grid, has Back button)
-- Clicking "Configure environment" → sets `showConfigureEnv(true)`, renders inline card panel (replaces tile grid, has Back button)
-- Each panel is a separate sub-menu with its own card set (not one unified panel)
-- Each product = a styled card: name, one-line description, "Open →" external link (`target="_blank"`)
-- Cards use the same chip/card CSS variables as the rest of the UI
+- Clicking "Experiences" → sets `showExperiences(true)`, renders inline chip sub-menu (replaces tile grid, has Back button). Each chip is a direct deep link (`<a target="_blank">`) to the respective ON24 experience.
+- Clicking "Configure environment" → sets `showConfigureEnv(true)`, renders inline chip sub-menu (replaces tile grid, has Back button). Each chip is a direct deep link to the respective ON24 configuration surface.
+- Each sub-menu uses the same chip button styles as the "How do I...?" sub-menu
+
+**Experiences chips** (from ON24_Grounding.docx):
+| Label | URL |
+|-------|-----|
+| Elite — Webinars | https://wcc.on24.com/webcast/webcasts |
+| Engagement Hub | https://wccv.on24.com/webcast/managemychannel |
+| Target — Landing Pages | https://wccv.on24.com/webcast/gatewayexperience |
+| GoLive — Virtual Events | https://wccgl.on24.com/webcast/events |
+
+**Configure environment chips**:
+| Label | URL |
+|-------|-----|
+| Media Manager | https://wccv.on24.com/webcast/mediamanager |
+| Segment Builder | https://segment.on24.com/segments/segments |
+| Connect / Integrations | https://wcc.on24.com/webcast/integrations |
+| Branding | https://wcc.on24.com/webcast/accountdashboard?tab=branding&clientId=10710 |
+| Manage Users | https://wcc.on24.com/webcast/manageusers |
+
+Note: `clientId=10710` is the root client ID, hardcoded from `settings.on24_client_id`. The frontend uses this constant directly — no API call needed.
 
 ### Orchestrator changes
 - New `route_to_config` tool added to `ROUTING_TOOLS`

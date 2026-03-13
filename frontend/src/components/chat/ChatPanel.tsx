@@ -3,21 +3,50 @@ import { useChatContext } from '../../context/ChatContext'
 import ChatMessage from './ChatMessage'
 import AgentIndicator from './AgentIndicator'
 
-const SUGGESTIONS = [
-  'Show event calendar',
-  'How do I ...? (ON24 help)',
-  'Show attendance trends',
-  'Which events had the best engagement?',
-  'How many events ran this month?',
-  'Top audience companies',
-  'Event registration rates',
-  'Show poll results for last event',
+type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'neutral'
+
+const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: string; hoverBorder: string }> = {
+  data:      { border: '#6366f1', bg: 'rgba(99,102,241,0.07)',  hoverBg: 'rgba(99,102,241,0.13)',  hoverBorder: '#6366f1' },
+  concierge: { border: '#f59e0b', bg: 'rgba(245,158,11,0.07)',  hoverBg: 'rgba(245,158,11,0.13)',  hoverBorder: '#f59e0b' },
+  config:    { border: '#10b981', bg: 'rgba(16,185,129,0.07)',  hoverBg: 'rgba(16,185,129,0.13)',  hoverBorder: '#10b981' },
+  calendar:  { border: '#8b5cf6', bg: 'rgba(139,92,246,0.07)', hoverBg: 'rgba(139,92,246,0.13)',  hoverBorder: '#8b5cf6' },
+  neutral:   { border: 'var(--color-border)', bg: 'var(--color-card)', hoverBg: 'var(--color-chip-hover-bg)', hoverBorder: 'var(--color-border)' },
+}
+
+const SMART_TIPS_URL = 'https://wcc.on24.com/webcast/keyinsightssummary'
+
+const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
+  { text: 'Recent events',             agent: 'concierge'                    },
+  { text: 'Experiences',               agent: 'config'                       },
+  { text: 'How do I ...? (ON24 help)',  agent: 'concierge'                    },
+  { text: 'Configure environment',     agent: 'config'                       },
+  { text: 'Trends',                    agent: 'data'                         },
+  { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
+  { text: 'Event data exploration',    agent: 'data'                         },
+  { text: 'Other',                     agent: 'neutral'                      },
+]
+
+const EXPERIENCE_LINKS = [
+  { label: 'Elite — Webinars',        url: 'https://wcc.on24.com/webcast/webcasts' },
+  { label: 'Engagement Hub',          url: 'https://wccv.on24.com/webcast/managemychannel' },
+  { label: 'Target — Landing Pages',  url: 'https://wccv.on24.com/webcast/gatewayexperience' },
+  { label: 'GoLive — Virtual Events', url: 'https://wccgl.on24.com/webcast/events' },
+]
+
+const CONFIG_LINKS = [
+  { label: 'Media Manager',         url: 'https://wccv.on24.com/webcast/mediamanager' },
+  { label: 'Segment Builder',       url: 'https://segment.on24.com/segments/segments' },
+  { label: 'Connect / Integrations',url: 'https://wcc.on24.com/webcast/integrations' },
+  { label: 'Branding',              url: 'https://wcc.on24.com/webcast/accountdashboard?tab=branding&clientId=10710' },
+  { label: 'Manage Users',          url: 'https://wcc.on24.com/webcast/manageusers' },
 ]
 
 export default function ChatPanel() {
   const { messages, isProcessing, activeAgent, sendMessage, openCalendar } = useChatContext()
   const [input, setInput] = useState('')
   const [showHowDoI, setShowHowDoI] = useState(false)
+  const [showExperiences, setShowExperiences] = useState(false)
+  const [showConfigureEnv, setShowConfigureEnv] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -114,7 +143,7 @@ export default function ChatPanel() {
             </h2>
 
             {/* Suggestion tiles — 2-column grid */}
-            {!showHowDoI ? (
+            {!showHowDoI && !showExperiences && !showConfigureEnv ? (
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
@@ -122,76 +151,25 @@ export default function ChatPanel() {
                 width: '100%',
                 maxWidth: 680,
               }}>
-                {SUGGESTIONS.map((s, i) => (
-                  <button
-                    key={i}
-                    aria-label={`Suggest: ${s}`}
-                    onClick={() => {
-                      if (s === 'Show event calendar') { openCalendar() }
-                      else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
-                      else { sendMessage(s); setInput('') }
-                    }}
-                    style={{
-                      padding: '0.875rem 1rem',
-                      background: 'var(--color-chip-bg)',
-                      border: '1px solid var(--color-chip-border)',
-                      borderRadius: 8,
-                      color: 'var(--color-chip-text)',
-                      fontSize: '0.825rem',
-                      fontWeight: 500,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      lineHeight: 1.4,
-                      transition: 'border-color 0.12s, background 0.12s',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-hover-bg)'
-                      ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-bg)'
-                      ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-chip-border)'
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              /* "How do I...?" sub-menu */
-              <div style={{ width: '100%', maxWidth: 680 }}>
-                <button
-                  onClick={() => setShowHowDoI(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.375rem',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'var(--color-primary)', fontSize: '0.8rem', fontWeight: 500,
-                    marginBottom: '0.75rem', padding: 0,
-                  }}
-                >
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                  </svg>
-                  Back
-                </button>
-                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
-                  What would you like help with?
-                </p>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '0.625rem',
-                }}>
-                  {HOW_DO_I_OPTIONS.map((q, i) => (
+                {SUGGESTIONS.map(({ text: s, agent, href }, i) => {
+                  const c = AGENT_COLORS[agent]
+                  return (
                     <button
                       key={i}
-                      aria-label={q}
-                      onClick={() => { sendMessage(q); setInput(''); setShowHowDoI(false) }}
+                      aria-label={`Suggest: ${s}`}
+                      onClick={() => {
+                        if (s === 'Recent events') { openCalendar() }
+                        else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
+                        else if (s === 'Experiences') { setShowExperiences(true) }
+                        else if (s === 'Configure environment') { setShowConfigureEnv(true) }
+                        else if (href) { window.open(href, '_blank', 'noreferrer') }
+                        else { sendMessage(s); setInput('') }
+                      }}
                       style={{
                         padding: '0.875rem 1rem',
-                        background: 'var(--color-chip-bg)',
-                        border: '1px solid var(--color-chip-border)',
+                        background: c.bg,
+                        border: `1px solid ${c.border}`,
+                        borderLeft: `3px solid ${c.border}`,
                         borderRadius: 8,
                         color: 'var(--color-chip-text)',
                         fontSize: '0.825rem',
@@ -203,13 +181,164 @@ export default function ChatPanel() {
                         boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-hover-bg)'
-                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-primary)'
+                        (e.currentTarget as HTMLButtonElement).style.background = c.hoverBg
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-chip-bg)'
-                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-chip-border)'
+                        (e.currentTarget as HTMLButtonElement).style.background = c.bg
                       }}
+                    >
+                      {s}{href ? ' ↗' : ''}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : showExperiences ? (
+              /* Experiences sub-menu */
+              <div style={{ width: '100%', maxWidth: 680 }}>
+                <button
+                  onClick={() => setShowExperiences(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: AGENT_COLORS.config.border, fontSize: '0.8rem', fontWeight: 500,
+                    marginBottom: '0.75rem', padding: 0,
+                  }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                  Which ON24 experience?
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
+                  {EXPERIENCE_LINKS.map(({ label, url }) => (
+                    <a
+                      key={label}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        padding: '0.875rem 1rem',
+                        background: AGENT_COLORS.config.bg,
+                        border: `1px solid ${AGENT_COLORS.config.border}`,
+                        borderLeft: `3px solid ${AGENT_COLORS.config.border}`,
+                        borderRadius: 8,
+                        color: 'var(--color-chip-text)',
+                        fontSize: '0.825rem',
+                        fontWeight: 500,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        lineHeight: 1.4,
+                        textDecoration: 'none',
+                        display: 'block',
+                        transition: 'background 0.12s',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = AGENT_COLORS.config.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = AGENT_COLORS.config.bg }}
+                    >
+                      {label} ↗
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : showConfigureEnv ? (
+              /* Configure environment sub-menu */
+              <div style={{ width: '100%', maxWidth: 680 }}>
+                <button
+                  onClick={() => setShowConfigureEnv(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: AGENT_COLORS.config.border, fontSize: '0.8rem', fontWeight: 500,
+                    marginBottom: '0.75rem', padding: 0,
+                  }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                  What would you like to configure?
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
+                  {CONFIG_LINKS.map(({ label, url }) => (
+                    <a
+                      key={label}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        padding: '0.875rem 1rem',
+                        background: AGENT_COLORS.config.bg,
+                        border: `1px solid ${AGENT_COLORS.config.border}`,
+                        borderLeft: `3px solid ${AGENT_COLORS.config.border}`,
+                        borderRadius: 8,
+                        color: 'var(--color-chip-text)',
+                        fontSize: '0.825rem',
+                        fontWeight: 500,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        lineHeight: 1.4,
+                        textDecoration: 'none',
+                        display: 'block',
+                        transition: 'background 0.12s',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = AGENT_COLORS.config.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = AGENT_COLORS.config.bg }}
+                    >
+                      {label} ↗
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* "How do I...?" sub-menu */
+              <div style={{ width: '100%', maxWidth: 680 }}>
+                <button
+                  onClick={() => setShowHowDoI(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: AGENT_COLORS.concierge.border, fontSize: '0.8rem', fontWeight: 500,
+                    marginBottom: '0.75rem', padding: 0,
+                  }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                  What would you like help with?
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
+                  {HOW_DO_I_OPTIONS.map((q, i) => (
+                    <button
+                      key={i}
+                      aria-label={q}
+                      onClick={() => { sendMessage(q); setInput(''); setShowHowDoI(false) }}
+                      style={{
+                        padding: '0.875rem 1rem',
+                        background: AGENT_COLORS.concierge.bg,
+                        border: `1px solid ${AGENT_COLORS.concierge.border}`,
+                        borderLeft: `3px solid ${AGENT_COLORS.concierge.border}`,
+                        borderRadius: 8,
+                        color: 'var(--color-chip-text)',
+                        fontSize: '0.825rem',
+                        fontWeight: 500,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        lineHeight: 1.4,
+                        transition: 'background 0.12s',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.concierge.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.concierge.bg }}
                     >
                       {q}
                     </button>

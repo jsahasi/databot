@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface AiContent {
+  count: number
+  types: string[]
+  source_event_id: number
+  client_id: number
+}
+
 interface CalendarEvent {
   event_id: number
   title: string
@@ -16,6 +23,7 @@ interface CalendarEvent {
   poll_response_count?: number | null
   survey_response_count?: number | null
   resource_download_count?: number | null
+  ai_content?: AiContent | null
 }
 
 interface Props {
@@ -96,6 +104,64 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
 }
 
 // ─── Event Detail Panel ───────────────────────────────────────────────────────
+
+function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
+  const [expanded, setExpanded] = useState(false)
+  const mmUrl = `https://wccv.on24.com/webcast/mediamanager?search=${ai.source_event_id}&date_range=all&client_ids=${ai.client_id}`
+  return (
+    <div style={{
+      background: 'var(--color-card)', borderRadius: 10,
+      padding: '0.875rem 1rem',
+      border: '1px solid var(--color-border)',
+    }}>
+      <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+        AI-ACE Content
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <a
+          href={mmUrl}
+          target="_blank"
+          rel="noreferrer"
+          style={{ fontSize: '0.8rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}
+        >
+          Key Takeaways ↗
+        </a>
+        <button
+          onClick={() => setExpanded(v => !v)}
+          style={{
+            fontSize: '0.7rem', fontWeight: 600,
+            background: 'rgba(16,185,129,0.1)', color: '#10b981',
+            border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20,
+            padding: '0.15rem 0.5rem', cursor: 'pointer', lineHeight: 1.4,
+          }}
+        >
+          +{ai.count}
+        </button>
+      </div>
+      {expanded && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.6rem' }}>
+          {ai.types.map(type => (
+            <a
+              key={type}
+              href={mmUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                fontSize: '0.7rem', fontWeight: 500,
+                background: 'rgba(16,185,129,0.1)', color: '#10b981',
+                border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20,
+                padding: '0.2rem 0.6rem', textDecoration: 'none',
+                display: 'inline-block',
+              }}
+            >
+              {type.replace(/_/g, ' ')}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClose: () => void }) {
   const [event, setEvent] = useState<CalendarEvent>(initial)
@@ -243,6 +309,10 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
             Performance data available after the event concludes.
           </div>
         )}
+
+        {/* AI-ACE Key Takeaways */}
+        {event.ai_content && <KeyTakeawaysTile ai={event.ai_content} />}
+
       </div>
     </div>
   )

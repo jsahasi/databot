@@ -153,6 +153,29 @@ async def get_calendar_event(event_id: int):
         # Only fetch response counts for past events
         if not result["is_future"]:
             try:
+                ai_sql = """
+                    SELECT
+                        replace(vl.source, 'AUTOGEN_', '') AS type,
+                        COUNT(*) AS cnt
+                    FROM on24master.video_library vl
+                    WHERE vl.source_event_id = $1
+                      AND vl.source LIKE 'AUTO%'
+                      AND vl.client_id = ANY($2::bigint[])
+                    GROUP BY vl.source
+                    ORDER BY vl.source
+                """
+                ai_rows = await conn.fetch(ai_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
+                if ai_rows:
+                    result["ai_content"] = {
+                        "count": sum(int(r["cnt"]) for r in ai_rows),
+                        "types": [r["type"] for r in ai_rows],
+                        "source_event_id": event_id,
+                        "client_id": client_ids[0],
+                    }
+            except Exception:
+                pass
+
+            try:
                 poll_row = await conn.fetchrow(poll_sql, event_id, timeout=_QUERY_TIMEOUT)
                 result["poll_response_count"] = int(poll_row["cnt"]) if poll_row else 0
             except Exception:
