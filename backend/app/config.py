@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # OpenAI (embeddings)
     openai_api_key: str = ""
 
+    # Brand voice — company website for blog scraping (optional)
+    company_website_url: str = ""
+
     # App
     app_name: str = "DataBot"
     debug: bool = False

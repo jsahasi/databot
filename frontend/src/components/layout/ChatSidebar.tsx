@@ -88,16 +88,6 @@ export default function ChatSidebar() {
         </button>
       </div>
 
-      {/* Recent Chats */}
-      <div>
-        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-          Recent Chats
-        </p>
-        <p style={{ fontSize: '0.775rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-          No recent chats
-        </p>
-      </div>
-
       {/* Docs */}
       <div>
         <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>

@@ -22,9 +22,22 @@ async def lifespan(app: FastAPI):
     task = asyncio.create_task(_ingest_knowledge_base())
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
+    # Startup: refresh brand voice if stale (non-blocking)
+    bv_task = asyncio.create_task(_refresh_brand_voice())
+    _background_tasks.add(bv_task)
+    bv_task.add_done_callback(_background_tasks.discard)
     yield
     # Shutdown
     await close_pool()
+
+
+async def _refresh_brand_voice():
+    """Refresh brand voice document if stale (runs as background task)."""
+    try:
+        from app.services.brand_voice import refresh_if_stale
+        await refresh_if_stale()
+    except Exception as e:
+        logger.warning(f"Brand voice refresh failed (non-fatal): {e}")
 
 
 async def _ingest_knowledge_base():
