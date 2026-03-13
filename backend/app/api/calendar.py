@@ -156,21 +156,31 @@ async def get_calendar_event(event_id: int):
                 ai_sql = """
                     SELECT
                         replace(vl.source, 'AUTOGEN_', '') AS type,
-                        COUNT(*) AS cnt
+                        vl.media_content                   AS text,
+                        vl.creation_timestamp
                     FROM on24master.video_library vl
                     WHERE vl.source_event_id = $1
                       AND vl.source LIKE 'AUTO%'
                       AND vl.client_id = ANY($2::bigint[])
-                    GROUP BY vl.source
-                    ORDER BY vl.source
+                    ORDER BY vl.source, vl.creation_timestamp DESC
                 """
                 ai_rows = await conn.fetch(ai_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
                 if ai_rows:
+                    # Collect unique types; grab text of the first KEYTAKEAWAYS row
+                    seen_types: list[str] = []
+                    kt_text: str | None = None
+                    for r in ai_rows:
+                        t = r["type"]
+                        if t not in seen_types:
+                            seen_types.append(t)
+                        if t == "KEYTAKEAWAYS" and kt_text is None:
+                            kt_text = r["text"]
                     result["ai_content"] = {
-                        "count": sum(int(r["cnt"]) for r in ai_rows),
-                        "types": [r["type"] for r in ai_rows],
+                        "count": len(ai_rows),
+                        "types": seen_types,
                         "source_event_id": event_id,
                         "client_id": client_ids[0],
+                        "keytakeaways_text": kt_text,
                     }
             except Exception:
                 pass

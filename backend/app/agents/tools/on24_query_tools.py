@@ -195,6 +195,21 @@ async def compute_event_kpis(event_id: int) -> dict:
     for field in ("avg_engagement", "avg_live_minutes", "conversion_rate"):
         if result.get(field) is not None:
             result[field] = round(float(result[field]), 2)
+
+    # AI-ACE content check
+    ai_sql = """
+        SELECT COUNT(*) AS cnt
+        FROM on24master.video_library vl
+        WHERE vl.source_event_id = $1
+          AND vl.source LIKE 'AUTO%'
+          AND vl.client_id = ANY($2::bigint[])
+    """
+    async with pool.acquire() as conn:
+        ai_row = await conn.fetchrow(ai_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
+    ai_count = int(ai_row["cnt"]) if ai_row else 0
+    if ai_count > 0:
+        result["ai_content"] = {"count": ai_count, "client_id": client_ids[0]}
+
     return result
 
 

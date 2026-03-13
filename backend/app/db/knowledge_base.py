@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 
 _CHROMA_DIR = Path("/app/data/chromadb")
-_ZENDESK_FILE = Path("/app/data/zendesk-merge-20260226.json")
+_ZENDESK_FILE = Path("/app/data/zendesk_articles.json")
 _client: chromadb.ClientAPI | None = None
 _collection_name = "on24_knowledge"
 

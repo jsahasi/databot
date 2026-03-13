@@ -7,6 +7,7 @@ interface AiContent {
   types: string[]
   source_event_id: number
   client_id: number
+  keytakeaways_text?: string | null
 }
 
 interface CalendarEvent {
@@ -107,7 +108,7 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
 
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
   const [expanded, setExpanded] = useState(false)
-  const mmUrl = `https://wccv.on24.com/webcast/mediamanager?search=${ai.source_event_id}&date_range=all&client_ids=${ai.client_id}`
+  const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${ai.source_event_id}`
   return (
     <div style={{
       background: 'var(--color-card)', borderRadius: 10,
@@ -117,6 +118,8 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
       <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
         AI-ACE Content
       </div>
+
+      {/* Header row: link + expand badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <a
           href={mmUrl}
@@ -135,28 +138,47 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
             padding: '0.15rem 0.5rem', cursor: 'pointer', lineHeight: 1.4,
           }}
         >
-          +{ai.count}
+          {expanded ? '▲' : `+${ai.count}`}
         </button>
       </div>
+
+      {/* Expanded: type chips + scrollable text */}
       {expanded && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.6rem' }}>
-          {ai.types.map(type => (
-            <a
-              key={type}
-              href={mmUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                fontSize: '0.7rem', fontWeight: 500,
-                background: 'rgba(16,185,129,0.1)', color: '#10b981',
-                border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20,
-                padding: '0.2rem 0.6rem', textDecoration: 'none',
-                display: 'inline-block',
-              }}
-            >
-              {type.replace(/_/g, ' ')}
-            </a>
-          ))}
+        <div style={{ marginTop: '0.6rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.6rem' }}>
+            {ai.types.map(type => (
+              <a
+                key={type}
+                href={mmUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  fontSize: '0.7rem', fontWeight: 500,
+                  background: 'rgba(16,185,129,0.1)', color: '#10b981',
+                  border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20,
+                  padding: '0.2rem 0.6rem', textDecoration: 'none', display: 'inline-block',
+                }}
+              >
+                {type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+              </a>
+            ))}
+          </div>
+          {ai.keytakeaways_text && (
+            <div style={{
+              maxHeight: 200,
+              overflowY: 'auto',
+              background: 'var(--color-bg)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 6,
+              padding: '0.625rem 0.75rem',
+              fontSize: '0.75rem',
+              color: 'var(--color-text)',
+              lineHeight: 1.6,
+              whiteSpace: 'pre-wrap',
+            }}>
+              {ai.keytakeaways_text}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -250,6 +250,28 @@ function EventCardInline({ card }: { card: any }) {
             ))}
           </div>
         )}
+        {card.ai_content && (() => {
+          const { count, client_id, event_id: eid } = card.ai_content
+          const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${eid ?? card.event_id}`
+          return (
+            <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
+              <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
+                AI-ACE Content
+              </div>
+              <a
+                href={mmUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: '0.78rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}
+              >
+                Key Takeaways ↗
+              </a>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginLeft: '0.4rem' }}>
+                {count} article{count !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
