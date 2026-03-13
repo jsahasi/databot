@@ -205,13 +205,14 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
         </div>
       )}
 
-      {/* Content — no inner scroll; outer panel provides the single scrollbar */}
+      {/* Content — scrollable area */}
       {(() => {
         const html = content
         return html ? (
           <div
             dangerouslySetInnerHTML={{ __html: html }}
             style={{
+              maxHeight: 220, overflowY: 'auto',
               background: 'var(--color-bg)', border: '1px solid var(--color-border)',
               borderRadius: 6, padding: '0.625rem 0.75rem',
               fontSize: '0.75rem', color: 'var(--color-text)', lineHeight: 1.6,
@@ -260,7 +261,7 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
       borderLeft: '1px solid var(--color-border)',
       background: 'var(--color-bg)',
       display: 'flex', flexDirection: 'column',
-      overflowY: 'auto', overflowX: 'hidden',
+      overflow: 'hidden',
     }}>
       {/* Colour bar header */}
       <div style={{ height: 4, background: color, flexShrink: 0 }} />
