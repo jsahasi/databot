@@ -155,3 +155,13 @@ Implementation:
 **Decision:** Add `avg_engagement_score` as a 4th KPI tile in the calendar event detail side panel.
 **Rationale:** Engagement score is a primary performance indicator. Adding it alongside registrants/attendees/conversion gives a complete performance picture.
 **Implementation:** Added `LEFT JOIN dw_attendee a ON a.event_id = e.event_id` to the `get_calendar_event` SQL; `dw_attendee` has no `client_id` column — scoped by event_id only (no explicit client filter needed here as event_id already scoped by client check above).
+
+## 2026-03-13: Concierge Agent Identity + Self-Contained Answers
+**Decision:** Rename the KB-answering agent from "knowledge_base" to "concierge" in all attribution, chip logic, and code.
+**Rationale:** "knowledge_base" describes an implementation detail (what tool it uses), not the agent's role. "Concierge" conveys the intent: a knowledgeable guide who answers questions directly.
+**Answer format:** Concierge must give complete self-contained answers from KB article content — never link to Help Center as the primary answer. Links only if user explicitly asks. Max 200 words. No preamble.
+
+## 2026-03-13: Suggestion Chip Structure (2+2+1)
+**Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
+**Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.
+**Agent-switch mapping:** concierge→[data, content]; data→[concierge, content]; content→[data, concierge]. "Home" calls `resetChat()`. "How do I...?" opens the sub-menu without sending a message.

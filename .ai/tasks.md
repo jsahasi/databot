@@ -231,7 +231,19 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Orchestrator routing: route_to_config + route_to_concierge stubs added
 - [x] ON24_Grounding.docx added to repo (data/)
 
+## Phase 9 Addendum: Concierge Agent + Chip Navigation — COMPLETE (2026-03-13)
+- [x] Renamed agent attribution from "knowledge_base" → "concierge" (orchestrator.py, chat.py)
+- [x] Concierge prompt overhaul: self-contained answers from KB content, no links by default, conversational tone
+- [x] Links banned from concierge responses unless user explicitly asks; max 200 words
+- [x] Chip structure changed: 2 LLM context chips + 2 agent-switch chips (per other agent) + "Home" = 5 total
+- [x] Agent-switch chips by agent: concierge→["Explore my event data","Content performance insights"]; data→["How do I...?","Content performance insights"]; content→["Explore my event data","How do I...?"]
+- [x] "Home" chip → calls resetChat() (clears chat, returns to welcome screen)
+- [x] "How do I...?" chip → opens how-to sub-menu (no message sent)
+- [x] Audience companies: `months` param exposed in tool schema; cross-event default = 1 month (30 days); agent instructed to state time period in title line
+- [x] Auto-restart backend after every backend commit (new workflow rule)
+
 ## Backlog / Next Steps
+- [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
 - [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
 - [ ] Frontend Vitest component tests + Playwright E2E
