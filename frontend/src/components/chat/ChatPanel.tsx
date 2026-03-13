@@ -162,6 +162,7 @@ export default function ChatPanel() {
                         else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
+                        else if (s === 'Event data exploration') { sendMessage('What is the event ID?'); setInput('') }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
                       }}

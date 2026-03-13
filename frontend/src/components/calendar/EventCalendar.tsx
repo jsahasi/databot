@@ -8,6 +8,7 @@ interface AiContent {
   source_event_id: number
   client_id: number
   articles?: Record<string, string>
+  kt_sections?: Record<string, string>  // summary | takeaways | quote | other
 }
 
 interface CalendarEvent {
@@ -21,6 +22,7 @@ interface CalendarEvent {
   registrant_count?: number | null
   attendee_count?: number | null
   conversion_rate?: number | null
+  avg_engagement_score?: number | null
   poll_response_count?: number | null
   survey_response_count?: number | null
   resource_download_count?: number | null
@@ -120,51 +122,27 @@ function aiTypeLabel(t: string) {
   return AI_TYPE_LABELS[t] ?? t.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 }
 
-// Section tabs for Key Takeaways content
-const KT_TABS = ['Executive Summary', 'Takeaways', 'Quote', 'Other'] as const
-type KtTab = typeof KT_TABS[number]
-const KT_HEADING_MAP: Record<string, KtTab> = {
-  'Executive Summary': 'Executive Summary',
-  'Key Takeaways': 'Takeaways',
-  'Key Quote': 'Quote',
-}
-
-function parseKtSections(html: string): Partial<Record<KtTab, string>> {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const raw: Record<string, string> = {}
-  let current = 'Other'
-  const buf: string[] = []
-  const flush = () => {
-    if (buf.length) { raw[current] = (raw[current] ?? '') + buf.join(''); buf.length = 0 }
-  }
-  for (const el of Array.from(doc.body.children)) {
-    const heading = (el as HTMLElement).querySelector('[style*="font-size: 18px"]')
-    if (heading) {
-      flush()
-      current = KT_HEADING_MAP[heading.textContent?.trim() ?? ''] ?? 'Other'
-    } else buf.push((el as HTMLElement).outerHTML)
-  }
-  flush()
-  return raw as Partial<Record<KtTab, string>>
+// Section tab order for Key Takeaways (keys match backend _parse_kt_sections output)
+const KT_TAB_ORDER = ['summary', 'takeaways', 'quote', 'other'] as const
+const KT_TAB_LABELS: Record<string, string> = {
+  summary: 'Summary', takeaways: 'Takeaways', quote: 'Quote', other: 'Other',
 }
 
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
   const articles = ai.articles ?? {}
+  const ktSections = ai.kt_sections ?? {}
   const types = ai.types.filter(t => articles[t])
   const defaultType = types.includes('KEYTAKEAWAYS') ? 'KEYTAKEAWAYS' : (types[0] ?? '')
   const [selectedType, setSelectedType] = useState(defaultType)
 
-  // Section tabs — only relevant for KEYTAKEAWAYS
-  const ktSections = selectedType === 'KEYTAKEAWAYS' ? parseKtSections(articles['KEYTAKEAWAYS'] ?? '') : {}
-  const availableTabs = KT_TABS.filter(t => ktSections[t])
-  const defaultTab: KtTab = availableTabs.includes('Takeaways') ? 'Takeaways' : (availableTabs[0] ?? 'Other')
-  const [activeTab, setActiveTab] = useState<KtTab>(defaultTab)
-  // Reset tab when type changes
+  const availableTabs = KT_TAB_ORDER.filter(k => ktSections[k])
+  const defaultTab = availableTabs.includes('takeaways') ? 'takeaways' : (availableTabs[0] ?? '')
+  const [activeTab, setActiveTab] = useState(defaultTab)
+
   const prevType = useRef(selectedType)
   if (prevType.current !== selectedType) {
     prevType.current = selectedType
-    setActiveTab(availableTabs.includes('Takeaways') ? 'Takeaways' : (availableTabs[0] ?? 'Other'))
+    setActiveTab(availableTabs.includes('takeaways') ? 'takeaways' : (availableTabs[0] ?? ''))
   }
 
   const MM_SUBTYPE: Record<string, string> = {
@@ -174,7 +152,9 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
   }
   const subType = MM_SUBTYPE[selectedType] ?? 'autogen_' + selectedType.toLowerCase()
   const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=${subType}&search=${ai.source_event_id}`
-  const content = selectedType === 'KEYTAKEAWAYS' ? ktSections[activeTab] : articles[selectedType]
+  const content = selectedType === 'KEYTAKEAWAYS'
+    ? (ktSections[activeTab] ?? articles['KEYTAKEAWAYS'])
+    : articles[selectedType]
 
   return (
     <div style={{ background: 'var(--color-card)', borderRadius: 10, padding: '0.875rem 1rem', border: '1px solid var(--color-border)' }}>
@@ -205,7 +185,7 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
         {types.map(t => <option key={t} value={t}>{aiTypeLabel(t)}</option>)}
       </select>
 
-      {/* Section tabs — only for Key Takeaways when sections are found */}
+      {/* Section tabs — only for Key Takeaways */}
       {selectedType === 'KEYTAKEAWAYS' && availableTabs.length > 0 && (
         <div style={{
           display: 'flex', borderBottom: '2px solid var(--color-border)',
@@ -220,14 +200,14 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
               background: 'transparent',
               color: activeTab === tab ? '#10b981' : 'var(--color-text-secondary)',
               cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>{tab}</button>
+            }}>{KT_TAB_LABELS[tab] ?? tab}</button>
           ))}
         </div>
       )}
 
-      {/* Content — no inner scroll; outer panel scrolls */}
+      {/* Content — no inner scroll; outer panel provides the single scrollbar */}
       {(() => {
-        const html = content ?? (selectedType === 'KEYTAKEAWAYS' ? articles['KEYTAKEAWAYS'] : undefined)
+        const html = content
         return html ? (
           <div
             dangerouslySetInnerHTML={{ __html: html }}
@@ -268,6 +248,7 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
     kpis.push({ label: 'Registrants', value: (event.registrant_count ?? 0).toLocaleString(), icon: '👥' })
     kpis.push({ label: 'Attendees', value: (event.attendee_count ?? 0).toLocaleString(), icon: '✅' })
     if (event.conversion_rate) kpis.push({ label: 'Conversion', value: `${event.conversion_rate}%`, icon: '📈' })
+    if (event.avg_engagement_score != null) kpis.push({ label: 'Avg Engagement', value: event.avg_engagement_score.toFixed(1), icon: '⚡' })
     if (event.poll_response_count) kpis.push({ label: 'Poll Responses', value: event.poll_response_count.toLocaleString(), icon: '📊' })
     if (event.survey_response_count) kpis.push({ label: 'Survey Responses', value: event.survey_response_count.toLocaleString(), icon: '📋' })
     if (event.resource_download_count) kpis.push({ label: 'Resource Downloads', value: event.resource_download_count.toLocaleString(), icon: '⬇️' })

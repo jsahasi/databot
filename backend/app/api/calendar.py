@@ -3,12 +3,45 @@
 import logging
 from datetime import datetime, timezone, timedelta
 
+from bs4 import BeautifulSoup, Tag
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db.on24_db import get_pool, get_tenant_client_ids
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+_KT_HEADING_MAP = {
+    "executive summary": "summary",
+    "key takeaways": "takeaways",
+    "key quote": "quote",
+}
+
+
+def _parse_kt_sections(html: str) -> dict[str, str]:
+    """Split keytakeaways HTML into named sections.
+
+    Headings are identified by inline font-size: 18px.
+    Unknown headings go into 'other'. Content before the first heading also
+    goes into 'other'.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    sections: dict[str, list[str]] = {}
+    current = "other"
+
+    for el in soup.children:
+        if not isinstance(el, Tag):
+            continue
+        # Is this element a section heading? (contains font-size: 18px)
+        heading_tag = el.find(True, style=lambda s: s and "font-size: 18px" in s)
+        # Long text with 18px styling is content, not a section heading
+        if heading_tag and len(heading_tag.get_text(strip=True)) < 80:
+            heading_text = heading_tag.get_text(strip=True).lower()
+            current = _KT_HEADING_MAP.get(heading_text, "other")
+        else:
+            sections.setdefault(current, []).append(str(el))
+
+    return {k: "".join(v) for k, v in sections.items() if "".join(v).strip()}
 
 _QUERY_TIMEOUT = 10.0
 
@@ -44,6 +77,8 @@ def _serialize_event(row: dict, include_kpis: bool) -> dict:
         result["registrant_count"] = int(reg) if reg is not None else None
         result["attendee_count"] = int(att) if att is not None else None
         result["conversion_rate"] = conv
+        eng = e.get("avg_engagement_score")
+        result["avg_engagement_score"] = float(eng) if eng is not None else None
     return result
 
 
@@ -110,10 +145,13 @@ async def get_calendar_event(event_id: int):
             e.goodtill                        AS end_time,
             e.event_type                      AS event_type,
             SUM(s.registrant_count)           AS registrant_count,
-            SUM(s.attendee_count)             AS attendee_count
+            SUM(s.attendee_count)             AS attendee_count,
+            ROUND(AVG(a.engagement_score)::numeric, 1) AS avg_engagement_score
         FROM on24master.event e
         LEFT JOIN on24master.dw_event_session s
                ON s.event_id = e.event_id
+        LEFT JOIN on24master.dw_attendee a
+               ON a.event_id = e.event_id
         WHERE e.event_id = $1
           AND e.client_id = ANY($2::bigint[])
         GROUP BY e.event_id, e.description, e.seo_abstract,
@@ -175,15 +213,20 @@ async def get_calendar_event(event_id: int):
                             seen_types.append(t)
                         if t not in articles and r["text"]:
                             articles[t] = r["text"]
+                    # Pre-parse KEYTAKEAWAYS into named sections
+                    kt_sections: dict[str, str] = {}
+                    if "KEYTAKEAWAYS" in articles:
+                        kt_sections = _parse_kt_sections(articles["KEYTAKEAWAYS"])
                     result["ai_content"] = {
                         "count": len(ai_rows),
                         "types": seen_types,
                         "source_event_id": event_id,
                         "client_id": client_ids[0],
                         "articles": articles,
+                        "kt_sections": kt_sections,
                     }
-            except Exception:
-                pass
+            except Exception as _ai_err:
+                logger.warning(f"ai_content fetch failed: {_ai_err!r}")
 
             try:
                 poll_row = await conn.fetchrow(poll_sql, event_id, timeout=_QUERY_TIMEOUT)
