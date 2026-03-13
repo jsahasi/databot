@@ -164,20 +164,20 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
             ))}
           </div>
           {ai.keytakeaways_text && (
-            <div style={{
-              maxHeight: 200,
-              overflowY: 'auto',
-              background: 'var(--color-bg)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 6,
-              padding: '0.625rem 0.75rem',
-              fontSize: '0.75rem',
-              color: 'var(--color-text)',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap',
-            }}>
-              {ai.keytakeaways_text}
-            </div>
+            <div
+              dangerouslySetInnerHTML={{ __html: ai.keytakeaways_text }}
+              style={{
+                maxHeight: 220,
+                overflowY: 'auto',
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 6,
+                padding: '0.625rem 0.75rem',
+                fontSize: '0.75rem',
+                color: 'var(--color-text)',
+                lineHeight: 1.6,
+              }}
+            />
           )}
         </div>
       )}
@@ -332,8 +332,8 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
           </div>
         )}
 
-        {/* AI-ACE Key Takeaways */}
-        {event.ai_content && <KeyTakeawaysTile ai={event.ai_content} />}
+        {/* AI-ACE Key Takeaways — only shown when text content is available */}
+        {event.ai_content?.keytakeaways_text && <KeyTakeawaysTile ai={event.ai_content} />}
 
       </div>
     </div>
