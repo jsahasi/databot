@@ -84,7 +84,7 @@ async def generate_suggestions(
             "drill deeper, cover adjacent sub-features, or address common next steps. "
             "Do NOT generate generic unrelated how-to questions. "
             f"User asked: {user_message}\n"
-            f"The answer covered: {bot_response[:400]}\n"
+            f"The answer covered: {response_text[:400]}\n"
             "Each suggestion must be a short how-to phrase (3-8 words), conversational. "
             "Return only a JSON array of exactly 2 strings, nothing else."
         )
@@ -127,7 +127,10 @@ async def generate_suggestions(
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
     match = re.search(r'\[.*\]', text, re.DOTALL)
     raw = match.group() if match else text
-    context_chips: list[str] = json.loads(raw)[:2]
+    try:
+        context_chips: list[str] = json.loads(raw)[:2]
+    except Exception:
+        context_chips = []  # Always return switch chips + Home even if LLM output is malformed
 
     return context_chips + switch_chips + ["Home"]
 
