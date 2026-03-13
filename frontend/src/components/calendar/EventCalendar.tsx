@@ -107,7 +107,7 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
 // ─── Event Detail Panel ───────────────────────────────────────────────────────
 
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${ai.client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${ai.source_event_id}`
   return (
     <div style={{
