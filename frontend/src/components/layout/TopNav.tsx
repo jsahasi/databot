@@ -1,17 +1,33 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useChatContext } from '../../context/ChatContext'
 
+interface AdminUser {
+  admin_id: number
+  email: string
+  name: string
+}
+
 export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
   const { isConnected, openCalendar } = useChatContext()
   const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
   const [dbEnv, setDbEnv] = useState<string>('')
   const [qaAvailable, setQaAvailable] = useState(false)
   const [switching, setSwitching] = useState(false)
+  const [admins, setAdmins] = useState<AdminUser[]>([])
+  const [selectedAdmin, setSelectedAdmin] = useState<string>('')
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
     localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
+
+  // Fetch active admins on mount
+  useEffect(() => {
+    fetch('/api/admins')
+      .then(r => r.json())
+      .then(d => setAdmins(d.admins || []))
+      .catch(() => setAdmins([]))
+  }, [])
 
   // Poll DB environment status every 30s
   useEffect(() => {
@@ -61,6 +77,35 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
+
+      {/* Simulated Admin dropdown */}
+      {admins.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
+          <label htmlFor="admin-select" style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            Simulated Admin:
+          </label>
+          <select
+            id="admin-select"
+            value={selectedAdmin}
+            onChange={e => setSelectedAdmin(e.target.value)}
+            style={{
+              fontSize: '0.75rem',
+              padding: '0.2rem 0.4rem',
+              borderRadius: 4,
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-card)',
+              color: 'var(--color-text)',
+              maxWidth: 220,
+              cursor: 'pointer',
+            }}
+          >
+            <option value="">— None —</option>
+            {admins.map(a => (
+              <option key={a.admin_id} value={a.email}>{a.email}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
