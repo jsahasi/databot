@@ -61,7 +61,7 @@ class OrchestratorAgent:
     ROUTING_TOOLS = [
         {
             "name": "search_knowledge_base",
-            "description": "Search the ON24 knowledge base (Zendesk help articles) for platform how-to questions, feature explanations, and configuration guides. Use this for ANY question about how to do something on the ON24 platform (e.g. 'how do I add speakers', 'how to set up polls', 'how to configure registration').",
+            "description": "Search the ON24 knowledge base (Zendesk help articles AND ON24 REST API v2 reference — 71 endpoints) for platform how-to questions, feature explanations, configuration guides, and API/integration questions. Use this for ANY question about how to do something on the ON24 platform OR about ON24 REST APIs, endpoints, integrations, and developer capabilities.",
             "input_schema": {
                 "type": "object",
                 "properties": {
