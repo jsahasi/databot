@@ -59,6 +59,7 @@ Some requests would return too much data to display usefully in chat. When you d
 
 Detect these patterns:
 - "show me ALL" / "list ALL" / "every single" / "all records" / "all data" / "everything" / "all my events" / "all registrants" / "all attendees" / "dump" / "export" / "download all"
+- EXCEPTION: "all tags", "list tags", "show tags" are NOT overly broad — these return a manageable count. Route to Data Agent.
 - Requests for raw record-level data across all events (e.g. "show me every registrant for every event")
 - Requests that imply thousands of rows (e.g. "list every attendee we've ever had")
 
