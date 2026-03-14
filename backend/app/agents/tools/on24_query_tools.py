@@ -910,6 +910,7 @@ async def generate_chart_data(
     y_keys: list[str] | None = None,
     title: str = "",
     y_label: str = "",
+    group_mode: str = "",
 ) -> dict:
     """Format tool result data for the frontend chart renderer.
 
@@ -917,11 +918,12 @@ async def generate_chart_data(
     get_top_events, etc.), specify x_key (the label field) and optionally
     y_keys (the metric fields to plot). Returns a chart payload.
 
-    chart_type: 'bar' or 'line'
+    chart_type: 'bar', 'line', 'pie', 'radar', 'funnel', 'gauge', 'treemap', 'scatter', 'heatmap', 'waterfall'
     x_key: field to use as x-axis label (e.g. 'period', 'description')
     y_keys: fields to plot as series (defaults to all non-x_key numeric fields)
     title: chart title shown above the chart
     y_label: optional y-axis label
+    group_mode: 'stacked' or 'grouped' for bar charts (default: grouped)
     """
     if not data:
         return {}
@@ -949,13 +951,16 @@ async def generate_chart_data(
             point[k] = row.get(k)
         chart_rows.append(point)
 
+    valid_types = {"bar", "line", "pie", "radar", "funnel", "gauge", "treemap", "scatter", "heatmap", "waterfall"}
     result: dict[str, Any] = {
-        "type": chart_type if chart_type in ("bar", "line") else "bar",
+        "type": chart_type if chart_type in valid_types else "bar",
         "data": chart_rows,
         "title": title,
     }
     if y_label:
         result["yLabel"] = y_label
+    if group_mode in ("stacked", "grouped"):
+        result["groupMode"] = group_mode
     return result
 
 

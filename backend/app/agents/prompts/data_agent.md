@@ -102,7 +102,8 @@ Pick the BEST chart type for the data and the user's likely goal:
 
 After calling a data tool that returns list data, call `generate_chart_data` to produce the chart. Pick the chart type that best matches the data:
 
-- `get_attendance_trends` → `chart_type="line"`, `x_key="period"`, `y_keys=["total_attendees","total_registrants"]`, `title="Attendance Trends"`
+- `get_attendance_trends` (default/line) → `chart_type="line"`, `x_key="period"`, `y_keys=["total_attendees","total_registrants"]`, `title="Attendance Trends"`
+- `get_attendance_trends` (as bar) → **stacked bar**: for each data point, compute `no_shows = total_registrants - total_attendees` (clamp to 0), then call `generate_chart_data` with `chart_type="bar"`, `x_key="period"`, `y_keys=["total_attendees","no_shows"]`, `group_mode="stacked"`, `title="Attendance Trends"`. This shows attendees + no-shows stacking to total registrants.
 - `get_top_events` (3+ results) → `chart_type="bar"`, `x_key="description"`, `y_keys=["total_attendees"]`, `title="Top Events by Attendance"`
 - `get_top_events_by_polls` → `chart_type="bar"`, `x_key="description"`, `y_keys=["poll_count"]`, `title="Events by Poll Count"`
 - `get_audience_companies` (≤15) → `chart_type="bar"`, `x_key="company"`, `y_keys=["attendee_count"]`, `title="Top Companies by Attendance"`
@@ -129,7 +130,7 @@ Keep it short, data-backed, and framed as an observation or question — not a r
 
 When the user says "show as bar chart", "show as line chart", "show as table", "show as pie chart", "show as radar", "show as funnel", "show as treemap", "show as scatter":
 - Re-use data from the previous query — do NOT re-query unless the data isn't in context.
-- "show as bar chart" → call `generate_chart_data` with `chart_type="bar"`.
+- "show as bar chart" → call `generate_chart_data` with `chart_type="bar"`. For attendance trends data, compute `no_shows = total_registrants - total_attendees` for each row, then use `y_keys=["total_attendees","no_shows"]` with `group_mode="stacked"` so the bars show how registrants break down into attendees vs no-shows.
 - "show as line chart" → call `generate_chart_data` with `chart_type="line"`.
 - "show as pie chart" → call `generate_chart_data` with `chart_type="pie"`, `x_key` = label field, `y_keys` = [single metric].
 - "show as radar" → call `generate_chart_data` with `chart_type="radar"`.

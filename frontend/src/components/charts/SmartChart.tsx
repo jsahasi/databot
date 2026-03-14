@@ -95,6 +95,7 @@ export interface SmartChartData {
   x_key?: string
   y_keys?: string[]
   yLabel?: string
+  groupMode?: 'stacked' | 'grouped'
 }
 
 const ChartLoading = () => (
@@ -105,9 +106,12 @@ const ChartLoading = () => (
 
 /* ---------- individual chart renderers ---------- */
 
-function NivoBar({ data, xKey, yKeys }: { data: any[]; xKey: string; yKeys: string[] }) {
+function NivoBar({ data, xKey, yKeys, groupMode = 'grouped' }: { data: any[]; xKey: string; yKeys: string[]; groupMode?: 'stacked' | 'grouped' }) {
   // Format labels for axis
   const allLabels = data.map(d => String(d[xKey]))
+
+  // Pretty-print y_key labels for legend
+  const formatKeyLabel = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
   return (
     <div style={{ height: 280 }}>
@@ -116,10 +120,11 @@ function NivoBar({ data, xKey, yKeys }: { data: any[]; xKey: string; yKeys: stri
           data={data}
           keys={yKeys}
           indexBy={xKey}
-          margin={{ top: 10, right: yKeys.length > 1 ? 120 : 20, bottom: 50, left: 60 }}
+          groupMode={groupMode}
+          margin={{ top: 10, right: yKeys.length > 1 ? 140 : 20, bottom: 50, left: 60 }}
           padding={0.3}
           colors={COLORS}
-          borderRadius={3}
+          borderRadius={groupMode === 'stacked' ? 0 : 3}
           theme={NIVO_THEME}
           axisBottom={{
             tickSize: 0,
@@ -141,12 +146,18 @@ function NivoBar({ data, xKey, yKeys }: { data: any[]; xKey: string; yKeys: stri
             dataFrom: 'keys',
             anchor: 'bottom-right',
             direction: 'column',
-            translateX: 110,
-            itemWidth: 100,
+            translateX: 130,
+            itemWidth: 120,
             itemHeight: 20,
             symbolSize: 10,
             symbolShape: 'circle',
           }] : []}
+          tooltip={({ id, value, indexValue }) => (
+            <div style={{ background: '#1e293b', color: '#e2e8f0', padding: '6px 10px', borderRadius: 6, fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+              <strong>{formatKeyLabel(String(id))}</strong>: {typeof value === 'number' && value >= 1000 ? value.toLocaleString() : value}
+              <br /><span style={{ color: '#94a3b8' }}>{indexValue}</span>
+            </div>
+          )}
         />
       </Suspense>
     </div>
@@ -458,7 +469,7 @@ function RechartsLine({ data, xKey, yKeys, yLabel }: { data: any[]; xKey: string
 export default function SmartChart({ data: chartData }: { data: SmartChartData }) {
   if (!chartData?.data?.length) return null
 
-  const { type, data, title, x_key, y_keys, yLabel } = chartData
+  const { type, data, title, x_key, y_keys, yLabel, groupMode } = chartData
 
   // Derive keys if not provided
   const keys = Object.keys(data[0] || {})
@@ -477,7 +488,7 @@ export default function SmartChart({ data: chartData }: { data: SmartChartData }
         </p>
       )}
 
-      {type === 'bar'       && <NivoBar data={data} xKey={xKey} yKeys={yKeys} />}
+      {type === 'bar'       && <NivoBar data={data} xKey={xKey} yKeys={yKeys} groupMode={groupMode} />}
       {type === 'pie'       && <NivoPie data={data} />}
       {type === 'radar'     && <NivoRadar data={data} xKey={xKey} yKeys={yKeys} />}
       {type === 'funnel'    && <NivoFunnel data={data} xKey={xKey} />}

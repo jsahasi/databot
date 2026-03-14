@@ -333,6 +333,11 @@ DATA_AGENT_TOOLS = [
                 },
                 "title": {"type": "string", "description": "Chart title"},
                 "y_label": {"type": "string", "description": "Optional y-axis label"},
+                "group_mode": {
+                    "type": "string",
+                    "enum": ["stacked", "grouped"],
+                    "description": "For bar charts: 'stacked' to stack series on top of each other, 'grouped' (default) to show side-by-side.",
+                },
             },
             "required": ["data", "chart_type", "x_key"],
         },
