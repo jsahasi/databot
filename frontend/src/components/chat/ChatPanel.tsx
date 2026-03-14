@@ -22,8 +22,8 @@ const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
   { text: 'How do I ...? (ON24 help)',  agent: 'concierge'                    },
   { text: 'Configure environment',     agent: 'config'                       },
   { text: 'Trends',                    agent: 'data'                         },
-  { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
-  { text: 'Performance by tags',        agent: 'data'                         },
+  { text: 'Show funnel',              agent: 'data'                         },
+  { text: 'Show campaigns',           agent: 'data'                         },
   { text: 'Explore Content',           agent: 'content'                      },
 ]
 
@@ -177,7 +177,8 @@ export default function ChatPanel() {
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
                         else if (s === 'Explore Content') { setShowExploreContent(true) }
-                        else if (s === 'Performance by tags') { sendMessage('Show me performance by tags used in the last month. List all event tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag.', 'Show me performance by tags in the last month'); setInput('') }
+                        else if (s === 'Show funnel') { sendMessage('Show me events by funnel stage for the last month. Use get_events_by_tag with tag_type="funnel", aggregate=true, months=1. Then show a bar chart with the funnel stages on the x-axis and total attendees on the y-axis. Title it "Leads by Funnel Stage — Last 30 Days".', 'Show funnel stages for the last month'); setInput('') }
+                        else if (s === 'Show campaigns') { sendMessage('Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type="campaign", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it "Leads by Campaign — Last 30 Days".', 'Show campaigns for the last month'); setInput('') }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
                       }}
