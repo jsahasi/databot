@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useChatContext } from '../../context/ChatContext'
 
-const DOC_LINKS = [
-  { label: 'Market Requirements', href: '/docs/mrd.html' },
-  { label: 'Product Requirements', href: '/docs/prd.html' },
-  { label: 'Technical Specifications', href: '/docs/tech-spec.html' },
+const DOC_BASES = [
+  { label: 'Market Requirements', path: '/docs/mrd.html' },
+  { label: 'Product Requirements', path: '/docs/prd.html' },
+  { label: 'Technical Specifications', path: '/docs/tech-spec.html' },
 ]
 
 export default function ChatSidebar() {
@@ -13,6 +13,9 @@ export default function ChatSidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const [recentChanges, setRecentChanges] = useState<string>('')
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+  const themeParam = isDark ? '?theme=dark' : '?theme=light'
+  const docLinks = DOC_BASES.map(d => ({ label: d.label, href: d.path + themeParam }))
 
   useEffect(() => {
     fetch('/docs/recent-changes.html')
@@ -94,7 +97,7 @@ export default function ChatSidebar() {
           Docs
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {DOC_LINKS.map(({ label, href }) => (
+          {docLinks.map(({ label, href }) => (
             <a
               key={href}
               href={href}
