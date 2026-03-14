@@ -43,7 +43,7 @@ DB_QUERIES: dict[str, str] = {
     "list_events": (
         "SELECT * FROM on24master.event "
         "WHERE client_id = ANY($1::bigint[]) "
-        "AND goodafter >= '2024-07-01' AND goodafter <= '2024-12-31' "
+        "AND goodafter >= '2025-12-01' AND goodafter <= '2026-03-14' "
         "ORDER BY goodafter DESC LIMIT 10"
     ),
     "list_client_attendees": (
@@ -305,8 +305,15 @@ async def main() -> None:
     print("\n[1/7] Fetching a sample event ID...")
     event_id: int | None = None
     try:
+        # Use a recent 60-day window to ensure events exist (well within 180-day limit)
+        from datetime import timedelta
+        _end = datetime.now()
+        _start = _end - timedelta(days=60)
+        _start_str = _start.strftime("%Y-%m-%d")
+        _end_str = _end.strftime("%Y-%m-%d")
+        print(f"  Date range: {_start_str} to {_end_str}")
         events_resp = await client.list_events(
-            start_date="2024-07-01", end_date="2024-12-31", items_per_page=5
+            start_date=_start_str, end_date=_end_str, items_per_page=5
         )
         # ON24 returns events under various keys
         events_list = (
@@ -329,15 +336,15 @@ async def main() -> None:
 
     client_benchmarks = [
         ("list_events", lambda: client.list_events(
-            start_date="2024-07-01", end_date="2024-12-31", items_per_page=10)),
+            start_date="2025-12-01", end_date="2026-03-14", items_per_page=10)),
         ("list_client_attendees", lambda: client.list_client_attendees(
-            start_date="2024-07-01", end_date="2024-12-31", items_per_page=10)),
+            start_date="2025-12-01", end_date="2026-03-14", items_per_page=10)),
         ("get_attendee_by_email", lambda: client.get_attendee_by_email(
             email="test@example.com")),
         ("get_attendee_all_events", lambda: client.get_attendee_all_events(
             email="test@example.com", items_per_page=10)),
         ("list_client_registrants", lambda: client.list_client_registrants(
-            start_date="2024-07-01", end_date="2024-12-31", items_per_page=10)),
+            start_date="2025-12-01", end_date="2026-03-14", items_per_page=10)),
         ("get_registrant_by_email", lambda: client.get_registrant_by_email(
             email="test@example.com")),
         ("get_registrant_all_events", lambda: client.get_registrant_all_events(
@@ -345,7 +352,7 @@ async def main() -> None:
         ("get_survey_library", lambda: client.get_survey_library()),
         ("get_engaged_accounts", lambda: client.get_engaged_accounts()),
         ("list_client_leads", lambda: client.list_client_leads(
-            start_date="2024-07-01", end_date="2024-12-31", items_per_page=10)),
+            start_date="2025-12-01", end_date="2026-03-14", items_per_page=10)),
         ("get_pep", lambda: client.get_pep(email="test@example.com")),
         ("list_client_presenters", lambda: client.list_client_presenters()),
         ("list_sub_clients", lambda: client.list_sub_clients()),
@@ -462,10 +469,10 @@ async def main() -> None:
 
     if mcp_available:
         mcp_benchmarks = [
-            ("list_events", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
-            ("list_client_attendees", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
-            ("list_client_registrants", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
-            ("list_client_leads", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
+            ("list_events", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
+            ("list_client_attendees", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
+            ("list_client_registrants", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
+            ("list_client_leads", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
             ("get_event_types", {}),
             ("get_timezones", {}),
         ]

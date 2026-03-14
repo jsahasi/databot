@@ -289,10 +289,14 @@ DATA_AGENT_TOOLS = [
     {
         "name": "generate_chart_data",
         "description": (
-            "Format data from a previous tool call into a chart for the frontend. "
-            "Call this after get_attendance_trends, get_top_events, get_top_events_by_polls, "
-            "get_poll_overview, or get_audience_companies whenever a chart is appropriate. "
-            "Pass the full data array returned by the previous tool."
+            "Format data from a previous tool call into a rich visualization for the frontend. "
+            "Call this after any data tool when a chart would help the user understand the data. "
+            "Pick the BEST chart type for the data and insight: "
+            "bar (comparisons), line (trends over time), pie (part-of-whole, <8 slices), "
+            "radar (multi-KPI comparison of 3-7 items), funnel (stage progression like TOFU→MOFU→BOFU), "
+            "gauge (single score 0-100), treemap (hierarchical proportions), "
+            "scatter (correlation between 2 metrics), heatmap (2D matrix), waterfall (cumulative changes). "
+            "Be creative — pick the visualization that best reveals the insight."
         ),
         "input_schema": {
             "type": "object",
@@ -304,8 +308,19 @@ DATA_AGENT_TOOLS = [
                 },
                 "chart_type": {
                     "type": "string",
-                    "enum": ["bar", "line", "pie"],
-                    "description": "Chart type: 'line' for time series, 'bar' for comparisons, 'pie' for part-of-whole distributions",
+                    "enum": ["bar", "line", "pie", "radar", "funnel", "gauge", "treemap", "scatter", "heatmap", "waterfall"],
+                    "description": (
+                        "Chart type — pick the best fit: "
+                        "'bar' for ranked comparisons, 'line' for time series trends, "
+                        "'pie' for part-of-whole distributions (<8 categories), "
+                        "'radar' for multi-metric comparison of items (e.g. comparing events across registrants/engagement/conversion), "
+                        "'funnel' for stage progressions (TOFU→MOFU→BOFU, registered→attended→engaged), "
+                        "'gauge' for a single score or percentage (0-100), "
+                        "'treemap' for hierarchical proportions (companies by size, tags by event count), "
+                        "'scatter' for correlations (registrants vs engagement, size vs conversion), "
+                        "'heatmap' for 2D matrix data (day/hour engagement, month/category), "
+                        "'waterfall' for cumulative gains/losses over time"
+                    ),
                 },
                 "x_key": {
                     "type": "string",
