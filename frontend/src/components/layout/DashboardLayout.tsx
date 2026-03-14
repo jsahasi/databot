@@ -7,7 +7,7 @@ import AccountBreadcrumb from './AccountBreadcrumb'
 import EventCalendar from '../calendar/EventCalendar'
 
 function LayoutInner() {
-  const { isCalendarOpen, calendarProposedMode, closeCalendar, sendMessage } = useChatContext()
+  const { isCalendarOpen, calendarProposedMode, proposedEvents, closeCalendar, sendMessage } = useChatContext()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <TopNav />
@@ -18,7 +18,7 @@ function LayoutInner() {
           <Outlet />
         </main>
       </div>
-      <EventCalendar isOpen={isCalendarOpen} proposedMode={calendarProposedMode} onClose={closeCalendar} onEventToChat={(ev) => {
+      <EventCalendar isOpen={isCalendarOpen} proposedMode={calendarProposedMode} proposedEvents={proposedEvents} onClose={closeCalendar} onEventToChat={(ev) => {
         sendMessage(`Tell me about event ${ev.event_id} — ${ev.title}`)
         closeCalendar()
       }} />

@@ -43,7 +43,7 @@ const CONFIG_LINKS = [
 ]
 
 export default function ChatPanel() {
-  const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, resetChat } = useChatContext()
+  const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, setProposedEvents, resetChat } = useChatContext()
   const [input, setInput] = useState('')
   const [showHowDoI, setShowHowDoI] = useState(false)
   const [showExperiences, setShowExperiences] = useState(false)
@@ -68,6 +68,14 @@ export default function ChatPanel() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // When a message arrives with proposedEvents, store them in context
+  useEffect(() => {
+    const last = messages[messages.length - 1]
+    if (last?.role === 'assistant' && last.proposedEvents?.length) {
+      setProposedEvents(last.proposedEvents)
+    }
+  }, [messages, setProposedEvents])
 
   // Restore focus to input whenever processing finishes
   useEffect(() => {

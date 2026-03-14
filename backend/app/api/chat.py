@@ -269,6 +269,13 @@ async def websocket_chat(websocket: WebSocket):
                             "data": result["content_articles"],
                         })
 
+                    # Send proposed calendar events if available
+                    if result.get("proposed_events"):
+                        await websocket.send_json({
+                            "type": "proposed_events",
+                            "data": result["proposed_events"],
+                        })
+
                     # Send confirmation request if a destructive operation is pending
                     if result.get("requires_confirmation"):
                         await websocket.send_json({

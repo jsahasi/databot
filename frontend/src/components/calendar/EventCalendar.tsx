@@ -29,17 +29,29 @@ interface CalendarEvent {
   ai_content?: AiContent | null
 }
 
+interface ProposedEvent {
+  title: string
+  date: string        // YYYY-MM-DD
+  time: string        // HH:MM (24h)
+  duration_minutes: number
+  funnel_stage?: string
+  topic?: string
+}
+
 interface Props {
   isOpen: boolean
   onClose: () => void
   onEventToChat?: (event: CalendarEvent) => void
   proposedMode?: boolean
+  proposedEvents?: ProposedEvent[]
 }
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 
 const EVENT_COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899']
-function eventColor(id: number) { return EVENT_COLORS[id % EVENT_COLORS.length] }
+const PROPOSED_COLOR = '#a78bfa'  // lighter purple for proposed events
+function eventColor(id: number) { return id < 0 ? PROPOSED_COLOR : EVENT_COLORS[id % EVENT_COLORS.length] }
+function isProposed(ev: CalendarEvent) { return ev.event_id < 0 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -285,10 +297,10 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
   const start = toLocal(event.start_time)
   const end = toLocal(event.end_time)
 
-  // Fetch full detail (with poll/survey/resource counts) on mount
+  // Fetch full detail (with poll/survey/resource counts) on mount — skip for proposed events
   useEffect(() => {
     setEvent(initial)
-    if (initial.is_future) return
+    if (initial.is_future || isProposed(initial)) return
     setLoadingDetail(true)
     fetch(`/api/calendar/event/${initial.event_id}`)
       .then(r => r.ok ? r.json() : null)
@@ -298,8 +310,14 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
   }, [initial.event_id])
 
   // KPI tiles — always show registrants + attendees for past events (even if 0)
+  const proposed = isProposed(event)
   const kpis: { label: string; value: string; icon: string }[] = []
-  if (!event.is_future) {
+  if (proposed) {
+    // Show proposed event metadata instead of KPIs
+    const anyEv = event as any
+    if (anyEv._funnel_stage) kpis.push({ label: 'Funnel Stage', value: anyEv._funnel_stage, icon: '🎯' })
+    if (anyEv._topic) kpis.push({ label: 'Topic', value: anyEv._topic, icon: '💡' })
+  } else if (!event.is_future) {
     kpis.push({ label: 'Registrants', value: (event.registrant_count ?? 0).toLocaleString(), icon: '👥' })
     kpis.push({ label: 'Attendees', value: (event.attendee_count ?? 0).toLocaleString(), icon: '✅' })
     if (event.conversion_rate) kpis.push({ label: 'Conversion', value: `${event.conversion_rate}%`, icon: '📈' })
@@ -482,16 +500,19 @@ function MonthView({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 1, overflow: 'hidden' }}>
                     {dayEvents.slice(0, maxPills).map(ev => {
                       const t = fmtTime(toLocal(ev.start_time))
-                      const tooltipText = `${ev.title}\n${t}${ev.event_type ? ' · ' + ev.event_type : ''}`
+                      const proposed = isProposed(ev)
+                      const tooltipText = `${proposed ? '[PROPOSED] ' : ''}${ev.title}\n${t}${ev.event_type ? ' · ' + ev.event_type : ''}`
                       return (
                         <Tooltip key={ev.event_id} text={tooltipText}>
                           <button onClick={() => onSelectEvent(ev)} onDoubleClick={() => onDoubleClickEvent?.(ev)}
                             style={{
                               display: 'block', width: '100%', textAlign: 'left',
                               padding: '0px 3px', borderRadius: 3,
-                              background: eventColor(ev.event_id),
-                              color: '#fff', fontSize: '0.6rem', fontWeight: 500,
-                              border: 'none', cursor: 'pointer',
+                              background: proposed ? 'transparent' : eventColor(ev.event_id),
+                              color: proposed ? PROPOSED_COLOR : '#fff',
+                              fontSize: '0.6rem', fontWeight: 500,
+                              border: proposed ? `1.5px dashed ${PROPOSED_COLOR}` : 'none',
+                              cursor: 'pointer',
                               overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
                               lineHeight: 1.4,
                             }}
@@ -623,8 +644,10 @@ function WeekView({
                 height: HOURS.length * CELL_HEIGHT,
                 pointerEvents: 'none',
               }}>
-                {dayEvs.map(ev => (
-                  <Tooltip key={ev.event_id} text={`${ev.title}\n${fmtTime(toLocal(ev.start_time))}${ev.event_type ? ' · ' + ev.event_type : ''}`}>
+                {dayEvs.map(ev => {
+                  const proposed = isProposed(ev)
+                  return (
+                  <Tooltip key={ev.event_id} text={`${proposed ? '[PROPOSED] ' : ''}${ev.title}\n${fmtTime(toLocal(ev.start_time))}${ev.event_type ? ' · ' + ev.event_type : ''}`}>
                   <button
                     onClick={() => onSelectEvent(ev)}
                     onDoubleClick={() => onDoubleClickEvent?.(ev)}
@@ -633,13 +656,16 @@ function WeekView({
                       top: eventTop(ev),
                       left: 2, right: 2,
                       height: eventHeight(ev),
-                      background: eventColor(ev.event_id),
-                      color: '#fff', fontSize: '0.65rem', fontWeight: 500,
+                      background: proposed ? 'rgba(167, 139, 250, 0.1)' : eventColor(ev.event_id),
+                      color: proposed ? PROPOSED_COLOR : '#fff',
+                      fontSize: '0.65rem', fontWeight: 500,
                       borderRadius: 4, padding: '3px 5px',
-                      border: 'none', cursor: 'pointer', pointerEvents: 'auto',
+                      border: proposed ? `1.5px dashed ${PROPOSED_COLOR}` : 'none',
+                      cursor: 'pointer', pointerEvents: 'auto',
                       textAlign: 'left', overflow: 'hidden',
                     }}
                   >
+                    {proposed && <div style={{ fontSize: '0.5rem', textTransform: 'uppercase', opacity: 0.7, letterSpacing: '0.5px' }}>Proposed</div>}
                     <div style={{ fontSize: '0.6rem', opacity: 0.85, flexShrink: 0 }}>
                       {fmtTime(toLocal(ev.start_time))}
                     </div>
@@ -648,7 +674,8 @@ function WeekView({
                     </div>
                   </button>
                   </Tooltip>
-                ))}
+                  )
+                })}
               </div>
             )
           })}
@@ -721,8 +748,10 @@ function DayView({
             height: HOURS.length * CELL_HEIGHT,
             pointerEvents: 'none',
           }}>
-            {events.map(ev => (
-              <Tooltip key={ev.event_id} text={`${ev.title}\n${fmtTime(toLocal(ev.start_time))}${ev.event_type ? ' · ' + ev.event_type : ''}`}>
+            {events.map(ev => {
+              const proposed = isProposed(ev)
+              return (
+              <Tooltip key={ev.event_id} text={`${proposed ? '[PROPOSED] ' : ''}${ev.title}\n${fmtTime(toLocal(ev.start_time))}${ev.event_type ? ' · ' + ev.event_type : ''}`}>
                 <button
                   onClick={() => onSelectEvent(ev)}
                   onDoubleClick={() => onDoubleClickEvent?.(ev)}
@@ -731,13 +760,16 @@ function DayView({
                     top: eventTop(ev),
                     left: 4, right: 4,
                     height: eventHeight(ev),
-                    background: eventColor(ev.event_id),
-                    color: '#fff', fontSize: '0.8rem', fontWeight: 500,
+                    background: proposed ? 'rgba(167, 139, 250, 0.1)' : eventColor(ev.event_id),
+                    color: proposed ? PROPOSED_COLOR : '#fff',
+                    fontSize: '0.8rem', fontWeight: 500,
                     borderRadius: 6, padding: '4px 10px',
-                    border: 'none', cursor: 'pointer', pointerEvents: 'auto',
+                    border: proposed ? `1.5px dashed ${PROPOSED_COLOR}` : 'none',
+                    cursor: 'pointer', pointerEvents: 'auto',
                     textAlign: 'left', overflow: 'hidden',
                   }}
                 >
+                  {proposed && <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', opacity: 0.7, letterSpacing: '0.5px' }}>Proposed</div>}
                   <div style={{ fontSize: '0.7rem', opacity: 0.85, marginBottom: 2 }}>
                     {fmtTime(toLocal(ev.start_time))}{toLocal(ev.end_time) ? ` – ${fmtTime(toLocal(ev.end_time))}` : ''}
                     {ev.event_type ? ` · ${ev.event_type}` : ''}
@@ -747,7 +779,8 @@ function DayView({
                   </div>
                 </button>
               </Tooltip>
-            ))}
+              )})}
+
           </div>
         </div>
       </div>
@@ -757,7 +790,7 @@ function DayView({
 
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
-export default function EventCalendar({ isOpen, onClose, onEventToChat, proposedMode = false }: Props) {
+export default function EventCalendar({ isOpen, onClose, onEventToChat, proposedMode = false, proposedEvents = [] }: Props) {
   const today = new Date()
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [dayDate, setDayDate] = useState(today)
@@ -887,9 +920,30 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
     }
   }, [view, dayDate])
 
-  // In proposed mode: hide all existing events unless toggle is on; also strip past events
+  // Convert proposed events to CalendarEvent format with negative IDs (to distinguish)
+  const proposedAsCalendar: CalendarEvent[] = proposedEvents.map((pe, i) => ({
+    event_id: -(i + 1),  // negative IDs = proposed
+    title: pe.title,
+    abstract: '',
+    start_time: `${pe.date}T${pe.time}:00`,
+    end_time: (() => {
+      const d = new Date(`${pe.date}T${pe.time}:00`)
+      d.setMinutes(d.getMinutes() + (pe.duration_minutes || 60))
+      return d.toISOString()
+    })(),
+    event_type: pe.funnel_stage || 'Proposed',
+    is_future: true,
+    _proposed: true,
+    _funnel_stage: pe.funnel_stage,
+    _topic: pe.topic,
+  } as CalendarEvent & { _proposed?: boolean; _funnel_stage?: string; _topic?: string }))
+
+  // In proposed mode: show proposed events + optionally existing future events
   const visibleEvents = proposedMode
-    ? (showExistingEvents ? events.filter(e => { const d = toLocal(e.start_time); return d ? d >= today : true }) : [])
+    ? [
+        ...proposedAsCalendar,
+        ...(showExistingEvents ? events.filter(e => { const d = toLocal(e.start_time); return d ? d >= today : true }) : []),
+      ]
     : events
 
   // Filter events for current view
@@ -973,7 +1027,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
           {proposedMode && (
             <>
               <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#8b5cf6', background: 'rgba(139,92,246,0.1)', padding: '0.2rem 0.6rem', borderRadius: 4 }}>
-                Proposed Calendar
+                Proposed Calendar{proposedEvents.length > 0 ? ` (${proposedEvents.length} events)` : ' — ask me to propose a content calendar first'}
               </span>
               <button
                 onClick={() => setShowExistingEvents(v => !v)}

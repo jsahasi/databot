@@ -11,6 +11,7 @@ export interface ChatMessage {
   eventCards?: any[] | null
   pollCards?: any[] | null
   contentArticles?: any[] | null
+  proposedEvents?: any[] | null
   suggestions?: string[]
   isLoading?: boolean
   timestamp: Date
@@ -150,6 +151,19 @@ export function useChat(options: UseChatOptions = {}) {
               return [
                 ...prev.slice(0, -1),
                 { ...last, contentArticles: data.data },
+              ]
+            }
+            return prev
+          })
+          break
+
+        case 'proposed_events':
+          setMessages(prev => {
+            const last = prev[prev.length - 1]
+            if (last && last.role === 'assistant') {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, proposedEvents: data.data },
               ]
             }
             return prev

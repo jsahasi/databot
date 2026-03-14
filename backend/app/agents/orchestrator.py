@@ -17,6 +17,21 @@ logger = logging.getLogger(__name__)
 
 _ORCHESTRATOR_TEMPLATE = (Path(__file__).parent / "prompts" / "orchestrator.md").read_text()
 
+import re
+
+def _extract_proposed_events(text: str) -> list[dict] | None:
+    """Extract proposed_events JSON from a ```proposed_events fenced block."""
+    m = re.search(r"```proposed_events\s*\n(.*?)```", text, re.DOTALL)
+    if not m:
+        return None
+    try:
+        events = json.loads(m.group(1).strip())
+        if isinstance(events, list) and events:
+            return events
+    except (json.JSONDecodeError, TypeError):
+        logger.warning("Failed to parse proposed_events JSON from content agent")
+    return None
+
 
 def _build_orchestrator_prompt() -> str:
     today = date.today().strftime("%B %d, %Y")
@@ -339,12 +354,16 @@ class OrchestratorAgent:
                         text = result["text"]
                         self.conversation_history.append({"role": "assistant", "content": text})
 
+                        # Extract proposed_events JSON block from content agent response
+                        proposed_events = _extract_proposed_events(text)
+
                         return {
                             "text": text,
                             "agent_used": "content_agent",
                             "chart_data": None,
                             "requires_confirmation": False,
                             "confirmation_summary": None,
+                            "proposed_events": proposed_events,
                         }
 
                     elif tool_name == "route_to_admin_agent":
