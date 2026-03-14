@@ -311,7 +311,7 @@ class OrchestratorAgent:
 
                         # Step 1: Gather analytics from the data agent
                         data_query = (
-                            f"Get attendance trends for the last 6 months and the top 20 events by engagement score."
+                            f"Get attendance trends for the last {months} months and the top 20 events by engagement score."
                         )
                         try:
                             data_result = await self.data_agent.run(
