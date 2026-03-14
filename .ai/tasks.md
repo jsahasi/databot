@@ -317,7 +317,7 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [ ] Frontend Playwright E2E tests
 - [ ] Multi-client: implement per-request context var for tenant ID
 - [x] ~~Recent Chats: persist chat history in localStorage~~ — removed from scope
-- [ ] Marketer + director regression test prompts (300 total in marketer_prompts.json + director_prompts.json)
+- [x] Marketer + director regression test prompts — test_persona_prompts.py loads 300 prompts from JSON, commit 0826421
 
 ## Verified ON24 Schema (on24master)
 

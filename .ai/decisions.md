@@ -205,6 +205,22 @@ Implementation:
 **Decision:** Applied 15+ WCAG fixes: skip-to-content link, focus-visible outlines, aria-live regions, aria-expanded on collapsible sections, dark mode contrast (#94a0b8 for text-secondary), chat input labels, chart role="img", DOMPurify on calendar HTML.
 **Rationale:** VPAT audit revealed multiple Partially Supports criteria. Fixes bring 9 criteria to full Supports status. 4 items remain open (calendar keyboard nav, chart axes contrast, calendar responsive 320px, chart data tables).
 
+## 2026-03-14: Lead Query Tools (dw_lead)
+**Decision:** Added `query_leads` and `query_lead_stats` to on24_query_tools.py, registered as data agent tools `get_leads` and `get_lead_stats`.
+**Rationale:** dw_lead (105M rows) has direct client_id — no event join needed. Enables lead analytics: contact search by company/job title, aggregate stats with monthly trends, top companies, acquisition sources.
+
+## 2026-03-14: CLAUDE.md Compaction + .ai/architecture.md
+**Decision:** Reduced CLAUDE.md from 198 to 47 lines. Extracted data access, agent system, tables, WS protocol to `.ai/architecture.md`. Removed project structure tree, detailed chart/calendar/MCP sections (derivable from code).
+**Rationale:** CLAUDE.md was consuming excessive context window. Key conventions and safety rules stay; implementation details belong in code or .ai/ files.
+
+## 2026-03-14: Content Agent Topic Suggestions Mode
+**Decision:** Added "Topic Suggestions" section to content agent prompt. When user asks "what topic" or "what should I write about", agent proposes 3-5 creative numbered topics without showing raw data. Create Content chips simplified to "Help me write a [type]".
+**Rationale:** Previous behavior dumped raw analytics tables before topic suggestions. Users want concise creative proposals informed by data, not data dumps.
+
+## 2026-03-14: Orchestrator Routing Priority (Content Before Data)
+**Decision:** Content agent routing (rule 4) now comes before data agent routing (rule 6) in orchestrator. Explicit triggers: "suggest topics", "what topic", "create a script".
+**Rationale:** "Create a script" and "suggest topics" requests were being routed to data agent (which showed raw tables) instead of content agent (which provides creative recommendations). Fixed duplicate rule numbering.
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.
