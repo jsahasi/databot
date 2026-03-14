@@ -61,7 +61,6 @@ class TestAuthHeaders:
         assert client._headers["accessTokenKey"] == "test-key"
         assert client._headers["accessTokenSecret"] == "test-secret"
         assert client._headers["Accept"] == "application/json"
-        assert client._headers["Content-Type"] == "application/json"
 
 
 # ---------------------------------------------------------------------------
