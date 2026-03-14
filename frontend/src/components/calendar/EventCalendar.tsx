@@ -171,18 +171,20 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
     : articles[selectedType]
 
   return (
-    <div style={{ background: 'var(--color-card)', borderRadius: 10, padding: '0.875rem 1rem', border: '1px solid var(--color-border)' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+    <div>
+      {/* Section label — matches Performance header style */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
         <span style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           AI-ACE Content
         </span>
         <a href={mmUrl} target="_blank" rel="noreferrer"
-          style={{ fontSize: '0.7rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}>
+          style={{ fontSize: '0.6rem', fontWeight: 600, color: '#10b981', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Media Manager ↗
         </a>
       </div>
 
+      {/* Card body */}
+      <div style={{ background: 'var(--color-card)', borderRadius: 10, padding: '0.75rem 1rem', border: '1px solid var(--color-border)' }}>
       {/* Article type dropdown */}
       <select
         value={selectedType}
@@ -234,6 +236,7 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
           />
         ) : null
       })()}
+      </div>
     </div>
   )
 }
