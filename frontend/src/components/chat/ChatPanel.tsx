@@ -50,6 +50,7 @@ const PERM_FILTER: Record<string, string[]> = {
   'manage-virtual-events':    ['GoLive — Virtual Events'],
   'manage-brand-settings':    ['Branding'],
   'manage-integrations':      ['Connect / Integrations'],
+  'manage-users':             ['Manage Users'],
 }
 
 function filterByPermissions<T extends { label: string }>(items: T[], perms: string[]): T[] {
