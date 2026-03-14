@@ -72,6 +72,128 @@ if "remove_registrant" not in BLOCKLIST:
             return {"success": False, "error": e.message}
 
 
+# ── Read Tools ──
+
+if "list_events" not in BLOCKLIST:
+    @mcp.tool()
+    async def list_events(start_date: str = "", end_date: str = "", items_per_page: int = 100, page_offset: int = 0) -> dict:
+        """List events for the client with optional date filters."""
+        try:
+            return await _client().list_events(start_date or None, end_date or None, items_per_page, page_offset)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "get_event" not in BLOCKLIST:
+    @mcp.tool()
+    async def get_event(event_id: int) -> dict:
+        """Get event metadata and usage summary."""
+        try:
+            return await _client().get_event(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "list_event_attendees" not in BLOCKLIST:
+    @mcp.tool()
+    async def list_event_attendees(event_id: int, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        """List attendees for a specific event."""
+        try:
+            return await _client().list_event_attendees(event_id, items_per_page, page_offset)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "list_event_registrants" not in BLOCKLIST:
+    @mcp.tool()
+    async def list_event_registrants(event_id: int, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        """List registrants for a specific event."""
+        try:
+            return await _client().list_event_registrants(event_id, items_per_page, page_offset)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "list_client_attendees" not in BLOCKLIST:
+    @mcp.tool()
+    async def list_client_attendees(start_date: str = "", end_date: str = "", items_per_page: int = 100, page_offset: int = 0) -> dict:
+        """List attendees across all events."""
+        try:
+            return await _client().list_client_attendees(start_date or None, end_date or None, items_per_page, page_offset)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "list_client_registrants" not in BLOCKLIST:
+    @mcp.tool()
+    async def list_client_registrants(start_date: str = "", end_date: str = "", items_per_page: int = 100, page_offset: int = 0) -> dict:
+        """List registrants across all events."""
+        try:
+            return await _client().list_client_registrants(start_date or None, end_date or None, items_per_page, page_offset)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "list_client_leads" not in BLOCKLIST:
+    @mcp.tool()
+    async def list_client_leads(start_date: str = "", end_date: str = "", items_per_page: int = 50, page_offset: int = 0) -> dict:
+        """List leads across all events."""
+        try:
+            return await _client().list_client_leads(start_date or None, end_date or None, items_per_page, page_offset)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "get_event_polls" not in BLOCKLIST:
+    @mcp.tool()
+    async def get_event_polls(event_id: int) -> dict:
+        """Get poll questions and responses for an event."""
+        try:
+            return await _client().get_event_polls(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "get_event_surveys" not in BLOCKLIST:
+    @mcp.tool()
+    async def get_event_surveys(event_id: int) -> dict:
+        """Get survey questions and responses for an event."""
+        try:
+            return await _client().get_event_surveys(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "get_event_resources" not in BLOCKLIST:
+    @mcp.tool()
+    async def get_event_resources(event_id: int) -> dict:
+        """Get resources viewed for an event."""
+        try:
+            return await _client().get_event_resources(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "get_event_types" not in BLOCKLIST:
+    @mcp.tool()
+    async def get_event_types() -> dict:
+        """Get available event types."""
+        try:
+            return await _client().get_event_types()
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "get_timezones" not in BLOCKLIST:
+    @mcp.tool()
+    async def get_timezones() -> dict:
+        """Get available timezone codes."""
+        try:
+            return await _client().get_timezones()
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
 if __name__ == "__main__":
     logger.info(f"Starting ON24 MCP server. Blocklist: {BLOCKLIST or 'none'}")
     mcp.settings.host = "0.0.0.0"

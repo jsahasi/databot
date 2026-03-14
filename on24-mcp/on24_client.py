@@ -59,3 +59,72 @@ class ON24Client:
 
     async def remove_registration(self, event_id: int, email: str) -> dict:
         return await self._request("DELETE", f"event/{event_id}/registrant/{email}")
+
+    # ── Read Operations ──
+
+    async def _get(self, endpoint: str, params: dict | None = None) -> dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url, headers=self._headers, timeout=30.0) as client:
+            resp = await client.get(self._path(endpoint), params=params)
+        if resp.status_code >= 400:
+            raise ON24APIError(resp.status_code, resp.text)
+        return resp.json()
+
+    async def list_events(self, start_date: str | None = None, end_date: str | None = None,
+                          items_per_page: int = 100, page_offset: int = 0) -> dict:
+        params: dict = {"itemsPerPage": items_per_page, "pageOffset": page_offset}
+        if start_date:
+            params["startDate"] = start_date
+        if end_date:
+            params["endDate"] = end_date
+        return await self._get("event", params)
+
+    async def get_event(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}")
+
+    async def list_event_attendees(self, event_id: int, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        return await self._get(f"event/{event_id}/attendee", {"itemsPerPage": items_per_page, "pageOffset": page_offset})
+
+    async def list_event_registrants(self, event_id: int, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        return await self._get(f"event/{event_id}/registrant", {"itemsPerPage": items_per_page, "pageOffset": page_offset})
+
+    async def list_client_attendees(self, start_date: str | None = None, end_date: str | None = None,
+                                    items_per_page: int = 100, page_offset: int = 0) -> dict:
+        params: dict = {"itemsPerPage": items_per_page, "pageOffset": page_offset}
+        if start_date:
+            params["startDate"] = start_date
+        if end_date:
+            params["endDate"] = end_date
+        return await self._get("attendee", params)
+
+    async def list_client_registrants(self, start_date: str | None = None, end_date: str | None = None,
+                                      items_per_page: int = 100, page_offset: int = 0) -> dict:
+        params: dict = {"itemsPerPage": items_per_page, "pageOffset": page_offset}
+        if start_date:
+            params["startDate"] = start_date
+        if end_date:
+            params["endDate"] = end_date
+        return await self._get("registrant", params)
+
+    async def list_client_leads(self, start_date: str | None = None, end_date: str | None = None,
+                                items_per_page: int = 50, page_offset: int = 0) -> dict:
+        params: dict = {"itemsPerPage": items_per_page, "pageOffset": page_offset}
+        if start_date:
+            params["startDate"] = start_date
+        if end_date:
+            params["endDate"] = end_date
+        return await self._get("lead", params)
+
+    async def get_event_polls(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/poll")
+
+    async def get_event_surveys(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/survey")
+
+    async def get_event_resources(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/resource")
+
+    async def get_event_types(self) -> dict:
+        return await self._get("eventtypes")
+
+    async def get_timezones(self) -> dict:
+        return await self._get("timezones")

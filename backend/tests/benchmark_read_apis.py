@@ -302,7 +302,7 @@ async def main() -> None:
     # ------------------------------------------------------------------
     # Phase 0: Fetch a valid event_id for event-level endpoints
     # ------------------------------------------------------------------
-    print("\n[1/5] Fetching a sample event ID...")
+    print("\n[1/7] Fetching a sample event ID...")
     event_id: int | None = None
     try:
         events_resp = await client.list_events(
@@ -325,7 +325,7 @@ async def main() -> None:
     # ------------------------------------------------------------------
     # Phase 1: Client-Level Analytics (REST API)
     # ------------------------------------------------------------------
-    print("\n[2/5] Benchmarking client-level REST endpoints...")
+    print("\n[2/7] Benchmarking client-level REST endpoints...")
 
     client_benchmarks = [
         ("list_events", lambda: client.list_events(
@@ -363,7 +363,7 @@ async def main() -> None:
     # ------------------------------------------------------------------
     # Phase 2: Event-Level Analytics (REST API)
     # ------------------------------------------------------------------
-    print("\n[3/5] Benchmarking event-level REST endpoints...")
+    print("\n[3/7] Benchmarking event-level REST endpoints...")
 
     if event_id is not None:
         event_benchmarks = [
@@ -402,7 +402,7 @@ async def main() -> None:
     # ------------------------------------------------------------------
     # Phase 3: Content + Helper Endpoints (REST API)
     # ------------------------------------------------------------------
-    print("\n[4/5] Benchmarking content & helper REST endpoints...")
+    print("\n[4/7] Benchmarking content & helper REST endpoints...")
 
     helper_benchmarks = [
         ("list_media_manager_content", lambda: client.list_media_manager_content(
@@ -429,9 +429,70 @@ async def main() -> None:
         all_results.append(result)
 
     # ------------------------------------------------------------------
-    # Phase 4: Direct DB queries (on24master)
+    # Phase 4: MCP server read tools
     # ------------------------------------------------------------------
-    print("\n[5/5] Benchmarking direct DB queries (on24master)...")
+    print("\n[5/7] Benchmarking MCP server read tools...")
+
+    mcp_results: list[dict] = []
+    mcp_url = settings.mcp_server_url.rstrip("/") + "/mcp"
+
+    async def _call_mcp(tool_name: str, arguments: dict) -> dict:
+        from mcp.client.streamable_http import streamablehttp_client
+        from mcp import ClientSession
+        async with streamablehttp_client(mcp_url) as (read, write, _):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool(tool_name, arguments)
+        if result.content:
+            import json as _json
+            try:
+                return _json.loads(result.content[0].text)
+            except Exception:
+                return {"raw": result.content[0].text}
+        return {}
+
+    try:
+        # Quick connectivity test
+        await _call_mcp("get_timezones", {})
+        mcp_available = True
+        print(f"  MCP server at {mcp_url} — connected")
+    except Exception as exc:
+        mcp_available = False
+        print(f"  [SKIP] MCP server not available: {exc}")
+
+    if mcp_available:
+        mcp_benchmarks = [
+            ("list_events", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
+            ("list_client_attendees", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
+            ("list_client_registrants", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
+            ("list_client_leads", {"start_date": "2024-01-01", "end_date": "2024-12-31", "items_per_page": 10}),
+            ("get_event_types", {}),
+            ("get_timezones", {}),
+        ]
+        if event_id is not None:
+            mcp_benchmarks += [
+                ("get_event", {"event_id": event_id}),
+                ("list_event_attendees", {"event_id": event_id, "items_per_page": 10}),
+                ("list_event_registrants", {"event_id": event_id, "items_per_page": 10}),
+                ("get_event_polls", {"event_id": event_id}),
+                ("get_event_surveys", {"event_id": event_id}),
+                ("get_event_resources", {"event_id": event_id}),
+            ]
+
+        for tool_name, args in mcp_benchmarks:
+            result = await benchmark_endpoint(
+                f"MCP: {tool_name}",
+                lambda tn=tool_name, a=args: _call_mcp(tn, a),
+            )
+            status = f"{result['median_ms']}ms" if result["median_ms"] else "ERR"
+            err_hint = f" ({result['error'][:40]})" if result["error"] else ""
+            print(f"  {result['name']:<40} {status:>10}{err_hint}")
+            mcp_results.append(result)
+
+    # ------------------------------------------------------------------
+    # Phase 5: Direct DB queries (on24master)
+    # ------------------------------------------------------------------
+    print("\n[6/7] Benchmarking direct DB queries (on24master)...")
 
     db_pool = await _get_db_pool()
     db_results: list[dict] = []
@@ -473,43 +534,46 @@ async def main() -> None:
         print("  [SKIP] ON24 DB not available — skipping direct DB benchmarks.")
 
     # ------------------------------------------------------------------
-    # Summary table
+    # [7/7] Summary tables
     # ------------------------------------------------------------------
     print_header("REST API Results")
     print_table(all_results)
+
+    if mcp_results:
+        print_header("MCP Server Results")
+        print_table(mcp_results)
 
     if db_results:
         print_header("Direct DB Results")
         print_table(db_results)
 
-        # Comparison table for endpoints that have both REST + DB timings
-        print_header("REST vs DB Comparison")
-        rest_by_name = {r["name"]: r for r in all_results}
-        comparisons = []
-        for db_r in db_results:
-            api_name = db_r["name"].replace("DB: ", "")
-            if api_name in rest_by_name:
-                api_r = rest_by_name[api_name]
-                api_ms = api_r["median_ms"]
-                db_ms = db_r["median_ms"]
-                speedup = None
-                if api_ms and db_ms and db_ms > 0:
-                    speedup = round(api_ms / db_ms, 1)
-                comparisons.append({
-                    "endpoint": api_name,
-                    "rest_ms": api_ms,
-                    "db_ms": db_ms,
-                    "speedup": speedup,
-                })
+    # 3-way comparison: REST vs MCP vs DB
+    rest_by_name = {r["name"]: r for r in all_results}
+    mcp_by_name = {r["name"].replace("MCP: ", ""): r for r in mcp_results}
+    db_by_name = {r["name"].replace("DB: ", ""): r for r in db_results}
 
-        if comparisons:
-            print(f"{'Endpoint':<40} {'REST(ms)':>10} {'DB(ms)':>10} {'REST/DB':>10}")
-            print("-" * 74)
-            for c in comparisons:
-                rest_s = f"{c['rest_ms']:.1f}" if c["rest_ms"] else "N/A"
-                db_s = f"{c['db_ms']:.1f}" if c["db_ms"] else "N/A"
-                sp_s = f"{c['speedup']:.1f}x" if c["speedup"] else "N/A"
-                print(f"{c['endpoint']:<40} {rest_s:>10} {db_s:>10} {sp_s:>10}")
+    # Collect all endpoint names that appear in at least 2 sources
+    all_names = set(rest_by_name) | set(mcp_by_name) | set(db_by_name)
+    comparisons = []
+    for name in sorted(all_names):
+        rest_ms = rest_by_name.get(name, {}).get("median_ms")
+        mcp_ms = mcp_by_name.get(name, {}).get("median_ms")
+        db_ms = db_by_name.get(name, {}).get("median_ms")
+        sources = sum(1 for v in [rest_ms, mcp_ms, db_ms] if v is not None)
+        if sources >= 2:
+            comparisons.append({"endpoint": name, "rest_ms": rest_ms, "mcp_ms": mcp_ms, "db_ms": db_ms})
+
+    if comparisons:
+        print_header("REST vs MCP vs DB Comparison")
+        print(f"{'Endpoint':<35} {'REST(ms)':>10} {'MCP(ms)':>10} {'DB(ms)':>10} {'MCP/REST':>10} {'REST/DB':>10}")
+        print("-" * 89)
+        for c in comparisons:
+            rest_s = f"{c['rest_ms']:.1f}" if c["rest_ms"] else "N/A"
+            mcp_s = f"{c['mcp_ms']:.1f}" if c["mcp_ms"] else "N/A"
+            db_s = f"{c['db_ms']:.1f}" if c["db_ms"] else "N/A"
+            mcp_ratio = f"{c['mcp_ms'] / c['rest_ms']:.1f}x" if c["mcp_ms"] and c["rest_ms"] and c["rest_ms"] > 0 else "N/A"
+            rest_db_ratio = f"{c['rest_ms'] / c['db_ms']:.1f}x" if c["rest_ms"] and c["db_ms"] and c["db_ms"] > 0 else "N/A"
+            print(f"{c['endpoint']:<35} {rest_s:>10} {mcp_s:>10} {db_s:>10} {mcp_ratio:>10} {rest_db_ratio:>10}")
 
     # ------------------------------------------------------------------
     # Save JSON
@@ -520,10 +584,13 @@ async def main() -> None:
         "timestamp": datetime.now().isoformat(),
         "client_id": settings.on24_client_id,
         "base_url": settings.on24_base_url,
+        "mcp_url": mcp_url,
         "event_id_used": event_id,
         "runs_per_endpoint": RUNS,
         "rest_api": all_results,
+        "mcp": mcp_results,
         "direct_db": db_results,
+        "comparison": comparisons,
     }
 
     with open(RESULTS_FILE, "w") as f:
