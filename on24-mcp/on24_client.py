@@ -128,3 +128,119 @@ class ON24Client:
 
     async def get_timezones(self) -> dict:
         return await self._get("timezones")
+
+    async def get_attendee_by_email(self, email: str) -> dict:
+        return await self._get(f"attendee/{email}")
+
+    async def get_attendee_all_events(self, email: str, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        return await self._get(f"attendee/{email}/allevents", {"pageOffset": page_offset, "itemsPerPage": items_per_page})
+
+    async def get_registrant_by_email(self, email: str, event_id: int | None = None) -> dict:
+        params: dict = {}
+        if event_id is not None:
+            params["eventId"] = event_id
+        return await self._get(f"registrant/{email}", params or None)
+
+    async def get_registrant_all_events(self, email: str, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        return await self._get(f"registrant/{email}/allevents", {"pageOffset": page_offset, "itemsPerPage": items_per_page})
+
+    async def get_survey_library(self) -> dict:
+        return await self._get("surveylibrary")
+
+    async def get_engaged_accounts(self) -> dict:
+        return await self._get("engagedaccount")
+
+    async def get_pep(self, email: str) -> dict:
+        return await self._get(f"lead/{email}")
+
+    async def list_client_presenters(self) -> dict:
+        return await self._get("presenter")
+
+    async def list_sub_clients(self) -> dict:
+        """Special path: /v2/client/{clientId} with no trailing segment."""
+        async with httpx.AsyncClient(base_url=self.base_url, headers=self._headers, timeout=30.0) as client:
+            resp = await client.get(f"/v2/client/{self.client_id}")
+        if resp.status_code >= 400:
+            raise ON24APIError(resp.status_code, resp.text)
+        return resp.json()
+
+    async def get_realtime_user_questions(self) -> dict:
+        return await self._get("userquestions")
+
+    async def list_users(self) -> dict:
+        return await self._get("users")
+
+    async def get_event_viewing_sessions(self, event_id: int, session_type: str = "all",
+                                         items_per_page: int = 100, page_offset: int = 0) -> dict:
+        return await self._get(f"event/{event_id}/attendeesession",
+                               {"sessionType": session_type, "pageoffset": page_offset, "itemsPerPage": items_per_page})
+
+    async def get_event_ctas(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/cta")
+
+    async def get_event_group_chat(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/groupchat")
+
+    async def get_event_email_stats(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/emailstatistics")
+
+    async def get_event_certifications(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/certifications")
+
+    async def get_event_content_activity(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/contentactivity")
+
+    async def get_event_presenters(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/presenter")
+
+    async def get_event_calendar_reminder(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/calendarreminder")
+
+    async def get_event_email(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/email")
+
+    async def get_event_presenter_chat(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/presenterchat")
+
+    async def get_event_slides(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/slides")
+
+    async def get_ehub_content(self, gateway_id: int) -> dict:
+        return await self._get(f"ehub/{gateway_id}/content")
+
+    async def list_media_manager_content(self, items_per_page: int = 100, page_offset: int = 0) -> dict:
+        return await self._get("mediamanager", {"pageOffset": page_offset, "itemsPerPage": items_per_page})
+
+    async def get_media_manager_content(self, media_id: int) -> dict:
+        return await self._get(f"mediamanager/{media_id}")
+
+    async def get_custom_account_tags(self) -> dict:
+        return await self._get("customaccounttag")
+
+    async def get_account_managers(self) -> dict:
+        return await self._get("accountmanager")
+
+    async def get_event_managers(self) -> dict:
+        return await self._get("eventmanager")
+
+    async def get_event_profiles(self) -> dict:
+        return await self._get("eventprofile")
+
+    async def get_languages(self) -> dict:
+        return await self._get("languages")
+
+    async def get_registration_fields(self, event_id: int) -> dict:
+        return await self._get(f"event/{event_id}/regfield")
+
+    async def get_replacement_tokens(self, context: str | None = None) -> dict:
+        params = {"context": context} if context else None
+        return await self._get("tokens", params)
+
+    async def get_sales_reps(self) -> dict:
+        return await self._get("salesrep")
+
+    async def get_signal_contacts(self) -> dict:
+        return await self._get("signalrep")
+
+    async def get_technical_reps(self) -> dict:
+        return await self._get("technicalrep")
