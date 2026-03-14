@@ -432,10 +432,10 @@ export default function ChatPanel() {
                 </p>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.625rem' }}>
                   {[
-                    { label:'Webinar script',      prompt:'I want to create a webinar script. What topic or event should it be based on?' },
-                    { label:'Blog post',           prompt:'I want to write a blog post. What topic should it cover, and should it be based on a recent webinar?' },
-                    { label:'Social media posts',  prompt:'I want to create social media posts. What event or topic should they promote?' },
-                    { label:'eBook',               prompt:'I want to create an eBook. What topic or series of webinars should it be based on?' },
+                    { label:'Webinar script',      prompt:'Help me write a webinar script' },
+                    { label:'Blog post',           prompt:'Help me write a blog post' },
+                    { label:'Social media posts',  prompt:'Help me create social media posts' },
+                    { label:'eBook',               prompt:'Help me create an eBook' },
                   ].map(({ label, prompt }) => (
                     <button key={label}
                       onClick={() => { sendMessage(prompt); setInput(''); setShowContentCreate(false) }}
