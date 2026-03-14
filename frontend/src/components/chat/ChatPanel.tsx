@@ -215,7 +215,7 @@ export default function ChatPanel() {
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
                         else if (s === 'Trends') { setShowTrends(true) }
-                        else if (s === 'Explore Content') { setShowExploreContent(true) }
+                        else if (s === 'Explore Content') { setShowContentExplore(true) }
                         else if (s === 'Create Content') { setShowContentCreate(true) }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
@@ -452,7 +452,7 @@ export default function ChatPanel() {
             ) : showContentExplore ? (
               /* Explore existing AI-ACE content — pick article type */
               <div style={{ width:'100%', maxWidth:680 }}>
-                <button onClick={() => { setShowContentExplore(false); setShowExploreContent(true) }}
+                <button onClick={() => { setShowContentExplore(false) }}
                   style={{ display:'flex', alignItems:'center', gap:'0.375rem', background:'none', border:'none', cursor:'pointer', color: AGENT_COLORS.content.border, fontSize:'0.8rem', fontWeight:500, marginBottom:'0.75rem', padding:0 }}
                 >
                   <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
