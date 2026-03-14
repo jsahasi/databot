@@ -12,7 +12,8 @@ from pydantic import BaseModel, field_validator
 
 from app.agents.orchestrator import OrchestratorAgent
 from app.config import settings
-from app.db.on24_db import set_request_client_id
+from app.db.on24_db import set_request_client_id, get_client_id
+from app.services.response_cache import get_cached_response, cache_response
 
 logger = logging.getLogger(__name__)
 
@@ -214,11 +215,20 @@ async def websocket_chat(websocket: WebSocket):
 
                 agent = _get_or_create_agent(session_id)
 
+                # Check response cache (skip for confirmed actions and short/ambiguous messages)
+                cached_result = None
+                if not confirmed and len(content) > 5:
+                    cached_result = await get_cached_response(content, get_client_id())
+
                 # Notify client we're starting
                 await websocket.send_json({"type": "agent_start", "agent": "orchestrator"})
 
                 try:
-                    result = await agent.process_message(content, confirmed=confirmed)
+                    if cached_result:
+                        result = cached_result
+                        logger.info(f"Cache HIT for: {content[:50]}")
+                    else:
+                        result = await agent.process_message(content, confirmed=confirmed)
 
                     # Send agent routing info
                     if result.get("agent_used"):
@@ -289,6 +299,12 @@ async def websocket_chat(websocket: WebSocket):
                         "agent_used": result.get("agent_used"),
                         "requires_confirmation": result.get("requires_confirmation", False),
                     })
+
+                    # Cache the response for data/concierge queries (not admin/content creation)
+                    if not cached_result:
+                        _agent_used = result.get("agent_used", "")
+                        if _agent_used in ("data_agent", "concierge") and not result.get("requires_confirmation"):
+                            await cache_response(content, get_client_id(), result)
 
                     # Fire suggestions asynchronously — non-blocking, skip on timeout/error
                     _chart_data = result.get("chart_data")

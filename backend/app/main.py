@@ -9,6 +9,7 @@ from app.api.chat import websocket_chat
 from app.api.router import api_router
 from app.config import settings
 from app.db.on24_db import close_pool
+from app.services.response_cache import close_redis
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     await close_pool()
+    await close_redis()
 
 
 async def _refresh_brand_voice():

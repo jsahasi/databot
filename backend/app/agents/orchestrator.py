@@ -176,7 +176,7 @@ class OrchestratorAgent:
             response = await self.client.messages.create(
                 model=self.model,
                 max_tokens=2048,
-                system=_build_orchestrator_prompt(),
+                system=[{"type": "text", "text": _build_orchestrator_prompt(), "cache_control": {"type": "ephemeral"}}],
                 tools=self.ROUTING_TOOLS,
                 messages=self.conversation_history,
             )
@@ -222,7 +222,7 @@ class OrchestratorAgent:
                             followup = await self.client.messages.create(
                                 model=self.model,
                                 max_tokens=2048,
-                                system=_build_orchestrator_prompt(),
+                                system=[{"type": "text", "text": _build_orchestrator_prompt(), "cache_control": {"type": "ephemeral"}}],
                                 tools=self.ROUTING_TOOLS,
                                 messages=self.conversation_history,
                             )

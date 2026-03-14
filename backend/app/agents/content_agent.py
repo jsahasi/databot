@@ -156,11 +156,13 @@ class ContentAgent:
 
         tool_calls_made = []
 
+        system_cached = [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
+
         for _round in range(self.max_tool_rounds):
             response = await self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
-                system=system_prompt,
+                system=system_cached,
                 tools=CONTENT_AGENT_TOOLS,
                 messages=messages,
             )

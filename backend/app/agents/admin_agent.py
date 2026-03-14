@@ -52,11 +52,13 @@ class AdminAgent:
 
         tool_calls_made: list[dict] = []
 
+        system_cached = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+
         for _round in range(self.max_tool_rounds):
             response = await self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
-                system=SYSTEM_PROMPT,
+                system=system_cached,
                 tools=ADMIN_AGENT_TOOLS,
                 messages=messages,
             )

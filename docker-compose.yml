@@ -28,6 +28,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend/app:/app/app
       - ./data:/app/data
@@ -52,6 +54,19 @@ services:
       retries: 3
       start_period: 15s
 
+  redis:
+    image: redis:7-alpine
+    platform: linux/amd64
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - redisdata:/data
+
   frontend:
     build: ./frontend
     platform: linux/amd64
@@ -68,3 +83,4 @@ services:
 
 volumes:
   pgdata:
+  redisdata:

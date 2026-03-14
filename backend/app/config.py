@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     # Brand voice — company website for blog scraping (optional)
     company_website_url: str = ""
 
+    # Redis (response cache)
+    redis_url: str = "redis://redis:6379/0"
+    response_cache_ttl: int = 120  # seconds (2 min)
+
     # App
     app_name: str = "DataBot"
     debug: bool = False
