@@ -22,8 +22,8 @@ const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
   { text: 'How do I ...? (ON24 help)',  agent: 'concierge'                    },
   { text: 'Configure environment',     agent: 'config'                       },
   { text: 'Trends',                    agent: 'data'                         },
-  { text: 'Show funnel',              agent: 'data'                         },
-  { text: 'Show campaigns',           agent: 'data'                         },
+  { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
+  { text: 'Poll results overview',    agent: 'data'                         },
   { text: 'Explore Content',           agent: 'content'                      },
 ]
 
@@ -48,6 +48,7 @@ export default function ChatPanel() {
   const [showHowDoI, setShowHowDoI] = useState(false)
   const [showExperiences, setShowExperiences] = useState(false)
   const [showConfigureEnv, setShowConfigureEnv] = useState(false)
+  const [showTrends, setShowTrends] = useState(false)
   const [showExploreContent, setShowExploreContent] = useState(false)
   const [showContentCreate, setShowContentCreate] = useState(false)
   const [showContentExplore, setShowContentExplore] = useState(false)
@@ -156,7 +157,7 @@ export default function ChatPanel() {
             </h2>
 
             {/* Suggestion tiles — 2-column grid */}
-            {!showHowDoI && !showExperiences && !showConfigureEnv && !showExploreContent && !showContentCreate && !showContentExplore ? (
+            {!showHowDoI && !showExperiences && !showConfigureEnv && !showTrends && !showExploreContent && !showContentCreate && !showContentExplore ? (
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
@@ -176,9 +177,9 @@ export default function ChatPanel() {
                         else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
+                        else if (s === 'Trends') { setShowTrends(true) }
                         else if (s === 'Explore Content') { setShowExploreContent(true) }
-                        else if (s === 'Show funnel') { sendMessage('Show me events by funnel stage for the last month. Use get_events_by_tag with tag_type="funnel", aggregate=true, months=1. Then show a bar chart with the funnel stages on the x-axis and total attendees on the y-axis. Title it "Leads by Funnel Stage — Last 30 Days".', 'Show funnel stages for the last month'); setInput('') }
-                        else if (s === 'Show campaigns') { sendMessage('Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type="campaign", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it "Leads by Campaign — Last 30 Days".', 'Show campaigns for the last month'); setInput('') }
+                        else if (s === 'Poll results overview') { sendMessage('Poll results overview'); setInput('') }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
                       }}
@@ -209,6 +210,40 @@ export default function ChatPanel() {
                   )
                 })}
               </div>
+            ) : showTrends ? (
+              /* Trends sub-menu */
+              <div style={{ width: '100%', maxWidth: 680 }}>
+                <button
+                  onClick={() => setShowTrends(false)}
+                  style={{ display:'flex', alignItems:'center', gap:'0.375rem', background:'none', border:'none', cursor:'pointer', color: AGENT_COLORS.data.border, fontSize:'0.8rem', fontWeight:500, marginBottom:'0.75rem', padding:0 }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  Back
+                </button>
+                <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--color-text)', marginBottom:'0.75rem' }}>
+                  What trend would you like to see?
+                </p>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.625rem' }}>
+                  {[
+                    { label: 'Attendance over time',       prompt: 'Show me attendance trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type="line", x_key="period", y_keys=["attendees"]. Title: "Attendance Over Time".', display: 'Attendance over time' },
+                    { label: 'Registrations over time',    prompt: 'Show me registration trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type="line", x_key="period", y_keys=["registrants"]. Title: "Registrations Over Time".', display: 'Registrations over time' },
+                    { label: 'Engagement scores over time', prompt: 'Show me average engagement score trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type="line", x_key="period", y_keys=["avg_engagement"]. Title: "Avg Engagement Score Over Time".', display: 'Engagement scores over time' },
+                    { label: 'Show funnel',                prompt: 'Show me events by funnel stage for the last month. Use get_events_by_tag with tag_type="funnel", aggregate=true, months=1. Then show a bar chart with the funnel stages on the x-axis and total attendees on the y-axis. Title it "Leads by Funnel Stage — Last 30 Days".', display: 'Show funnel stages' },
+                    { label: 'Show campaigns',             prompt: 'Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type="campaign", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it "Leads by Campaign — Last 30 Days".', display: 'Show campaigns' },
+                    { label: 'Top events by engagement',   prompt: 'Show me the top 10 events by engagement score as a bar chart.', display: 'Top events by engagement' },
+                  ].map(({ label, prompt, display }) => (
+                    <button key={label}
+                      onClick={() => { sendMessage(prompt, display); setInput(''); setShowTrends(false) }}
+                      style={{ padding:'0.875rem 1rem', background: AGENT_COLORS.data.bg, border:`1px solid ${AGENT_COLORS.data.border}`, borderLeft:`3px solid ${AGENT_COLORS.data.border}`, borderRadius:8, color:'var(--color-chip-text)', fontSize:'0.825rem', fontWeight:600, textAlign:'left', cursor:'pointer', lineHeight:1.4, transition:'background 0.12s', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.data.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.data.bg }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             ) : showExperiences ? (
               /* Experiences sub-menu */
               <div style={{ width: '100%', maxWidth: 680 }}>
