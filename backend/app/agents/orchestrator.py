@@ -233,6 +233,7 @@ class OrchestratorAgent:
                             "event_card": result.get("event_card"),
                             "event_cards": result.get("event_cards"),
                             "poll_cards": result.get("poll_cards"),
+                            "content_articles": result.get("content_articles"),
                             "requires_confirmation": False,
                             "confirmation_summary": None,
                         }

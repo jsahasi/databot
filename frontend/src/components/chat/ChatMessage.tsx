@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import DOMPurify from 'dompurify'
 import {
   BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell,
@@ -277,6 +278,113 @@ function EventCardInline({ card }: { card: any }) {
   )
 }
 
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  BLOG: 'Blog Post',
+  KEYTAKEAWAYS: 'Key Takeaways',
+  EBOOK: 'eBook',
+  FAQ: 'FAQ',
+  FOLLOWUPEMAIL: 'Follow-up Email',
+  SOCIALMEDIA: 'Social Media',
+  TRANSCRIPT: 'Transcript',
+}
+
+const CONTENT_TYPE_COLORS: Record<string, string> = {
+  BLOG: '#4f46e5',
+  KEYTAKEAWAYS: '#10b981',
+  EBOOK: '#f59e0b',
+  FAQ: '#0ea5e9',
+  FOLLOWUPEMAIL: '#8b5cf6',
+  SOCIALMEDIA: '#ec4899',
+  TRANSCRIPT: '#6b7280',
+}
+
+function ContentArticlesInline({ articles }: { articles: any[] }) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(0)
+  if (!articles?.length) return null
+  return (
+    <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 560 }}>
+      {articles.map((article: any, idx: number) => {
+        const typeKey = (article.content_type || '').toUpperCase()
+        const typeLabel = CONTENT_TYPE_LABELS[typeKey] || typeKey
+        const accentColor = CONTENT_TYPE_COLORS[typeKey] || '#4f46e5'
+        const isExpanded = expandedIdx === idx
+        const dateStr = article.created_at
+          ? new Date(article.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+          : null
+        // Media Manager link
+        const mmUrl = article.event_id
+          ? `https://wccv.on24.com/webcast/mediamanager?date_range=all&types=article&sub_types=autogen_${typeKey.toLowerCase()}&search=${article.event_id}`
+          : `https://wccv.on24.com/webcast/mediamanager?date_range=all&types=article&sub_types=autogen_${typeKey.toLowerCase()}`
+
+        return (
+          <div key={idx} style={{
+            borderRadius: 10, border: '1px solid var(--color-border)',
+            background: 'var(--color-card)', overflow: 'hidden',
+          }}>
+            <div style={{ height: 3, background: accentColor }} />
+            <div style={{ padding: '0.65rem 0.85rem' }}>
+              {/* Header row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{
+                    fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    color: accentColor, background: `${accentColor}18`,
+                    padding: '0.15rem 0.45rem', borderRadius: 4,
+                  }}>
+                    {typeLabel}
+                  </span>
+                  {dateStr && (
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>{dateStr}</span>
+                  )}
+                </div>
+                <a
+                  href={mmUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: '0.65rem', color: '#10b981', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  Open in Media Manager ↗
+                </a>
+              </div>
+              {/* Event title */}
+              {article.event_title && (
+                <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>
+                  {article.event_title}
+                </div>
+              )}
+              {/* Content — collapsible */}
+              {article.content && (
+                <>
+                  <div
+                    style={{
+                      fontSize: '0.78rem', color: 'var(--color-text)', lineHeight: 1.55,
+                      maxHeight: isExpanded ? 'none' : '4.5rem',
+                      overflow: 'hidden',
+                      maskImage: isExpanded ? 'none' : 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                      WebkitMaskImage: isExpanded ? 'none' : 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
+                  />
+                  <button
+                    onClick={() => setExpandedIdx(isExpanded ? null : idx)}
+                    style={{
+                      marginTop: '0.35rem', fontSize: '0.7rem', color: accentColor,
+                      background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isExpanded ? 'Show less ▲' : 'Read more ▼'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function EventCardsGrid({ cards }: { cards: any[] }) {
   if (!cards?.length) return null
   return (
@@ -474,6 +582,9 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
 
       {/* Poll Cards */}
       {message.pollCards && <PollCardsInline polls={message.pollCards} />}
+
+      {/* AI Content Articles */}
+      {message.contentArticles && <ContentArticlesInline articles={message.contentArticles} />}
 
       {/* Thumbs-up confirmation */}
       {!isUser && feedbackState === 'thumbs_up' && (

@@ -3,13 +3,14 @@ import { useChatContext } from '../../context/ChatContext'
 import ChatMessage from './ChatMessage'
 import AgentIndicator from './AgentIndicator'
 
-type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'neutral'
+type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'content' | 'neutral'
 
 const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: string; hoverBorder: string }> = {
   data:      { border: '#6366f1', bg: 'rgba(99,102,241,0.07)',  hoverBg: 'rgba(99,102,241,0.13)',  hoverBorder: '#6366f1' },
   concierge: { border: '#f59e0b', bg: 'rgba(245,158,11,0.07)',  hoverBg: 'rgba(245,158,11,0.13)',  hoverBorder: '#f59e0b' },
   config:    { border: '#10b981', bg: 'rgba(16,185,129,0.07)',  hoverBg: 'rgba(16,185,129,0.13)',  hoverBorder: '#10b981' },
   calendar:  { border: '#8b5cf6', bg: 'rgba(139,92,246,0.07)', hoverBg: 'rgba(139,92,246,0.13)',  hoverBorder: '#8b5cf6' },
+  content:   { border: '#ec4899', bg: 'rgba(236,72,153,0.07)', hoverBg: 'rgba(236,72,153,0.13)',  hoverBorder: '#ec4899' },
   neutral:   { border: 'var(--color-border)', bg: 'var(--color-card)', hoverBg: 'var(--color-chip-hover-bg)', hoverBorder: 'var(--color-border)' },
 }
 
@@ -23,7 +24,7 @@ const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
   { text: 'Trends',                    agent: 'data'                         },
   { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
   { text: 'Event data exploration',    agent: 'data'                         },
-  { text: 'Other',                     agent: 'neutral'                      },
+  { text: 'Explore Content',           agent: 'content'                      },
 ]
 
 const EXPERIENCE_LINKS = [
@@ -47,6 +48,9 @@ export default function ChatPanel() {
   const [showHowDoI, setShowHowDoI] = useState(false)
   const [showExperiences, setShowExperiences] = useState(false)
   const [showConfigureEnv, setShowConfigureEnv] = useState(false)
+  const [showExploreContent, setShowExploreContent] = useState(false)
+  const [showContentCreate, setShowContentCreate] = useState(false)
+  const [showContentExplore, setShowContentExplore] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -143,7 +147,7 @@ export default function ChatPanel() {
             </h2>
 
             {/* Suggestion tiles — 2-column grid */}
-            {!showHowDoI && !showExperiences && !showConfigureEnv ? (
+            {!showHowDoI && !showExperiences && !showConfigureEnv && !showExploreContent && !showContentCreate && !showContentExplore ? (
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
@@ -162,6 +166,7 @@ export default function ChatPanel() {
                         else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
+                        else if (s === 'Explore Content') { setShowExploreContent(true) }
                         else if (s === 'Event data exploration') { sendMessage('What is the event ID?'); setInput('') }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
@@ -297,6 +302,101 @@ export default function ChatPanel() {
                   ))}
                 </div>
               </div>
+            ) : showExploreContent ? (
+              /* Explore Content top-level: Create new | Explore existing */
+              <div style={{ width: '100%', maxWidth: 680 }}>
+                <button
+                  onClick={() => setShowExploreContent(false)}
+                  style={{ display:'flex', alignItems:'center', gap:'0.375rem', background:'none', border:'none', cursor:'pointer', color: AGENT_COLORS.content.border, fontSize:'0.8rem', fontWeight:500, marginBottom:'0.75rem', padding:0 }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  Back
+                </button>
+                <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--color-text)', marginBottom:'0.75rem' }}>
+                  What would you like to do?
+                </p>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.625rem' }}>
+                  {[
+                    { label: 'Create new content', desc: 'Scripts, blogs, social posts, eBooks — written in your brand voice', action: () => { setShowExploreContent(false); setShowContentCreate(true) } },
+                    { label: 'Explore existing content', desc: 'Browse AI-generated articles from your past webinars', action: () => { setShowExploreContent(false); setShowContentExplore(true) } },
+                    { label: 'Propose content calendar', desc: 'Suggest a 3-month webinar plan based on your best-performing topics and audience', action: () => { sendMessage('Propose a content calendar for the next 3 months. Analyze my existing webinar cadence and top-performing topics, then suggest a schedule with ~10% more events, balanced across funnel stages (TOFU, MOFU, BOFU), and ranked by normalized engagement score. Explain why you proposed each event and what assumptions you made.'); setInput(''); setShowExploreContent(false) } },
+                  ].map(({ label, desc, action }) => (
+                    <button key={label} onClick={action}
+                      style={{ padding:'0.875rem 1rem', background: AGENT_COLORS.content.bg, border:`1px solid ${AGENT_COLORS.content.border}`, borderLeft:`3px solid ${AGENT_COLORS.content.border}`, borderRadius:8, color:'var(--color-chip-text)', fontSize:'0.825rem', fontWeight:500, textAlign:'left', cursor:'pointer', lineHeight:1.4, transition:'background 0.12s', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.bg }}
+                    >
+                      <div style={{ fontWeight:600 }}>{label}</div>
+                      <div style={{ fontSize:'0.75rem', color:'var(--color-text-secondary)', marginTop:'0.25rem', fontWeight:400 }}>{desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            ) : showContentCreate ? (
+              /* Create new content — pick article type */
+              <div style={{ width:'100%', maxWidth:680 }}>
+                <button onClick={() => { setShowContentCreate(false); setShowExploreContent(true) }}
+                  style={{ display:'flex', alignItems:'center', gap:'0.375rem', background:'none', border:'none', cursor:'pointer', color: AGENT_COLORS.content.border, fontSize:'0.8rem', fontWeight:500, marginBottom:'0.75rem', padding:0 }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  Back
+                </button>
+                <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--color-text)', marginBottom:'0.75rem' }}>
+                  What type of content would you like to create?
+                </p>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.625rem' }}>
+                  {[
+                    { label:'Webinar script',      prompt:'I want to create a webinar script. What topic or event should it be based on?' },
+                    { label:'Blog post',           prompt:'I want to write a blog post. What topic should it cover, and should it be based on a recent webinar?' },
+                    { label:'Social media posts',  prompt:'I want to create social media posts. What event or topic should they promote?' },
+                    { label:'eBook',               prompt:'I want to create an eBook. What topic or series of webinars should it be based on?' },
+                  ].map(({ label, prompt }) => (
+                    <button key={label}
+                      onClick={() => { sendMessage(prompt); setInput(''); setShowContentCreate(false) }}
+                      style={{ padding:'0.875rem 1rem', background: AGENT_COLORS.content.bg, border:`1px solid ${AGENT_COLORS.content.border}`, borderLeft:`3px solid ${AGENT_COLORS.content.border}`, borderRadius:8, color:'var(--color-chip-text)', fontSize:'0.825rem', fontWeight:600, textAlign:'left', cursor:'pointer', lineHeight:1.4, transition:'background 0.12s', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.bg }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            ) : showContentExplore ? (
+              /* Explore existing AI-ACE content — pick article type */
+              <div style={{ width:'100%', maxWidth:680 }}>
+                <button onClick={() => { setShowContentExplore(false); setShowExploreContent(true) }}
+                  style={{ display:'flex', alignItems:'center', gap:'0.375rem', background:'none', border:'none', cursor:'pointer', color: AGENT_COLORS.content.border, fontSize:'0.8rem', fontWeight:500, marginBottom:'0.75rem', padding:0 }}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  Back
+                </button>
+                <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--color-text)', marginBottom:'0.75rem' }}>
+                  Which type of AI-generated content?
+                </p>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.625rem' }}>
+                  {[
+                    { label:'Key Takeaways',    prompt:'Show me the most recent AI-generated Key Takeaways articles' },
+                    { label:'Blog Posts',       prompt:'Show me the most recent AI-generated blog posts' },
+                    { label:'eBooks',           prompt:'Show me the most recent AI-generated eBooks' },
+                    { label:'FAQs',             prompt:'Show me the most recent AI-generated FAQ articles' },
+                    { label:'Follow-up Emails', prompt:'Show me the most recent AI-generated follow-up emails' },
+                    { label:'Social Media',     prompt:'Show me the most recent AI-generated social media posts' },
+                  ].map(({ label, prompt }) => (
+                    <button key={label}
+                      onClick={() => { sendMessage(prompt); setInput(''); setShowContentExplore(false) }}
+                      style={{ padding:'0.875rem 1rem', background: AGENT_COLORS.content.bg, border:`1px solid ${AGENT_COLORS.content.border}`, borderLeft:`3px solid ${AGENT_COLORS.content.border}`, borderRadius:8, color:'var(--color-chip-text)', fontSize:'0.825rem', fontWeight:600, textAlign:'left', cursor:'pointer', lineHeight:1.4, transition:'background 0.12s', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.hoverBg }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.bg }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             ) : (
               /* "How do I...?" sub-menu */
               <div style={{ width: '100%', maxWidth: 680 }}>

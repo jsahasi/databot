@@ -21,6 +21,7 @@ from app.agents.tools.on24_query_tools import (
     query_audience_sources,
     query_resources,
     generate_chart_data,
+    query_ai_content,
 )
 from app.agents.tools.content_tools import (
     analyze_topic_performance,
@@ -294,6 +295,29 @@ DATA_AGENT_TOOLS = [
             "required": ["data", "chart_type", "x_key"],
         },
     },
+    {
+        "name": "get_ai_content",
+        "description": (
+            "Fetch AI-ACE generated articles from the video library — blog posts, key takeaways, "
+            "eBooks, FAQs, follow-up emails, social media posts, or transcripts. "
+            "Use when the user asks to see, show, find, or list any AI-generated content. "
+            "Returns article title, full content (HTML), event context, and creation date."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "enum": ["BLOG", "EBOOK", "FAQ", "KEYTAKEAWAYS", "FOLLOWUPEMAIL", "SOCIALMEDIA", "TRANSCRIPT"],
+                    "description": "Filter to a specific content type. Omit to return the most recent articles across all types.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Number of articles to return (default 3, max 10).",
+                },
+            },
+        },
+    },
 ]
 
 # Map tool names to handler functions
@@ -313,9 +337,34 @@ TOOL_HANDLERS = {
     "get_audience_sources": query_audience_sources,
     "get_resources": query_resources,
     "generate_chart_data": generate_chart_data,
+    "get_ai_content": query_ai_content,
 }
 
 CONTENT_AGENT_TOOLS = [
+    {
+        "name": "get_ai_content",
+        "description": (
+            "Fetch AI-ACE generated articles from the video library — blog posts, key takeaways, "
+            "eBooks, FAQs, follow-up emails, social media posts, or transcripts. "
+            "Use this FIRST when writing any new article, to gather existing content as source material "
+            "and to match the established style. Omit content_type to get a variety of recent examples. "
+            "Returns article full content (HTML), event context, and creation date."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "enum": ["BLOG", "EBOOK", "FAQ", "KEYTAKEAWAYS", "FOLLOWUPEMAIL", "SOCIALMEDIA", "TRANSCRIPT"],
+                    "description": "Filter to a specific content type. Omit to return recent articles across all types.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Number of articles to return (default 5, max 10). Use 5-10 when gathering source material for writing.",
+                },
+            },
+        },
+    },
     {
         "name": "analyze_topic_performance",
         "description": "Analyze which event types/topics drive the highest engagement and attendance rates.",
@@ -357,6 +406,7 @@ CONTENT_AGENT_TOOLS = [
 ]
 
 CONTENT_TOOL_HANDLERS = {
+    "get_ai_content": query_ai_content,
     "analyze_topic_performance": analyze_topic_performance,
     "compare_event_performance": compare_event_performance,
     "analyze_scheduling_patterns": analyze_scheduling_patterns,

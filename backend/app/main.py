@@ -2,7 +2,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.chat import websocket_chat
@@ -63,6 +63,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next) -> Response:
+    """Add OWASP-recommended security headers to every HTTP response (A05)."""
+    response = await call_next(request)
+    # Prevent MIME-type sniffing (A05)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    # Deny framing (clickjacking protection, A05)
+    response.headers["X-Frame-Options"] = "DENY"
+    # Restrict referrer info on cross-origin requests
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Permissions policy — disable unused browser features
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # Content-Security-Policy — defence-in-depth against XSS even with DOMPurify
+    # 'unsafe-inline' is required for inline Recharts SVG styles; tighten if deps allow
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self' wss: ws:; "
+        "frame-ancestors 'none';"
+    )
+    return response
+
 
 app.include_router(api_router, prefix="/api")
 app.add_api_websocket_route("/ws/chat", websocket_chat)

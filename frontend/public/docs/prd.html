@@ -96,7 +96,8 @@
 <div class="content">
 
   <h2>1. Product Vision</h2>
-  <p>ON24 Nexus is an AI-powered analytics co-pilot that lives inside the ON24 experience workflow. It answers natural-language questions about event performance, surfaces audience insights, explains the platform, and manages events — all from a single conversational interface backed by live ON24 data.</p>
+  <p>ON24 Nexus is the everything app for marketers who care about engagement and data. It is not just an analytics tool — it is the intelligence layer that connects every webinar a team runs to actionable insights, reusable content, and smarter future planning. The system compounds in value over time: every webinar transcript, every AI-generated article, and every audience signal is retained and used to inform the next answer, the next piece of content, and the next event.</p>
+  <p>Nexus covers the full marketer lifecycle: understand what happened (analytics), answer how to do things (concierge), create new content tuned to your brand (content creation), and plan what to do next (forward-looking strategy) — all through a single conversational interface.</p>
 
   <h2>2. Feature Areas</h2>
 
@@ -133,15 +134,33 @@
     <li>Double-click to send event to chat for deeper analysis</li>
   </ul>
 
-  <h3>2.4 Content Intelligence (Content Agent)</h3>
-  <p>Analyzes historical event performance to surface topic recommendations and scheduling insights.</p>
+  <h3>2.4 Content Intelligence &amp; Creation (Content Agent)</h3>
+  <p>The content agent does two distinct jobs: it analyzes historical performance to surface strategy insights, and it creates new content tuned to the team's established brand voice.</p>
+  <p><strong>Strategy analysis:</strong></p>
   <ul>
     <li>Top-performing topics by engagement score</li>
     <li>Optimal scheduling patterns by day/time</li>
     <li>Topic gap analysis against past event history</li>
+    <li>Propose a future webinar schedule with titles and data-driven justification for each</li>
+  </ul>
+  <p><strong>Content creation (brand-voice tuned):</strong></p>
+  <ul>
+    <li>Brand voice is built automatically from all AI-ACE content in the account's <code>video_library</code> — no manual setup needed</li>
+    <li>Every piece of new content is silently informed by the last 5 articles of the same type, ensuring consistency</li>
+    <li>Supported types: webinar scripts, blog posts, social media posts, eBooks</li>
+    <li>Content created here is grounded in webinar transcripts and audience insights, not generic prompting</li>
   </ul>
 
-  <h3>2.5 Event Management (Admin Agent)</h3>
+  <h3>2.5 Content Exploration (AI-ACE Library)</h3>
+  <p>All AI-generated content from past webinars (Key Takeaways, blog posts, FAQs, follow-up emails, social media posts, eBooks) is browseable and explorable through chat. Users can ask to see, summarize, or repurpose any article.</p>
+  <div class="story">Show me the most recent blog posts
+    <em>→ Lists AI-generated blog articles from video_library, most recent first, with event context</em>
+  </div>
+  <div class="story">Propose a 6-month webinar schedule
+    <em>→ Returns titled webinar proposals with engagement-justified rationale for each, drawing on transcript and poll data to identify what topics audiences want next</em>
+  </div>
+
+  <h3>2.6 Event Management (Admin Agent)</h3>
   <p>Enables event creation, registration management, and updates via chat with explicit confirmation before any write operation.</p>
   <ul>
     <li>Create new events with title, date, description, type</li>

@@ -95,6 +95,7 @@ class DataAgent:
         event_card = None
         poll_cards = None
         event_cards = None   # 2–4 events → tiled cards
+        content_articles = None
         tool_calls_made = []
 
         system_prompt = _build_system_prompt()
@@ -147,6 +148,10 @@ class DataAgent:
                                 # Capture poll cards for visual display
                                 if tool_name == "get_polls" and isinstance(result, list) and len(result) > 0:
                                     poll_cards = result
+
+                                # Capture AI-generated content articles
+                                if tool_name == "get_ai_content" and isinstance(result, list) and len(result) > 0:
+                                    content_articles = result
 
                                 # Capture event card for single-event queries
                                 if tool_name == "get_event_detail" and isinstance(result, dict) and result.get("event_id"):
@@ -228,6 +233,7 @@ class DataAgent:
                     "event_card": event_card,
                     "event_cards": final_event_cards,
                     "poll_cards": poll_cards,
+                    "content_articles": content_articles,
                     "tool_calls": tool_calls_made,
                 }
 
@@ -253,5 +259,6 @@ class DataAgent:
             "event_card": event_card,
             "event_cards": None,
             "poll_cards": poll_cards,
+            "content_articles": content_articles,
             "tool_calls": tool_calls_made,
         }

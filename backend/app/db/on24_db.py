@@ -17,6 +17,7 @@ FUTURE multi-client support (when needed):
 
 import asyncio
 import contextvars
+import shutil
 import ssl
 import tempfile
 import os
@@ -57,16 +58,20 @@ def _build_ssl_context() -> ssl.SSLContext | None:
     ctx.verify_mode = ssl.CERT_REQUIRED
 
     tmp_dir = tempfile.mkdtemp()
-    ca_path = os.path.join(tmp_dir, "ca.pem")
-    cert_path = os.path.join(tmp_dir, "client.crt")
-    key_path = os.path.join(tmp_dir, "client.key")
+    try:
+        ca_path = os.path.join(tmp_dir, "ca.pem")
+        cert_path = os.path.join(tmp_dir, "client.crt")
+        key_path = os.path.join(tmp_dir, "client.key")
 
-    with open(ca_path, "w", newline="\n") as f: f.write(ca)
-    with open(cert_path, "w", newline="\n") as f: f.write(cert)
-    with open(key_path, "w", newline="\n") as f: f.write(key)
+        with open(ca_path, "w", newline="\n") as f: f.write(ca)
+        with open(cert_path, "w", newline="\n") as f: f.write(cert)
+        with open(key_path, "w", newline="\n") as f: f.write(key)
 
-    ctx.load_verify_locations(ca_path)
-    ctx.load_cert_chain(cert_path, key_path)
+        ctx.load_verify_locations(ca_path)
+        ctx.load_cert_chain(cert_path, key_path)
+    finally:
+        # Certs are loaded into the SSLContext in memory; remove temp files immediately
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     return ctx
 

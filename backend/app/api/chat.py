@@ -194,6 +194,13 @@ async def websocket_chat(websocket: WebSocket):
                     await websocket.send_json({"type": "error", "message": "Empty message"})
                     continue
 
+                # Strip null bytes and ASCII control characters to prevent prompt-injection
+                # payloads that embed hidden instructions via non-printing characters (A03).
+                content = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content).strip()
+                if not content:
+                    await websocket.send_json({"type": "error", "message": "Empty message"})
+                    continue
+
                 # Bound message length to prevent prompt-stuffing and resource exhaustion (A03).
                 _MAX_MESSAGE_LEN = 4000
                 if len(content) > _MAX_MESSAGE_LEN:
@@ -253,6 +260,13 @@ async def websocket_chat(websocket: WebSocket):
                         await websocket.send_json({
                             "type": "poll_cards",
                             "data": result["poll_cards"],
+                        })
+
+                    # Send AI content articles if available
+                    if result.get("content_articles"):
+                        await websocket.send_json({
+                            "type": "content_articles",
+                            "data": result["content_articles"],
                         })
 
                     # Send confirmation request if a destructive operation is pending

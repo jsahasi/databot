@@ -256,6 +256,33 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Chip safety: fallback to switch_chips + Home even when LLM returns malformed JSON
 - [x] COMPANY_WEBSITE_URL: add to .env.local to enable monthly web brand voice updates
 
+## Phase 9 Addendum 3: Security Hardening + Content Articles + Calendar Polish — COMPLETE (2026-03-13)
+- [x] OWASP security hardening:
+  - Security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy) in main.py
+  - Prompt injection: strip null bytes + ASCII control chars (0x00–0x08, 0x0e–0x1f) before processing in chat.py
+  - SSL cert temp files: `shutil.rmtree` in `finally` blocks in on24_db.py + on24_hierarchy.py
+  - Hierarchy auth: /api/hierarchy/children/{client_id} validates against deployment hierarchy before returning
+  - ClientContext.tsx: removed hardcoded DEFAULT_CLIENT_ID=10710; fetches root from /api/hierarchy on mount
+  - pool.fetch → async with pool.acquire() pattern in query_ai_content
+- [x] Content articles display pipeline:
+  - data_agent.py: captures `get_ai_content` result as `content_articles`
+  - orchestrator.py: passes content_articles through to chat.py
+  - chat.py: sends `content_articles` WS message type
+  - useChat.ts: handles content_articles WS message; adds to ChatMessage interface
+  - ChatMessage.tsx: ContentArticlesInline component with DOMPurify sanitization, type badges, collapsible content, Media Manager link
+  - DOMPurify 3.3.3 + @types/dompurify added to frontend/package.json
+- [x] Content agent article writing:
+  - content_agent.md: call `get_ai_content` FIRST for all creation requests (not analytics tools)
+  - Attribution sentence required; competitor references OK (factual)
+  - Content guardrails: no inflammatory, no code, max 800/150/300 words by type
+  - "Media Manager" terminology enforced (not "video library")
+- [x] `query_ai_content` source filter fix: `LIKE 'AUTOGEN_%'` → `LIKE 'AUTO%'` (aligns with calendar.py); removed overly strict `media_content IS NOT NULL AND LENGTH > 50` filter; client_id removed from SELECT; pool.acquire pattern; return keys: `content`/`event_id`/`created_at`
+- [x] Calendar PerformanceSection: collapsed by default when AI-ACE content is present; click to expand; chevron rotates
+- [x] "Propose content calendar" chip: added to showExploreContent panel at same level as Create/Explore; sends calendar generation request to content agent
+- [x] Content agent calendar rules: 3-month default, max 12 months (never exceed); analyze_topic_performance + analyze_scheduling_patterns; TOFU/MOFU/BOFU balance (40/35/25); normalized engagement = avg_engagement/60×scale; 5 refinement options after presenting
+- [x] Tech Ops document: background agent creating frontend/public/docs/tech-ops.html + ChatSidebar link (in progress)
+- [x] Security/accessibility test suite: background agent creating backend/tests/test_security.py + backend/tests/test_accessibility.py (in progress)
+
 ## Backlog / Next Steps
 - [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
 - [ ] Add query tools for dw_lead (lead/prospect analytics)

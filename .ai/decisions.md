@@ -171,6 +171,28 @@ Implementation:
 **Rationale:** Avoids requiring users to specify style — the agent automatically matches established voice. Examples provide concrete quality anchors. No tool call needed — injected directly into system prompt addendum.
 **Detection defaults:** email → FOLLOWUPEMAI; social/linkedin → SOCIALMEDIAP; faq → FAQ; ebook → EBOOK; takeaway/summary → KEYTAKEAWAYS; blog/article → BLOG (default fallback).
 
+## 2026-03-13: OWASP Security Hardening
+**Decision:** Applied OWASP Top 10 mitigations across backend and frontend.
+**Changes:**
+- A05 Security Misconfiguration → HTTP security headers middleware in `main.py` (X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy)
+- A03 Injection → strip null bytes + ASCII control chars from user input in `chat.py` before agent processing
+- A02 Cryptographic Failures → SSL cert private keys written to temp dir and deleted immediately after loading into SSLContext (`shutil.rmtree` in `finally` blocks in `on24_db.py` and `on24_hierarchy.py`)
+- A01 Broken Access Control → `/api/hierarchy/children/{client_id}` validates client_id is within deployment hierarchy before returning; `ClientContext.tsx` fetches root_client_id from API (no longer hardcoded in frontend bundle)
+- A07 XSS → DOMPurify 3.3.3 sanitizes `media_content` HTML before `dangerouslySetInnerHTML` in `ContentArticlesInline`
+
+## 2026-03-13: Content Articles Display Pipeline
+**Decision:** `get_ai_content` results are streamed to the frontend as a dedicated `content_articles` WS message type; rendered as `ContentArticlesInline` collapsible cards with DOMPurify sanitization.
+**Rationale:** Keeps LLM response text clean (agent outputs just the event identifier line) while frontend renders rich structured content. Same pattern as poll cards, event cards, and chart data — LLM produces minimal text, frontend does heavy lifting.
+**Field mapping:** Backend returns `content`/`event_id`/`created_at`; frontend reads these exact keys (prior mismatch with `media_content`/`source_event_id`/`creation_timestamp` caused blank renders).
+
+## 2026-03-13: query_ai_content Source Filter (AUTO% vs AUTOGEN_%)
+**Decision:** Widened `video_library` source filter from `LIKE 'AUTOGEN_%'` to `LIKE 'AUTO%'` and removed `media_content IS NOT NULL AND LENGTH > 50` filter.
+**Rationale:** `calendar.py`'s working reference implementation uses `AUTO%` with no content filter. The stricter filter was missing content and causing empty results. Also removed `client_id` from SELECT (leaked tenant ID to frontend).
+
+## 2026-03-13: Content Agent Creation-First Pattern
+**Decision:** Content agent must call `get_ai_content` FIRST for any content creation request — before `analyze_topic_performance`, `suggest_topics`, or any other tool.
+**Rationale:** The analytics tools (`analyze_topic_performance`, `compare_event_performance`, etc.) query the local DataBot PostgreSQL DB via SQLAlchemy ORM, which depends on the ETL sync being run. If sync hasn't run, these tools return "no data" and the agent refuses to write. `get_ai_content` queries ON24 master DB directly — it always has data. Starting with source material is also better content strategy.
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.

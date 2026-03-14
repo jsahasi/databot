@@ -6,6 +6,7 @@ Used exclusively by the hierarchy API endpoint — not by agent query tools.
 import asyncio
 import logging
 import os
+import shutil
 import ssl
 import tempfile
 
@@ -31,16 +32,20 @@ def _build_ssl_ctx(root_cert: str, cert: str, key: str) -> ssl.SSLContext | None
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_REQUIRED
     tmp = tempfile.mkdtemp()
-    paths = {
-        "ca.pem": _unescape(root_cert),
-        "client.crt": _unescape(cert),
-        "client.key": _unescape(key),
-    }
-    for name, content in paths.items():
-        with open(os.path.join(tmp, name), "w", newline="\n") as f:
-            f.write(content)
-    ctx.load_verify_locations(os.path.join(tmp, "ca.pem"))
-    ctx.load_cert_chain(os.path.join(tmp, "client.crt"), os.path.join(tmp, "client.key"))
+    try:
+        paths = {
+            "ca.pem": _unescape(root_cert),
+            "client.crt": _unescape(cert),
+            "client.key": _unescape(key),
+        }
+        for name, content in paths.items():
+            with open(os.path.join(tmp, name), "w", newline="\n") as f:
+                f.write(content)
+        ctx.load_verify_locations(os.path.join(tmp, "ca.pem"))
+        ctx.load_cert_chain(os.path.join(tmp, "client.crt"), os.path.join(tmp, "client.key"))
+    finally:
+        # Certs are loaded into the SSLContext in memory; remove temp files immediately
+        shutil.rmtree(tmp, ignore_errors=True)
     return ctx
 
 

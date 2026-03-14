@@ -56,12 +56,18 @@ async def get_hierarchy(client_id: int | None = Query(default=None)):
 
 @router.get("/hierarchy/children/{client_id}")
 async def get_children(client_id: int):
-    """Return direct children of a client node."""
+    """Return direct children of a client node (validated against deployment hierarchy)."""
+    root_id = int(settings.on24_client_id)
     try:
         pool, db_mode = await get_hierarchy_pool()
     except Exception as e:
         logger.error(f"Hierarchy pool unavailable: {e}")
         raise HTTPException(status_code=503, detail="ON24 database unavailable")
+
+    # Validate: requested client must be within this deployment's hierarchy (A01)
+    allowed = await get_allowed_client_ids(pool, root_id)
+    if client_id not in allowed:
+        raise HTTPException(status_code=404, detail="Client not found in hierarchy")
 
     children = await get_client_children(client_id, pool)
     return {"children": children, "db_mode": db_mode}

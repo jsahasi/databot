@@ -857,3 +857,77 @@ async def generate_chart_data(
     if y_label:
         result["yLabel"] = y_label
     return result
+
+
+_AI_CONTENT_TYPES = {
+    "BLOG":          "AUTOGEN_BLOG",
+    "EBOOK":         "AUTOGEN_EBOOK",
+    "FAQ":           "AUTOGEN_FAQ",
+    "KEYTAKEAWAYS":  "AUTOGEN_KEYTAKEAWAYS",
+    "FOLLOWUPEMAIL": "AUTOGEN_FOLLOWUPEMAI",
+    "SOCIALMEDIA":   "AUTOGEN_SOCIALMEDIAP",
+    "TRANSCRIPT":    "AUTOGEN_TRANSCRIPT",
+}
+
+
+async def query_ai_content(
+    content_type: str | None = None,
+    limit: int = 3,
+) -> list[dict]:
+    """Fetch AI-ACE generated articles from video_library.
+
+    Args:
+        content_type: One of BLOG, EBOOK, FAQ, KEYTAKEAWAYS, FOLLOWUPEMAIL,
+                      SOCIALMEDIA, TRANSCRIPT — or None for all types.
+        limit: Max articles to return (default 3, max 10).
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    limit = max(1, min(limit, 10))
+
+    # Build source filter
+    if content_type:
+        ct_upper = content_type.upper()
+        # Allow both short form ("BLOG") and full form ("AUTOGEN_BLOG")
+        source_filter = _AI_CONTENT_TYPES.get(ct_upper) or (
+            f"AUTOGEN_{ct_upper}" if not ct_upper.startswith("AUTOGEN_") else ct_upper
+        )
+        source_clause = "AND vl.source = $2"
+        params: list = [client_ids, source_filter, limit]
+        param_limit = "$3"
+    else:
+        # Match calendar.py: use AUTO% (catches AUTOGEN_* and any other AUTO-prefixed sources)
+        source_clause = "AND vl.source LIKE 'AUTO%'"
+        params = [client_ids, limit]
+        param_limit = "$2"
+
+    sql = f"""
+        SELECT
+            replace(vl.source, 'AUTOGEN_', '')        AS content_type,
+            vl.media_name                              AS title,
+            vl.media_content                           AS content,
+            vl.source_event_id                         AS event_id,
+            e.description                              AS event_title,
+            vl.creation_timestamp                      AS created_at
+        FROM on24master.video_library vl
+        LEFT JOIN on24master.event e ON e.event_id = vl.source_event_id
+        WHERE vl.client_id = ANY($1::bigint[])
+          {source_clause}
+        ORDER BY vl.creation_timestamp DESC
+        LIMIT {param_limit}
+    """
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, *params, timeout=_QUERY_TIMEOUT)
+    return [
+        {
+            "content_type": row["content_type"] or "",
+            "title": row["title"] or "",
+            "content": (row["content"] or "")[:8000],  # cap to avoid token explosion
+            "event_id": row["event_id"],
+            "event_title": row["event_title"] or "",
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+        }
+        for row in rows
+        if row["content_type"]  # skip rows where source strip produced empty type
+    ]

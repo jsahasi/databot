@@ -109,11 +109,13 @@
 <div class="content">
 
   <h2>1. Executive Summary</h2>
-  <p>ON24 customers generate rich webinar and experience data, but extracting actionable insights requires navigating 15+ fragmented analytics screens and manually cross-referencing reports. ON24 Nexus addresses this by providing a conversational AI interface that lets marketers and program managers ask natural-language questions and receive immediate, visualized answers — without leaving a single screen.</p>
+  <p>ON24 Nexus is the everything app for marketers who care about engagement and data. Every webinar a team runs feeds the system — transcripts, poll results, audience signals, and AI-generated content — making it progressively smarter over time. Nexus lets marketers ask natural-language questions about their event data, create new AI-generated content tuned to their brand voice, explore all existing AI-ACE content, and get data-driven proposals for future webinar schedules and topics — all from a single conversational interface backed by live ON24 data.</p>
+  <p>The system eliminates the need to navigate 15+ fragmented analytics screens. It also closes the content creation loop: the same AI that generates Key Takeaways from a transcript can write the follow-up blog post, social copy, and eBook in the same brand voice, informed by every piece of content the team has ever produced.</p>
 
   <h2>2. Market Problem</h2>
 
   <!-- Before/After diagram -->
+
   <svg class="diagram" viewBox="0 0 760 200" role="img" aria-label="Before and after comparison">
     <defs>
       <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" class="diag-text2" style="fill:var(--border)"/></marker>
@@ -167,14 +169,16 @@
 
   <h3>Pain Points</h3>
   <ul>
-    <li><strong>Fragmentation:</strong> ON24 analytics are spread across Dashboard, Smart Tips, Webcast Elite, Engagement Hub, Power Leads, Polls &amp; Surveys, and more — each requiring separate navigation.</li>
-    <li><strong>Latency:</strong> Generating a cross-event attendance trend report requires manual data export and Excel work, taking 30–60 minutes.</li>
-    <li><strong>Low adoption of insights:</strong> Marketers know the data exists but can't easily access it mid-campaign or in executive reviews.</li>
+    <li><strong>Analytics fragmentation:</strong> ON24 analytics are spread across Dashboard, Smart Tips, Webcast Elite, Engagement Hub, Power Leads, Polls &amp; Surveys, and more — each requiring separate navigation.</li>
+    <li><strong>Time-to-insight:</strong> Generating a cross-event attendance trend requires manual export and Excel work — 30–60 minutes for a single answer.</li>
+    <li><strong>Content not reused:</strong> AI-ACE generates Key Takeaways, blog posts, and emails after every webinar, but they're buried in the platform and rarely repurposed.</li>
+    <li><strong>Brand inconsistency:</strong> When content is repurposed manually, it doesn't match the team's established tone and style.</li>
+    <li><strong>No forward planning intelligence:</strong> Teams plan future webinar topics without data on what has worked, which topics are overrepresented, or what audiences want next.</li>
     <li><strong>Platform how-to barrier:</strong> New and occasional ON24 users frequently need to look up how to configure polls, registration pages, or integrations — disrupting their workflow.</li>
   </ul>
 
   <h3>Market Opportunity</h3>
-  <p>ON24 serves thousands of enterprise B2B marketing teams. Each team runs 10–200+ webinars annually. Even a 20% reduction in time-to-insight across the install base creates significant productivity value. Conversational analytics lowers the skill bar for data access, increasing the number of team members who can self-serve insights.</p>
+  <p>ON24 serves thousands of enterprise B2B marketing teams. Each team runs 10–200+ webinars annually and accumulates transcripts, poll data, and AI-generated content that is chronically underutilized. ON24 Nexus activates this asset: every webinar makes the system more useful, every piece of content reinforces the brand voice model, and every insight shapes the next event. The compounding value increases with usage — teams that engage consistently gain a feedback loop their competitors don't have.</p>
 
   <h2>3. Target Personas</h2>
   <div class="grid2">
@@ -240,11 +244,13 @@
       <tr><td>MR-03</td><td>Identify top attending companies across events</td><td class="priority-high">High</td><td>Account-based marketing intelligence</td></tr>
       <tr><td>MR-04</td><td>Answer platform how-to questions without sending users to external docs</td><td class="priority-high">High</td><td>Reduces support burden; keeps users in flow</td></tr>
       <tr><td>MR-05</td><td>Visualize poll results and audience interaction data</td><td class="priority-high">High</td><td>Content and engagement insights</td></tr>
-      <tr><td>MR-06</td><td>Provide a calendar view of upcoming and past events with KPIs</td><td class="priority-med">Medium</td><td>Planning and operational oversight</td></tr>
-      <tr><td>MR-07</td><td>Surface AI-generated content (key takeaways, summaries) from past events</td><td class="priority-med">Medium</td><td>Content repurposing and post-event follow-up</td></tr>
-      <tr><td>MR-08</td><td>Support audience company exclusion for cleaner internal analytics</td><td class="priority-med">Medium</td><td>Internal orgs skew attendance data</td></tr>
-      <tr><td>MR-09</td><td>Provide content topic recommendations based on historical engagement</td><td class="priority-low">Low</td><td>Strategic planning support</td></tr>
-      <tr><td>MR-10</td><td>Enable event creation and registration management via chat</td><td class="priority-low">Low</td><td>Operational convenience for power users</td></tr>
+      <tr><td>MR-06</td><td>Create new AI-generated content (blog, script, social, eBook) tuned to brand voice</td><td class="priority-high">High</td><td>Closes the content creation loop post-webinar</td></tr>
+      <tr><td>MR-07</td><td>Browse and surface all AI-ACE content from past events (Key Takeaways, blogs, emails)</td><td class="priority-high">High</td><td>Makes AI-generated content discoverable and reusable</td></tr>
+      <tr><td>MR-08</td><td>Propose future webinar schedule and titles with data-driven justification</td><td class="priority-high">High</td><td>Turns historical engagement data into forward planning</td></tr>
+      <tr><td>MR-09</td><td>Provide a calendar view of upcoming and past events with KPIs</td><td class="priority-med">Medium</td><td>Planning and operational oversight</td></tr>
+      <tr><td>MR-10</td><td>Support audience company exclusion for cleaner internal analytics</td><td class="priority-med">Medium</td><td>Internal orgs skew attendance data</td></tr>
+      <tr><td>MR-11</td><td>Provide content topic recommendations based on historical engagement and transcript analysis</td><td class="priority-med">Medium</td><td>Strategic planning support informed by past data</td></tr>
+      <tr><td>MR-12</td><td>Enable event creation and registration management via chat</td><td class="priority-low">Low</td><td>Operational convenience for power users</td></tr>
     </tbody>
   </table>
 
@@ -252,7 +258,9 @@
   <ul>
     <li>Time-to-first-insight: user gets a post-event performance summary in &lt;30 seconds</li>
     <li>Platform question deflection: &gt;80% of common how-to questions answered without external links</li>
-    <li>Adoption: &gt;3 queries per active user per week</li>
+    <li>Content creation: users can generate a brand-voice-tuned article from a past webinar in &lt;60 seconds</li>
+    <li>Content discoverability: all AI-ACE articles surfaced and browseable in chat</li>
+    <li>Adoption: &gt;3 queries per active user per week; content creation used by &gt;30% of active users</li>
     <li>Data accuracy: query results match ON24 platform reports within rounding margin</li>
   </ul>
 
@@ -262,6 +270,8 @@
     <li>Tenant isolation is mandatory — all queries scope to authorized client hierarchy only</li>
     <li>ON24 write operations (create event, manage registrations) require explicit user confirmation</li>
     <li>Knowledge base is sourced from ON24 Zendesk help articles (637 articles / 2,729 chunks)</li>
+    <li>Brand voice is derived from existing AI-ACE content in <code>video_library</code>; refreshed monthly via web scrape</li>
+    <li>Transcript-based content creation depends on AI-ACE having processed each event (AUTOGEN_ types present)</li>
     <li>Requires VPN or ON24 internal network access for the ON24 master database connection</li>
   </ul>
 

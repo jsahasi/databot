@@ -224,6 +224,59 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
   )
 }
 
+function PerformanceSection({ kpis, loadingDetail, defaultCollapsed }: {
+  kpis: { label: string; value: string; icon: string }[]
+  loadingDetail: boolean
+  defaultCollapsed: boolean
+}) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed)
+  return (
+    <div>
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0.3rem',
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          marginBottom: collapsed ? 0 : '0.5rem',
+        }}
+      >
+        <span style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Performance {loadingDetail && <span style={{ fontWeight: 400 }}>· loading…</span>}
+        </span>
+        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', marginTop: 1 }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {!collapsed && (
+        kpis.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            {kpis.map(kpi => (
+              <div key={kpi.label} style={{
+                background: 'var(--color-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 10, padding: '0.625rem 0.75rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}>
+                <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+                  {kpi.icon} {kpi.label}
+                </div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                  {kpi.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : !loadingDetail ? (
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontStyle: 'italic', margin: 0 }}>
+            No performance data available.
+          </p>
+        ) : null
+      )}
+    </div>
+  )
+}
+
 function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClose: () => void }) {
   const [event, setEvent] = useState<CalendarEvent>(initial)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -330,36 +383,13 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
           </div>
         )}
 
-        {/* Performance KPI grid */}
+        {/* Performance KPI grid — collapsed by default when AI-ACE content is present */}
         {!event.is_future && (
-          <div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-              Performance {loadingDetail && <span style={{ fontWeight: 400 }}>· loading…</span>}
-            </div>
-            {kpis.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                {kpis.map(kpi => (
-                  <div key={kpi.label} style={{
-                    background: 'var(--color-card)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 10, padding: '0.625rem 0.75rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  }}>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
-                      {kpi.icon} {kpi.label}
-                    </div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                      {kpi.value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : !loadingDetail ? (
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontStyle: 'italic', margin: 0 }}>
-                No performance data available.
-              </p>
-            ) : null}
-          </div>
+          <PerformanceSection
+            kpis={kpis}
+            loadingDetail={loadingDetail}
+            defaultCollapsed={!!(event.ai_content?.articles && Object.keys(event.ai_content.articles).length > 0)}
+          />
         )}
 
         {event.is_future && (
