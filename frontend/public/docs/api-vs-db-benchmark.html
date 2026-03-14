@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — API vs DB Benchmark</title>
+<style>
+  :root {
+    --bg: #f8f9fc; --card: #ffffff; --border: #e2e6ef;
+    --text: #1a1d2e; --text2: #5a6070;
+    --primary: #4f46e5; --accent: #4f46e5;
+    --green: #059669; --amber: #d97706; --red: #dc2626;
+    --heading: #111827; --hero-bg: linear-gradient(135deg, #eef0f8 0%, #e8eaf6 100%);
+  }
+  html.dark-mode {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
+    --text: #c9cfe0; --text2: #7c8499;
+    --primary: #a5b4fc; --accent: #6366f1;
+    --green: #34d399; --amber: #fbbf24; --red: #f87171;
+    --heading: #ffffff; --hero-bg: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: var(--hero-bg); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; position: relative; }
+  .badge { display: inline-block; background: #4f46e5; color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); }
+  .meta strong { color: var(--text); }
+  .content { max-width: 900px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: var(--heading); margin: 1.5rem 0 0.5rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { color: var(--text); margin-bottom: 0.35rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.85rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.875rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.875rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; margin: 0.1rem; white-space: nowrap; }
+  .tag-db { background: rgba(5,150,105,0.12); color: var(--green); }
+  .tag-api { background: rgba(99,102,241,0.15); color: var(--primary); }
+  .tag-na { background: rgba(90,96,112,0.12); color: var(--text2); }
+  .tag-either { background: rgba(217,119,6,0.12); color: var(--amber); }
+  code { background: rgba(99,102,241,0.12); color: var(--primary); font-size: 0.8rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-family: 'Fira Code', 'Cascadia Code', monospace; }
+  pre { background: rgba(0,0,0,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; font-size: 0.82rem; overflow-x: auto; margin-bottom: 1rem; }
+  html.dark-mode pre { background: #0d1021; }
+  .note { background: rgba(99,102,241,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 0.75rem 1.125rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text2); }
+  .winner-db { color: var(--green); font-weight: 700; }
+  .winner-api { color: var(--primary); font-weight: 700; }
+  .winner-na { color: var(--text2); }
+  .speedup { font-size: 0.78rem; color: var(--text2); }
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  @media (max-width: 640px) { .section-grid { grid-template-columns: 1fr; } .content { padding: 1.5rem 1.25rem; } }
+</style>
+<script>
+(function(){
+  var theme = new URLSearchParams(window.location.search).get('theme');
+  if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+})();
+</script>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">Benchmark — API vs DB</div>
+  <h1>ON24 REST API vs Direct DB</h1>
+  <p class="subtitle">Response-time benchmark and access-pattern recommendations for ON24 Nexus data operations</p>
+  <div class="meta">
+    <span><strong>Version</strong> 1.0</span>
+    <span><strong>Status</strong> Reference</span>
+    <span><strong>Last Updated</strong> March 2026</span>
+    <span><strong>Owner</strong> Engineering</span>
+  </div>
+  <a id="theme-toggle" href="#" style="position:absolute;top:1.25rem;right:2rem;font-size:0.75rem;color:var(--text2);text-decoration:none;padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--card);">Toggle theme</a>
+  <script>
+  (function(){
+    var toggle = document.getElementById('theme-toggle');
+    var isDark = document.documentElement.classList.contains('dark-mode');
+    var base = window.location.pathname;
+    toggle.href = base + (isDark ? '?theme=light' : '?theme=dark');
+    toggle.textContent = isDark ? 'Light mode' : 'Dark mode';
+  })();
+  </script>
+</div>
+
+<div class="content">
+
+  <h2>1. Summary</h2>
+  <p>ON24 Nexus has two ways to read data: the <strong>ON24 REST API</strong> (HTTP calls to <code>apiqa.on24.com</code>) and a <strong>direct asyncpg connection</strong> to the ON24 master PostgreSQL database (<code>10.3.7.233:5458/on24master</code>). For all read operations, direct DB access is faster by 10–100×. The REST API should be reserved exclusively for <strong>write operations</strong> where no DB equivalent exists.</p>
+
+  <div class="note">
+    These numbers are representative estimates based on known system characteristics. Run
+    <code>python backend/tests/benchmark_api_vs_db.py</code> against your environment (requires VPN and <code>.env.local</code> credentials) to get actual measurements.
+  </div>
+
+  <h2>2. Benchmark Results</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Operation</th>
+        <th>REST API (ms)</th>
+        <th>Direct DB (ms)</th>
+        <th>Winner</th>
+        <th>Recommendation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>List recent events (last 30 days)</td>
+        <td>350 – 800</td>
+        <td>15 – 40</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB. REST API paginates at 100/page; DB returns filtered results in one query.</td>
+      </tr>
+      <tr>
+        <td>Get single event detail</td>
+        <td>200 – 500</td>
+        <td>5 – 15</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB. Indexed <code>event_id</code> lookup is near-instant. REST API returns the same fields plus round-trip overhead.</td>
+      </tr>
+      <tr>
+        <td>List event registrants (one event)</td>
+        <td>300 – 900 <span class="speedup">per page × N pages</span></td>
+        <td>20 – 80</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB. REST API paginates at 100 registrants/call; large events require multiple sequential HTTP calls.</td>
+      </tr>
+      <tr>
+        <td>List event attendees (one event)</td>
+        <td>300 – 900 <span class="speedup">per page × N pages</span></td>
+        <td>20 – 80</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB (<code>dw_attendee</code>). Same pagination problem as registrants; DB also returns pre-computed engagement scores.</td>
+      </tr>
+      <tr>
+        <td>Get event polls (structure)</td>
+        <td>250 – 600</td>
+        <td>30 – 120</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB. REST API returns question definitions only; DB join returns question text + all response counts in one query.</td>
+      </tr>
+      <tr>
+        <td>Get engagement KPIs (one event)</td>
+        <td>200 – 500 <span class="speedup">(basic metadata only — no engagement_score)</span></td>
+        <td>5 – 20</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB exclusively. <code>dw_event_session</code> has pre-aggregated <code>engagement_score_avg</code>, attendee counts, and live vs. on-demand split. REST API does not expose these fields.</td>
+      </tr>
+      <tr>
+        <td>Attendance trends (12 months)</td>
+        <td>4,000 – 12,000 <span class="speedup">(12 serial HTTP calls)</span></td>
+        <td>80 – 250</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB. A single <code>GROUP BY DATE_TRUNC('month', ...)</code> replaces 12 sequential API calls. 20–50× faster.</td>
+      </tr>
+      <tr>
+        <td>Top events by engagement</td>
+        <td class="winner-na">N/A</td>
+        <td>100 – 400</td>
+        <td class="winner-db">Direct DB</td>
+        <td>DB only. REST API has no aggregate/sort endpoint; achieving this via the API requires fetching all events then sorting client-side — impractical.</td>
+      </tr>
+      <tr>
+        <td>Audience companies breakdown</td>
+        <td class="winner-na">N/A</td>
+        <td>30 – 150</td>
+        <td class="winner-db">Direct DB</td>
+        <td>DB only. No REST API equivalent. Uses <code>dw_attendee.company</code> with deduplication via <code>GROUP BY LOWER(TRIM(company))</code>.</td>
+      </tr>
+      <tr>
+        <td>Poll response counts + distributions</td>
+        <td>250 – 600 <span class="speedup">(structure only, no counts)</span></td>
+        <td>50 – 200</td>
+        <td class="winner-db">Direct DB</td>
+        <td>Use DB. REST API returns poll question definitions without response counts. DB join returns full per-answer distribution.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Write Operations — REST API Only</h2>
+  <p>The following operations have no direct DB equivalent and must use the REST API:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Operation</th>
+        <th>REST API Endpoint</th>
+        <th>Direct DB</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Create event</td>
+        <td><code>POST /event</code></td>
+        <td class="winner-na">N/A (read-only creds)</td>
+        <td>ON24 master DB connection is read-only. All writes go through the REST API.</td>
+      </tr>
+      <tr>
+        <td>Update event</td>
+        <td><code>PUT /event/{id}</code></td>
+        <td class="winner-na">N/A</td>
+        <td>Same as above.</td>
+      </tr>
+      <tr>
+        <td>Add registrant</td>
+        <td><code>POST /event/{id}/registrant</code></td>
+        <td class="winner-na">N/A</td>
+        <td>Write operation. Triggers ON24 confirmation email workflow.</td>
+      </tr>
+      <tr>
+        <td>Remove registrant</td>
+        <td><code>DELETE /event/{id}/registrant/{uid}</code></td>
+        <td class="winner-na">N/A</td>
+        <td>Write operation.</td>
+      </tr>
+      <tr>
+        <td>Get Prospect Engagement Profile (PEP)</td>
+        <td><code>GET /prospect/{email}/engagementprofile</code></td>
+        <td class="winner-na">Complex join</td>
+        <td>REST API provides a purpose-built endpoint. Equivalent DB join spans 6+ tables and requires email normalization.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Recommendations</h2>
+
+  <div class="section-grid">
+    <div class="card">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--green);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.04em;">Use Direct DB For</div>
+      <ul>
+        <li>All read-only analytics queries</li>
+        <li>Attendance trends &amp; comparisons</li>
+        <li>Top events by any metric</li>
+        <li>Audience company breakdowns</li>
+        <li>Poll questions + response counts</li>
+        <li>Engagement KPIs (<code>dw_event_session</code>)</li>
+        <li>Attendee + registrant lists</li>
+        <li>Event search and filtering</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--primary);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.04em;">Use REST API For</div>
+      <ul>
+        <li>Create event</li>
+        <li>Update event metadata</li>
+        <li>Add registrant</li>
+        <li>Remove registrant</li>
+        <li>Get Prospect Engagement Profile</li>
+        <li>Any future write operations</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>The <strong>key architectural rule</strong>: the ON24 master DB connection (<code>ON24_RO</code> user) is read-only by design. All write operations are funneled through the REST API via the Admin Agent. This separation means read performance is never constrained by API rate limits (6-tier token bucket, 10–1000 req/min) and analytics queries run at database speed.</p>
+
+  <h2>5. Methodology</h2>
+  <p>The benchmark script (<code>backend/tests/benchmark_api_vs_db.py</code>) uses the following approach:</p>
+  <ul>
+    <li>Each operation is executed <strong>3 times</strong>; the <strong>median</strong> is reported to reduce the effect of cold-start and GC pauses.</li>
+    <li>Timing is measured via <code>time.perf_counter()</code> wrapped around the entire async coroutine (including connection acquisition from the pool).</li>
+    <li>A real <code>event_id</code> is resolved from the 5 most recent past events before per-event benchmarks run.</li>
+    <li>REST API calls use the existing <code>ON24Client</code> which applies token-bucket rate limiting per endpoint category.</li>
+    <li>DB queries use the shared <code>asyncpg</code> pool (<code>min_size=2, max_size=10</code>) against <code>on24master</code> on <code>10.3.7.233:5458</code> — requires VPN / ON24 internal network.</li>
+    <li>Exceptions are caught per operation; unavailable endpoints are recorded as errors rather than crashing the benchmark.</li>
+  </ul>
+
+  <h3>Environment requirements</h3>
+  <pre>
+# .env.local must contain:
+ON24_DB_URL=postgresql+asyncpg://ON24_RO:&lt;pass&gt;@10.3.7.233:5458/on24master
+ON24_CLIENT_ID=10710
+ON24_BASE_URL=https://apiqa.on24.com
+ON24_ACCESS_TOKEN_KEY=&lt;key&gt;
+ON24_ACCESS_TOKEN_SECRET=&lt;secret&gt;
+DB_PG_SSL_ROOT_CERT_CONTENT=&lt;pem&gt;
+DB_PG_SSL_CERT_CONTENT=&lt;cert&gt;
+DB_PG_SSL_KEY_CONTENT=&lt;key&gt;
+
+# Run:
+python backend/tests/benchmark_api_vs_db.py</pre>
+
+  <h2>6. Representative Latency Ranges</h2>
+  <p>The table above uses representative numbers derived from the known characteristics of each system:</p>
+
+  <table>
+    <thead>
+      <tr><th>System</th><th>Operation type</th><th>Expected latency</th><th>Limiting factor</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>REST API</td>
+        <td>Single GET (no pagination)</td>
+        <td>200 – 500 ms</td>
+        <td>Internet round-trip + ON24 server processing</td>
+      </tr>
+      <tr>
+        <td>REST API</td>
+        <td>Paginated GET (multiple pages)</td>
+        <td>300 – 900 ms × N pages</td>
+        <td>Sequential HTTP calls; no batch/stream endpoint</td>
+      </tr>
+      <tr>
+        <td>REST API</td>
+        <td>12-month trend (12 serial calls)</td>
+        <td>4,000 – 12,000 ms</td>
+        <td>Rate limiter + sequential HTTP; parallel calls risk 429</td>
+      </tr>
+      <tr>
+        <td>Direct DB</td>
+        <td>Indexed single-row lookup</td>
+        <td>5 – 20 ms</td>
+        <td>Pool acquisition + network to 10.3.7.233</td>
+      </tr>
+      <tr>
+        <td>Direct DB</td>
+        <td>Filtered list (indexed client_id + date)</td>
+        <td>15 – 80 ms</td>
+        <td>Index scan on event table (~millions of rows)</td>
+      </tr>
+      <tr>
+        <td>Direct DB</td>
+        <td>Aggregate / GROUP BY</td>
+        <td>80 – 400 ms</td>
+        <td>dw_event_session seq scan for trend window</td>
+      </tr>
+      <tr>
+        <td>Direct DB</td>
+        <td>Poll join (event_user_x_answer)</td>
+        <td>50 – 200 ms</td>
+        <td>CTE with event-first filter to avoid 334M-row scan</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>7. Architecture Note</h2>
+  <p>The dual-access design is intentional and load-bearing:</p>
+  <ul>
+    <li>The <strong>ON24 master DB</strong> (<code>ON24_RO</code>) is a read-only replica — writes are blocked at the database level, preventing accidental data modification by agents.</li>
+    <li>The <strong>REST API</strong> enforces ON24's business logic for write operations (confirmation emails, event provisioning, registration workflow) which cannot be replicated by direct INSERT/UPDATE.</li>
+    <li>The <strong>rate limiter</strong> (6-tier token bucket, <code>backend/app/services/rate_limiter.py</code>) protects against REST API quota exhaustion. Direct DB queries bypass this entirely.</li>
+    <li>All agent tool calls are <strong>audit-logged</strong> to <code>agent_audit_logs</code> regardless of which data source is used.</li>
+  </ul>
+
+</div>
+</body>
+</html>

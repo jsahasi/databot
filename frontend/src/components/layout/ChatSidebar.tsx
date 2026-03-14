@@ -6,6 +6,7 @@ const DOC_BASES = [
   { label: 'Market Requirements', path: '/docs/mrd.html' },
   { label: 'Product Requirements', path: '/docs/prd.html' },
   { label: 'Technical Specifications', path: '/docs/tech-spec.html' },
+  { label: 'API vs DB Benchmark', path: '/docs/api-vs-db-benchmark.html' },
 ]
 
 export default function ChatSidebar() {
