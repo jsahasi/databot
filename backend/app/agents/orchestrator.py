@@ -127,22 +127,31 @@ class OrchestratorAgent:
 
         The orchestrator's routing tool_use blocks must not be forwarded to sub-agents
         because they reference tools the sub-agents don't have, causing API 400 errors.
+        Merges consecutive same-role messages to prevent API validation errors.
         """
-        clean = []
+        clean: list[dict] = []
         for msg in self.conversation_history:
             content = msg.get("content")
+            text: str | None = None
             if isinstance(content, str):
-                clean.append(msg)
+                text = content
             elif isinstance(content, list):
                 # Keep only text blocks; skip tool_use and tool_result
                 text_blocks = [b for b in content if isinstance(b, dict) and b.get("type") == "text"]
                 if text_blocks:
-                    clean.append({"role": msg["role"], "content": text_blocks})
+                    text = " ".join(b.get("text", "") for b in text_blocks)
                 # If content is a list of ContentBlock objects (Anthropic SDK), extract text
                 elif all(hasattr(b, "type") for b in content):
-                    texts = [{"type": "text", "text": b.text} for b in content if hasattr(b, "text")]
+                    texts = [b.text for b in content if hasattr(b, "text")]
                     if texts:
-                        clean.append({"role": msg["role"], "content": texts})
+                        text = " ".join(texts)
+            if not text or not text.strip():
+                continue
+            # Merge consecutive same-role messages (can happen when tool_result messages are stripped)
+            if clean and clean[-1]["role"] == msg["role"]:
+                clean[-1]["content"] += "\n" + text
+            else:
+                clean.append({"role": msg["role"], "content": text})
         return clean
 
     async def process_message(self, user_message: str, confirmed: bool = False) -> dict[str, Any]:

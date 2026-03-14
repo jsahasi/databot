@@ -222,7 +222,11 @@ class DataAgent:
                                 "is_error": True,
                             })
 
-                messages.append({"role": "user", "content": tool_results})
+                if tool_results:
+                    messages.append({"role": "user", "content": tool_results})
+                else:
+                    # No tool_use blocks found despite stop_reason — treat as final
+                    break
             else:
                 # Model returned a final text response
                 text_parts = [block.text for block in response.content if hasattr(block, "text")]
