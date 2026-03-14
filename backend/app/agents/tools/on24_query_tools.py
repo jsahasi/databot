@@ -964,6 +964,119 @@ async def generate_chart_data(
     return result
 
 
+async def query_leads(
+    limit: int = 20,
+    months: int = 3,
+    company: str | None = None,
+    job_title: str | None = None,
+) -> list[dict]:
+    """Get leads/prospects for the current client from dw_lead.
+
+    dw_lead has client_id directly — no need to join through event.
+    Returns contact info, company, job title, UTM params, and lead timestamps.
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    limit = max(1, min(limit, 100))
+    months = _clamp_months(months)
+
+    sql = """
+        SELECT
+            lead_id,
+            firstname,
+            lastname,
+            email,
+            company,
+            job_title,
+            company_industry,
+            company_size,
+            country,
+            partnerref,
+            utm_source,
+            utm_medium,
+            utm_campaign,
+            lead_create_timestamp
+        FROM on24master.dw_lead
+        WHERE client_id = ANY($1::bigint[])
+          AND lead_create_timestamp >= NOW() - ($2 || ' months')::INTERVAL
+          AND ($3::text IS NULL OR company ILIKE '%' || $3 || '%')
+          AND ($4::text IS NULL OR job_title ILIKE '%' || $4 || '%')
+        ORDER BY lead_create_timestamp DESC NULLS LAST
+        LIMIT $5
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, client_ids, str(months), company, job_title, limit,
+                                timeout=_QUERY_TIMEOUT)
+    return [_serialize(dict(row)) for row in rows]
+
+
+async def query_lead_stats(months: int = 3) -> dict:
+    """Aggregate lead statistics: total leads, top companies, top sources.
+
+    dw_lead has client_id directly — no event join needed.
+    Default window: 3 months (leads accumulate slower than event data).
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    months = _clamp_months(months)
+
+    # Total count + time-series by month
+    totals_sql = """
+        SELECT
+            COUNT(*) AS total_leads,
+            COUNT(DISTINCT company) FILTER (WHERE company IS NOT NULL AND TRIM(company) <> '') AS unique_companies,
+            DATE_TRUNC('month', lead_create_timestamp) AS period,
+            COUNT(*) AS period_leads
+        FROM on24master.dw_lead
+        WHERE client_id = ANY($1::bigint[])
+          AND lead_create_timestamp >= NOW() - ($2 || ' months')::INTERVAL
+        GROUP BY DATE_TRUNC('month', lead_create_timestamp)
+        ORDER BY period ASC
+    """
+
+    # Top companies by lead count
+    companies_sql = """
+        SELECT
+            COALESCE(NULLIF(TRIM(company), ''), SPLIT_PART(email, '@', 2)) AS company_name,
+            COUNT(*) AS lead_count
+        FROM on24master.dw_lead
+        WHERE client_id = ANY($1::bigint[])
+          AND lead_create_timestamp >= NOW() - ($2 || ' months')::INTERVAL
+        GROUP BY LOWER(COALESCE(NULLIF(TRIM(company), ''), SPLIT_PART(email, '@', 2)))
+        ORDER BY lead_count DESC
+        LIMIT 10
+    """
+
+    # Top sources (utm_source or partnerref)
+    sources_sql = """
+        SELECT
+            COALESCE(NULLIF(TRIM(utm_source), ''), NULLIF(TRIM(partnerref), ''), 'Direct') AS source,
+            COUNT(*) AS lead_count
+        FROM on24master.dw_lead
+        WHERE client_id = ANY($1::bigint[])
+          AND lead_create_timestamp >= NOW() - ($2 || ' months')::INTERVAL
+        GROUP BY source
+        ORDER BY lead_count DESC
+        LIMIT 10
+    """
+
+    async with pool.acquire() as conn:
+        trend_rows = await conn.fetch(totals_sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
+        company_rows = await conn.fetch(companies_sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
+        source_rows = await conn.fetch(sources_sql, client_ids, str(months), timeout=_QUERY_TIMEOUT)
+
+    total = sum(r["period_leads"] for r in trend_rows) if trend_rows else 0
+    unique_cos = max((r["unique_companies"] for r in trend_rows), default=0) if trend_rows else 0
+
+    return _serialize({
+        "total_leads": total,
+        "unique_companies": unique_cos,
+        "monthly_trend": [{"period": r["period"], "leads": r["period_leads"]} for r in trend_rows],
+        "top_companies": [{"company": r["company_name"], "lead_count": r["lead_count"]} for r in company_rows],
+        "top_sources": [{"source": r["source"], "lead_count": r["lead_count"]} for r in source_rows],
+    })
+
+
 _AI_CONTENT_TYPES = {
     "BLOG":          "AUTOGEN_BLOG",
     "EBOOK":         "AUTOGEN_EBOOK",

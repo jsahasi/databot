@@ -613,3 +613,91 @@ class TestQueryAiContent:
         ])
         result = await query_ai_content()
         assert result[0]["created_at"] is None
+
+
+# ---------- query_leads ----------
+
+class TestQueryLeads:
+    @pytest.mark.asyncio
+    async def test_returns_leads(self, patch_db):
+        from app.agents.tools.on24_query_tools import query_leads
+        patch_db.fetch.return_value = make_records([
+            {"lead_id": 1, "firstname": "Jane", "lastname": "Doe",
+             "email": "jane@acme.com", "company": "Acme Corp",
+             "job_title": "VP Marketing", "company_industry": "Technology",
+             "company_size": "500-1000", "country": "US",
+             "partnerref": "linkedin", "utm_source": "linkedin",
+             "utm_medium": "social", "utm_campaign": "q1-webinar",
+             "lead_create_timestamp": datetime(2026, 3, 10)},
+        ])
+        result = await query_leads()
+        assert len(result) == 1
+        assert result[0]["firstname"] == "Jane"
+        assert result[0]["company"] == "Acme Corp"
+        assert result[0]["lead_create_timestamp"] == "2026-03-10T00:00:00"
+
+    @pytest.mark.asyncio
+    async def test_company_filter(self, patch_db):
+        from app.agents.tools.on24_query_tools import query_leads
+        patch_db.fetch.return_value = []
+        await query_leads(company="Acme")
+        args = patch_db.fetch.call_args[0]
+        assert args[3] == "Acme"  # $3 = company param
+
+    @pytest.mark.asyncio
+    async def test_job_title_filter(self, patch_db):
+        from app.agents.tools.on24_query_tools import query_leads
+        patch_db.fetch.return_value = []
+        await query_leads(job_title="VP")
+        args = patch_db.fetch.call_args[0]
+        assert args[4] == "VP"  # $4 = job_title param
+
+    @pytest.mark.asyncio
+    async def test_limit_clamped(self, patch_db):
+        from app.agents.tools.on24_query_tools import query_leads
+        patch_db.fetch.return_value = []
+        await query_leads(limit=200)
+        args = patch_db.fetch.call_args[0]
+        assert args[5] == 100  # clamped to max 100
+
+
+# ---------- query_lead_stats ----------
+
+class TestQueryLeadStats:
+    @pytest.mark.asyncio
+    async def test_returns_stats(self, patch_db):
+        from app.agents.tools.on24_query_tools import query_lead_stats
+        # 3 queries: trend, companies, sources
+        patch_db.fetch.side_effect = [
+            make_records([
+                {"unique_companies": 25, "period": datetime(2026, 1, 1), "period_leads": 50},
+                {"unique_companies": 30, "period": datetime(2026, 2, 1), "period_leads": 65},
+            ]),
+            make_records([
+                {"company_name": "Acme", "lead_count": 20},
+                {"company_name": "Globex", "lead_count": 15},
+            ]),
+            make_records([
+                {"source": "linkedin", "lead_count": 40},
+                {"source": "Direct", "lead_count": 30},
+            ]),
+        ]
+        result = await query_lead_stats(months=3)
+        assert result["total_leads"] == 115  # 50 + 65
+        assert result["unique_companies"] == 30  # max
+        assert len(result["monthly_trend"]) == 2
+        assert result["monthly_trend"][0]["leads"] == 50
+        assert len(result["top_companies"]) == 2
+        assert result["top_companies"][0]["company"] == "Acme"
+        assert len(result["top_sources"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_empty_data(self, patch_db):
+        from app.agents.tools.on24_query_tools import query_lead_stats
+        patch_db.fetch.side_effect = [[], [], []]
+        result = await query_lead_stats()
+        assert result["total_leads"] == 0
+        assert result["unique_companies"] == 0
+        assert result["monthly_trend"] == []
+        assert result["top_companies"] == []
+        assert result["top_sources"] == []

@@ -23,6 +23,8 @@ from app.agents.tools.on24_query_tools import (
     query_resources,
     generate_chart_data,
     query_ai_content,
+    query_leads,
+    query_lead_stats,
 )
 from app.agents.tools.content_tools import (
     analyze_topic_performance,
@@ -343,6 +345,38 @@ DATA_AGENT_TOOLS = [
         },
     },
     {
+        "name": "get_leads",
+        "description": (
+            "Retrieve leads/prospects for the current client. Returns contact info (name, email, "
+            "company, job title, industry), geographic data (country), and acquisition source "
+            "(partnerref, UTM parameters). Use for 'show my leads', 'who are our prospects', "
+            "'leads from [company]', 'leads with [job title]'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Max results (default 20, max 100)"},
+                "months": {"type": "integer", "description": "Look-back window in months (default 3)"},
+                "company": {"type": "string", "description": "Filter by company name (case-insensitive substring match)"},
+                "job_title": {"type": "string", "description": "Filter by job title (case-insensitive substring match)"},
+            },
+        },
+    },
+    {
+        "name": "get_lead_stats",
+        "description": (
+            "Aggregate lead statistics: total lead count, unique companies, monthly lead trend, "
+            "top 10 companies by lead volume, and top 10 acquisition sources. "
+            "Use for 'lead overview', 'how many leads', 'lead trends', 'where do leads come from'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "months": {"type": "integer", "description": "Look-back window in months (default 3)"},
+            },
+        },
+    },
+    {
         "name": "get_ai_content",
         "description": (
             "Fetch AI-ACE generated articles from the video library — blog posts, key takeaways, "
@@ -386,6 +420,8 @@ TOOL_HANDLERS = {
     "get_resources": query_resources,
     "generate_chart_data": generate_chart_data,
     "get_ai_content": query_ai_content,
+    "get_leads": query_leads,
+    "get_lead_stats": query_lead_stats,
 }
 
 CONTENT_AGENT_TOOLS = [
