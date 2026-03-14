@@ -332,6 +332,11 @@ async def websocket_chat(websocket: WebSocket):
                                     "How do I add funnel tags?",
                                     "Analyze funnel stages anyway",
                                 ]
+                            # Inject "Suggest something" chip when content agent asks for direction
+                            if agent == "content_agent" and any(
+                                kw in text.lower() for kw in ("pick a topic", "what topic", "let me know", "which topic", "just let me know")
+                            ):
+                                suggestions = ["Suggest something"] + [s for s in suggestions if s != "Suggest something"][:4]
                             # Inject "View proposed calendar" chip for content calendar responses
                             if agent == "content_agent" and any(
                                 kw in text.lower() for kw in ("tofu", "mofu", "bofu", "funnel stage", "content calendar", "webinar plan", "proposed event")

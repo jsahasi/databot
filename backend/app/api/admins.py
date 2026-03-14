@@ -25,6 +25,7 @@ async def list_admins():
           ON axp.admin_id = a.admin_id AND axp.is_active = 'Y'
         WHERE axc.client_id = ANY($1::bigint[])
           AND a.is_active = 'Y'
+          AND (axp.admin_profile_name IS NULL OR axp.admin_profile_name != 'Event Admin')
         ORDER BY a.lastname, a.firstname
     """
     async with pool.acquire() as conn:
