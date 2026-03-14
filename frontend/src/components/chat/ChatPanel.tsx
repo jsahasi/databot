@@ -600,7 +600,7 @@ export default function ChatPanel() {
         padding: '0.875rem 2rem',
       }}>
         {activeAgent && (
-          <p id="chat-status" aria-live="polite" aria-atomic="true" style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.375rem' }}>
+          <p id="chat-status" aria-live="polite" aria-atomic="true" style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginBottom: '0.375rem' }}>
             {activeAgent.replace('_', ' ')} is thinking...
           </p>
         )}
@@ -665,7 +665,8 @@ export default function ChatPanel() {
               resize: 'none',
               lineHeight: 1.5,
               fontFamily: 'inherit',
-              color: '#111827',
+              color: 'var(--color-text)',
+              caretColor: 'var(--color-text)',
               maxHeight: 120,
               overflowY: 'auto',
             }}

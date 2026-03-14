@@ -23,7 +23,7 @@
   .subtitle { color: var(--text2); font-size: 0.9rem; }
   .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); flex-wrap: wrap; }
   .meta strong { color: var(--text); }
-  .content { max-width: 920px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  .content { max-width: 960px; margin: 0 auto; padding: 2.5rem 3.5rem; }
   h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
   h3 { font-size: 0.95rem; font-weight: 600; color: var(--heading); margin: 1.5rem 0 0.5rem; }
   p { color: var(--text); margin-bottom: 0.75rem; }
@@ -60,7 +60,7 @@
   <p class="subtitle">Capacity planning for 3,000 daily users (2,000–6,000 concurrent) on ON24 staging</p>
   <div class="meta">
     <span><strong>Target:</strong> 2,000 concurrent (baseline) → 6,000 concurrent (peak)</span>
-    <span><strong>Date:</strong> March 14, 2026</span>
+    <span><strong>Updated:</strong> March 14, 2026</span>
   </div>
   <p style="margin-top:1.25rem; font-size:0.85rem; color:var(--text2);"><strong style="color:var(--green);">Current capacity (dev machine):</strong> ~25–50 concurrent users — 5 gunicorn/uvicorn workers, 3 DB connections per worker (15 total), no caching, no load balancer.</p>
 </div>
@@ -78,44 +78,38 @@
         <td class="priority-low">Fine — add CDN for assets</td>
       </tr>
       <tr>
-        <td><strong>Backend (FastAPI/uvicorn)</strong></td>
-        <td>Single process, asyncio, no worker config</td>
-        <td class="priority-med">CPU-bound on agent orchestration</td>
-        <td class="priority-high">Needs 4+ workers, horizontal scaling</td>
+        <td><strong>Backend (gunicorn)</strong></td>
+        <td>5 uvicorn workers, asyncio per worker</td>
+        <td class="priority-med">~400 WS per worker — manageable</td>
+        <td class="priority-high">~1,200/worker — needs horizontal scaling (3 containers)</td>
       </tr>
       <tr>
         <td><strong>WebSocket connections</strong></td>
-        <td>Per-user persistent connection</td>
-        <td class="priority-med">~2K open sockets per process</td>
-        <td class="priority-high">Needs sticky sessions + multiple backends</td>
+        <td>Sticky to worker (TCP), in-memory session state</td>
+        <td class="priority-low">Inherently sticky — no shared state needed</td>
+        <td class="priority-med">Need load balancer for multi-container</td>
       </tr>
       <tr>
         <td><strong>PostgreSQL (local)</strong></td>
-        <td>Single container, default config, asyncpg pool</td>
-        <td class="priority-low">Adequate for metadata</td>
-        <td class="priority-med">Tune max_connections, connection pooling</td>
+        <td>Single container, default config, SQLAlchemy async</td>
+        <td class="priority-low">Adequate for metadata + KB</td>
+        <td class="priority-med">Tune max_connections, add PgBouncer</td>
       </tr>
       <tr>
         <td><strong>ON24 master DB</strong></td>
-        <td>External (10.3.7.233:5458), read-only, pool via asyncpg</td>
-        <td class="priority-med">Pool size critical — shared resource</td>
-        <td class="priority-high">Connection contention, need PgBouncer</td>
+        <td>External (10.3.7.233:5458), asyncpg pool 3/worker (15 total)</td>
+        <td class="priority-med">Pool contention under heavy analytics load</td>
+        <td class="priority-high">Need PgBouncer or connection multiplexer</td>
       </tr>
       <tr>
         <td><strong>Anthropic API</strong></td>
-        <td>Per-request API calls, no caching</td>
+        <td>Per-request calls, no prompt caching</td>
         <td class="priority-high">Rate limits + latency (1-5s per call)</td>
-        <td class="priority-high">Major bottleneck — caching essential</td>
-      </tr>
-      <tr>
-        <td><strong>ON24 REST API</strong></td>
-        <td>Token-bucket rate limiter (6 tiers, 10-1000 req/min)</td>
-        <td class="priority-med">Rate limit ceiling at high tier</td>
-        <td class="priority-high">Need response caching layer</td>
+        <td class="priority-high">Major bottleneck — prompt caching essential</td>
       </tr>
       <tr>
         <td><strong>MCP Server</strong></td>
-        <td>Single container, port 8001</td>
+        <td>Single container, port 8001, 67 tools</td>
         <td class="priority-low">Passthrough — bottleneck is ON24 API</td>
         <td class="priority-med">Scale with backend</td>
       </tr>
@@ -150,79 +144,117 @@
     </div>
   </div>
 
-  <h2>3. Critical Bottlenecks &amp; Mitigations</h2>
+  <h2>3. Anthropic API Cost Projection</h2>
 
   <div class="card">
-    <h3>3.1 Anthropic API Rate Limits <span class="tag red">Critical</span></h3>
+    <div class="card-title">Per-Message Cost Breakdown (Claude Sonnet 4)</div>
+    <table>
+      <tr><th>Component</th><th>Tokens</th><th>Rate</th><th>Cost</th></tr>
+      <tr><td>Input tokens (system prompt + user + history)</td><td>~2,000/call × 3 calls</td><td>$3.00/M tokens</td><td>$0.018</td></tr>
+      <tr><td>Output tokens (agent response)</td><td>~500/call × 3 calls</td><td>$15.00/M tokens</td><td>$0.023</td></tr>
+      <tr><th colspan="3">Cost per user message</th><th>~$0.04</th></tr>
+      <tr><th colspan="3">With prompt caching (90% input discount)</th><th>~$0.025</th></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Annual Cost by Scale</div>
+    <table>
+      <tr><th>Scenario</th><th>DAU</th><th>Msgs/day</th><th>Annual msgs</th><th>Without caching</th><th>With prompt caching</th></tr>
+      <tr>
+        <td><strong>Low</strong> (2K concurrent, 8hr/day)</td>
+        <td>~5,000</td><td>40,000</td><td>10M</td>
+        <td class="priority-med">~$400K</td>
+        <td class="priority-low">~$250K</td>
+      </tr>
+      <tr>
+        <td><strong>Medium</strong> (4K concurrent)</td>
+        <td>~10,000</td><td>80,000</td><td>20M</td>
+        <td class="priority-high">~$800K</td>
+        <td class="priority-med">~$500K</td>
+      </tr>
+      <tr>
+        <td><strong>High</strong> (6K concurrent)</td>
+        <td>~15,000</td><td>120,000</td><td>30M</td>
+        <td class="priority-high">~$1.2M</td>
+        <td class="priority-med">~$750K</td>
+      </tr>
+    </table>
+    <p style="font-size:0.78rem; color:var(--text2); margin-top:0.5rem;">Prompt caching requires adding <code>cache_control: {"type": "ephemeral"}</code> to the system prompt in each agent's <code>messages.create()</code> call. 5-minute TTL. No code changes beyond that one field.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cost Reduction Strategies</div>
+    <ul>
+      <li><strong>Prompt caching</strong> — 90% input token discount for cached system prompts. Saves $150K–$450K/yr.</li>
+      <li><strong>Haiku for routing</strong> — Use Claude Haiku ($0.25/$1.25 per M tokens) for orchestrator classification, Sonnet for sub-agents. Saves ~30% on orchestrator calls.</li>
+      <li><strong>Response caching</strong> — Cache identical queries (SHA256 hash) for 5 min in Redis. Eliminates redundant LLM calls for common questions ("show attendance trends").</li>
+      <li><strong>Batch tool calls</strong> — Reduce multi-round tool loops by designing tools to return richer payloads in fewer calls.</li>
+    </ul>
+  </div>
+
+  <h2>4. Critical Bottlenecks &amp; Mitigations</h2>
+
+  <div class="card">
+    <h3>4.1 Anthropic API Rate Limits <span class="tag red">Critical</span></h3>
     <p>Each user message triggers 2–4 Anthropic API calls (orchestrator classification + sub-agent tool loop). At 6K concurrent, this is ~160 calls/second.</p>
     <ul>
-      <li><strong>Mitigation 1:</strong> Cache frequent orchestrator classifications (e.g., "show attendance trends" → data_agent routing)</li>
-      <li><strong>Mitigation 2:</strong> Implement response caching for identical queries within time window (5 min TTL)</li>
-      <li><strong>Mitigation 3:</strong> Use Haiku for orchestrator routing (faster, cheaper), Sonnet for sub-agents</li>
-      <li><strong>Mitigation 4:</strong> Request Anthropic rate limit increase for production tier</li>
+      <li><strong>Prompt caching:</strong> Add <code>cache_control</code> to system prompts — 90% input cost reduction, minimal code change</li>
+      <li><strong>Response caching:</strong> Redis cache for identical queries within 5 min window</li>
+      <li><strong>Model tiering:</strong> Haiku for orchestrator routing (faster, cheaper), Sonnet for sub-agents</li>
+      <li><strong>Rate limit increase:</strong> Request Anthropic production-tier rate limits</li>
     </ul>
   </div>
 
   <div class="card">
-    <h3>3.2 WebSocket Connection Limits <span class="tag amber">High</span></h3>
-    <p>Single uvicorn process handles all WebSocket connections. OS file descriptor limit and Python GIL create ceiling.</p>
+    <h3>4.2 ON24 Master DB Connection Pool <span class="tag amber">High</span></h3>
+    <p>External read-only DB shared across all workers. Current config: 3 connections per worker × 5 workers = 15 total.</p>
     <ul>
-      <li><strong>Mitigation 1:</strong> Run 4 uvicorn workers: <code>uvicorn app.main:app --workers 4</code></li>
-      <li><strong>Mitigation 2:</strong> Add nginx load balancer with sticky sessions (ip_hash or cookie)</li>
-      <li><strong>Mitigation 3:</strong> Horizontal scaling — 2+ backend containers behind load balancer</li>
-      <li><strong>Mitigation 4:</strong> Consider Redis pub/sub for cross-worker message broadcasting</li>
+      <li><strong>Current (dev):</strong> 15 connections — adequate for ~25-50 concurrent users</li>
+      <li><strong>At 2K:</strong> Increase to 5/worker × 10 workers = 50 connections, or add PgBouncer</li>
+      <li><strong>At 6K:</strong> PgBouncer as connection multiplexer is required (multiplex 200+ app connections → 50 DB connections)</li>
+      <li><strong>Query caching:</strong> Redis cache for hot queries (event lists, KPIs) with 60s TTL</li>
     </ul>
   </div>
 
   <div class="card">
-    <h3>3.3 ON24 Master DB Connection Pool <span class="tag amber">High</span></h3>
-    <p>External read-only DB shared across all requests. Current pool has no explicit max size configuration.</p>
+    <h3>4.3 WebSocket Connection Management <span class="tag amber">High</span></h3>
+    <p>WebSocket connections are inherently sticky to a single worker (TCP). In-memory conversation history works without shared state.</p>
     <ul>
-      <li><strong>Mitigation 1:</strong> Set explicit pool limits: <code>min_size=5, max_size=20</code></li>
-      <li><strong>Mitigation 2:</strong> Add PgBouncer as connection multiplexer between app and ON24 DB</li>
-      <li><strong>Mitigation 3:</strong> Cache hot queries (event lists, KPIs) with 60s TTL in Redis</li>
-      <li><strong>Mitigation 4:</strong> Read replica for analytics queries if available</li>
+      <li><strong>Current (dev):</strong> 5 workers handle ~10 WS connections each — no issues</li>
+      <li><strong>At 2K:</strong> ~400 WS per worker — within uvicorn's async capability</li>
+      <li><strong>At 6K:</strong> Need 3 backend containers (15 workers total, ~400 each) behind load balancer with WebSocket-aware routing</li>
+      <li><strong>No session sharing needed:</strong> Chat history lives within the WS connection lifetime only</li>
     </ul>
   </div>
 
   <div class="card">
-    <h3>3.4 ON24 REST API Rate Limits <span class="tag amber">High</span></h3>
-    <p>Token bucket rate limiter enforces 6 tiers (10–1000 req/min). Shared across all users.</p>
+    <h3>4.4 Single-Container Architecture <span class="tag amber">High</span></h3>
+    <p>Current docker-compose runs one backend container with 5 workers. No horizontal scaling, no failover.</p>
     <ul>
-      <li><strong>Mitigation 1:</strong> Prefer direct DB queries over REST API for read operations</li>
-      <li><strong>Mitigation 2:</strong> Cache REST API responses (event details: 5 min, attendee lists: 2 min)</li>
-      <li><strong>Mitigation 3:</strong> Queue non-urgent API calls to smooth traffic spikes</li>
+      <li><strong>Scale horizontally:</strong> <code>docker compose up --scale backend=3</code> (15 total workers)</li>
+      <li><strong>Add load balancer:</strong> nginx or Traefik with health-check routing and WebSocket support</li>
+      <li><strong>Production:</strong> Kubernetes or ECS with autoscaling (target: CPU 70% or WS count per pod)</li>
     </ul>
   </div>
 
-  <div class="card">
-    <h3>3.5 Single-Container Architecture <span class="tag amber">High</span></h3>
-    <p>Current docker-compose runs one instance of each service. No horizontal scaling, no failover.</p>
-    <ul>
-      <li><strong>Mitigation 1:</strong> Use <code>docker compose up --scale backend=3</code></li>
-      <li><strong>Mitigation 2:</strong> Add nginx or Traefik as reverse proxy with health-check routing</li>
-      <li><strong>Mitigation 3:</strong> For production: Kubernetes or ECS with autoscaling groups</li>
-      <li><strong>Mitigation 4:</strong> Externalize session state to Redis (currently in-process memory)</li>
-    </ul>
-  </div>
-
-  <h2>4. Recommended Architecture (6K Concurrent)</h2>
+  <h2>5. Recommended Architecture (6K Concurrent)</h2>
   <div class="card">
     <table>
       <tr><th>Layer</th><th>Component</th><th>Instances</th><th>Notes</th></tr>
       <tr><td>CDN</td><td>CloudFront / nginx cache</td><td>1</td><td>Static assets + HTML docs</td></tr>
-      <tr><td>Load Balancer</td><td>nginx / ALB</td><td>1</td><td>Sticky sessions for WebSocket, health checks</td></tr>
-      <tr><td>Backend</td><td>FastAPI (uvicorn, 4 workers)</td><td>3 containers</td><td>12 total workers, ~500 WS each</td></tr>
-      <tr><td>Cache</td><td>Redis 7</td><td>1 (clustered)</td><td>Response cache, session state, pub/sub</td></tr>
-      <tr><td>Connection Pool</td><td>PgBouncer</td><td>1</td><td>Multiplex to ON24 master DB</td></tr>
-      <tr><td>Local DB</td><td>PostgreSQL 16</td><td>1</td><td>metadata, audit logs, knowledge base</td></tr>
-      <tr><td>MCP Server</td><td>FastMCP</td><td>2</td><td>Scale with backend</td></tr>
+      <tr><td>Load Balancer</td><td>nginx / ALB</td><td>1</td><td>WebSocket-aware, health checks, no sticky sessions needed</td></tr>
+      <tr><td>Backend</td><td>FastAPI (gunicorn, 5 workers)</td><td>3 containers</td><td>15 total workers, ~400 WS each</td></tr>
+      <tr><td>Cache</td><td>Redis 7</td><td>1</td><td>Response cache (5 min TTL), prompt cache coordination</td></tr>
+      <tr><td>Connection Pool</td><td>PgBouncer</td><td>1</td><td>Multiplex to ON24 master DB (200 app → 50 DB conns)</td></tr>
+      <tr><td>Local DB</td><td>PostgreSQL 16</td><td>1</td><td>Metadata, audit logs, knowledge base embeddings</td></tr>
+      <tr><td>MCP Server</td><td>FastMCP</td><td>2</td><td>Scale with backend for ON24 REST API access</td></tr>
     </table>
   </div>
 
-  <h2>5. Load Testing Plan</h2>
+  <h2>6. Load Testing Plan</h2>
 
-  <h3>5.1 Tools</h3>
+  <h3>6.1 Tools</h3>
   <div class="card">
     <table>
       <tr><th>Tool</th><th>Purpose</th><th>Why</th></tr>
@@ -233,7 +265,7 @@
     </table>
   </div>
 
-  <h3>5.2 Test Scenarios</h3>
+  <h3>6.2 Test Scenarios</h3>
   <div class="card">
     <table>
       <tr><th>#</th><th>Scenario</th><th>VUs</th><th>Duration</th><th>Metrics</th></tr>
@@ -289,18 +321,7 @@
     </table>
   </div>
 
-  <h3>5.3 ON24 Staging Environment Setup</h3>
-  <div class="card">
-    <ol>
-      <li><strong>Deploy to staging:</strong> Replicate docker-compose to ON24 staging infra with 3 backend replicas</li>
-      <li><strong>Point to QA DB:</strong> Switch <code>ON24_DB_URL</code> to QA instance (port 5459) — never load-test against PROD</li>
-      <li><strong>Mock Anthropic API:</strong> Use a local proxy (e.g., LiteLLM) with canned responses for load tests that don't need real AI — this isolates infrastructure bottlenecks from API rate limits</li>
-      <li><strong>Monitoring:</strong> Enable Prometheus metrics on FastAPI (<code>prometheus-fastapi-instrumentator</code>), Grafana dashboards for real-time p95/p99, connection counts, pool utilization</li>
-      <li><strong>k6 cloud or distributed:</strong> Run k6 from 2+ machines to avoid client-side bottleneck at 6K VUs</li>
-    </ol>
-  </div>
-
-  <h3>5.4 Success Criteria</h3>
+  <h3>6.3 Success Criteria</h3>
   <div class="card">
     <table>
       <tr><th>Metric</th><th>Target (2K)</th><th>Target (6K)</th></tr>
@@ -313,15 +334,41 @@
     </table>
   </div>
 
-  <h2>6. Quick Wins (Implement Before Load Test)</h2>
+  <h2>7. Quick Wins (Low-Effort, High-Impact)</h2>
   <div class="card">
-    <ol>
-      <li><strong>Add Redis response cache</strong> — Cache identical chat queries (SHA256 of prompt) for 5 min. Eliminates redundant Anthropic calls.</li>
-      <li><strong>Configure uvicorn workers</strong> — <code>--workers 4</code> in Dockerfile CMD. Immediate 4x connection capacity.</li>
-      <li><strong>Set explicit DB pool sizes</strong> — <code>min_size=5, max_size=20</code> on both local and ON24 asyncpg pools.</li>
-      <li><strong>Add connection timeout</strong> — Set 30s timeout on ON24 DB pool acquire to prevent cascading failures.</li>
-      <li><strong>Enable gzip compression</strong> — Add GZipMiddleware for REST API responses (&gt;1KB).</li>
-    </ol>
+    <table>
+      <tr><th>#</th><th>Action</th><th>Impact</th><th>Effort</th></tr>
+      <tr>
+        <td>1</td>
+        <td><strong>Enable Anthropic prompt caching</strong><br/>Add <code>cache_control: {"type": "ephemeral"}</code> to system prompts in 4 agent files</td>
+        <td class="priority-low">Save $150K–$450K/yr, 90% input token discount</td>
+        <td>30 min</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>Add Redis response cache</strong><br/>Cache identical chat queries (SHA256 of prompt) for 5 min</td>
+        <td class="priority-low">Eliminates redundant LLM calls for repeated questions</td>
+        <td>2 hours</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>Use Haiku for orchestrator routing</strong><br/>Switch orchestrator from Sonnet to Haiku (12x cheaper input, 4x cheaper output)</td>
+        <td class="priority-low">~30% cost reduction on routing calls</td>
+        <td>15 min</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><strong>Enable GZip compression</strong><br/>Add <code>GZipMiddleware</code> for REST API responses &gt; 1KB</td>
+        <td class="priority-low">Reduce bandwidth 60-80% for table/chart data</td>
+        <td>5 min</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><strong>Tune worker count via env var</strong><br/><code>UVICORN_WORKERS=N</code> in docker-compose (already implemented)</td>
+        <td class="priority-low">Linear scaling on multi-core machines</td>
+        <td>Done</td>
+      </tr>
+    </table>
   </div>
 
 </div>
