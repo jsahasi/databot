@@ -1,0 +1,1819 @@
+{
+  "source": "ON24 REST API v2",
+  "base_urls": {
+    "na": "https://api.on24.com",
+    "eu": "https://api.eu.on24.com",
+    "qa": "https://apiqa.on24.com"
+  },
+  "authentication": {
+    "description": "All requests require accessTokenKey and accessTokenSecret headers.",
+    "headers": [
+      "accessTokenKey",
+      "accessTokenSecret"
+    ]
+  },
+  "endpoints": [
+    {
+      "id": "client_events",
+      "category": "Client Analytics",
+      "name": "List Events",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event",
+      "content_type": "application/json",
+      "description": "List all events with optional date/type filters. Returns paginated event metadata.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": "YYYY-MM-DD"
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": "YYYY-MM-DD"
+        },
+        {
+          "name": "includeInactive",
+          "type": "string",
+          "required": false,
+          "description": "Y/N"
+        },
+        {
+          "name": "contentType",
+          "type": "string",
+          "required": false,
+          "description": "all/webcast/simulive/ondemand/always/virtual/hybrid"
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": "Results per page"
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": "Page number"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "client_attendees",
+      "category": "Client Analytics",
+      "name": "Client Attendees",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/attendee",
+      "content_type": "application/json",
+      "description": "List attendees across all events. Returns engagement metrics and session details. Paginated.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "attendee_by_email",
+      "category": "Client Analytics",
+      "name": "Attendee by Email",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/attendee/{email}",
+      "content_type": "application/json",
+      "description": "Get most recent attendance for an email. Returns engagement score and viewing time.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Path parameter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "attendee_all_events",
+      "category": "Client Analytics",
+      "name": "Attendee All Events",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/attendee/{email}/allevents",
+      "content_type": "application/json",
+      "description": "Get attendance across all events for an email. Paginated.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Path parameter"
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "client_registrants",
+      "category": "Client Analytics",
+      "name": "Client Registrants",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/registrant",
+      "content_type": "application/json",
+      "description": "List registrants across all events. Paginated.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "registrant_by_email",
+      "category": "Client Analytics",
+      "name": "Registrant by Email",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/registrant/{email}",
+      "content_type": "application/json",
+      "description": "Get registration for an email. Optionally filter by event or partner ref.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Path parameter"
+        },
+        {
+          "name": "eventId",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "partnerref",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "registrant_all_events",
+      "category": "Client Analytics",
+      "name": "Registrant All Events",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/registrant/{email}/allevents",
+      "content_type": "application/json",
+      "description": "Get all registrations across events for an email. Supports sub-account filtering.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Path parameter"
+        },
+        {
+          "name": "excludeSubaccounts",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "subaccounts",
+          "type": "string",
+          "required": false,
+          "description": "Comma-separated IDs"
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "survey_library",
+      "category": "Client Analytics",
+      "name": "Client Survey Library",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/surveylibrary",
+      "content_type": "application/json",
+      "description": "Get reusable survey question library. Returns templates with questions and answer options.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "engaged_accounts",
+      "category": "Client Analytics",
+      "name": "Engaged Accounts",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/engagedaccount",
+      "content_type": "application/json",
+      "description": "Top engaged accounts from last 90 days (max 100). Useful for ABM targeting.",
+      "parameters": [],
+      "notes": "90-day lookback, max 100 results."
+    },
+    {
+      "id": "client_leads",
+      "category": "Client Analytics",
+      "name": "Client Leads",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/lead",
+      "content_type": "application/json",
+      "description": "List leads across all events. Returns lead scores and engagement levels. Paginated.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pep",
+      "category": "Client Analytics",
+      "name": "Prospect Engagement Profile",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/lead/{email}",
+      "content_type": "application/json",
+      "description": "Get PEP score and engagement history for an email across all touchpoints.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Path parameter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "client_presenters",
+      "category": "Client Analytics",
+      "name": "Client Presenters",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/presenter",
+      "content_type": "application/json",
+      "description": "List all presenters across the client account.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "sub_clients",
+      "category": "Client Analytics",
+      "name": "Sub-Clients",
+      "method": "GET",
+      "path": "/v2/client/{clientId}",
+      "content_type": "application/json",
+      "description": "List sub-client accounts under this client.",
+      "parameters": [],
+      "notes": "Special path: no trailing segment."
+    },
+    {
+      "id": "user_questions",
+      "category": "Client Analytics",
+      "name": "Real-time User Questions",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/userquestions",
+      "content_type": "application/json",
+      "description": "Questions submitted in last 5 minutes across live events. Real-time Q&A monitoring.",
+      "parameters": [
+        {
+          "name": "excludesubaccounts",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "emailFilter",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": "Returns last 5 min of data."
+    },
+    {
+      "id": "client_users",
+      "category": "Client Analytics",
+      "name": "Users",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/users",
+      "content_type": "application/json",
+      "description": "List platform users for the client account. Returns names, emails, roles.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_attendees",
+      "category": "Event Analytics",
+      "name": "Event Attendees",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/attendee",
+      "content_type": "application/json",
+      "description": "List attendees for a specific event with engagement data. Paginated.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "event_viewing_sessions",
+      "category": "Event Analytics",
+      "name": "Attendee Viewing Sessions",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/attendeesession",
+      "content_type": "application/json",
+      "description": "Get viewing session data for an event. Shows live vs on-demand session breakdowns.",
+      "parameters": [
+        {
+          "name": "sessionType",
+          "type": "string",
+          "required": false,
+          "description": "all/live/simulive/od"
+        },
+        {
+          "name": "pageoffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "event_cta",
+      "category": "Event Analytics",
+      "name": "Call to Action",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/cta",
+      "content_type": "application/json",
+      "description": "Get CTA click activity for an event. Shows which CTAs were clicked and by whom.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_certifications",
+      "category": "Event Analytics",
+      "name": "Certifications",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/certifications",
+      "content_type": "application/json",
+      "description": "Get certification completions for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_content_activity",
+      "category": "Event Analytics",
+      "name": "Engagement Hub Content Activity",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/contentactivity",
+      "content_type": "application/json",
+      "description": "Get content interaction data for an Engagement Hub event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_calendar_reminder",
+      "category": "Event Analytics",
+      "name": "Email Calendar Reminder",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/calendarreminder",
+      "content_type": "application/json",
+      "description": "Get calendar reminder configuration for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_email_details",
+      "category": "Event Analytics",
+      "name": "Email Notification Details",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/email",
+      "content_type": "application/json",
+      "description": "Get email notification configurations for an event. Returns all email templates.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_email_stats",
+      "category": "Event Analytics",
+      "name": "Email Statistics",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/emailstatistics",
+      "content_type": "application/json",
+      "description": "Get email send/open/click statistics for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_group_chat",
+      "category": "Event Analytics",
+      "name": "Group Chat Activity",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/groupchat",
+      "content_type": "application/json",
+      "description": "Get group chat messages and activity for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_metadata",
+      "category": "Event Analytics",
+      "name": "Event Metadata and Usage",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}",
+      "content_type": "application/json",
+      "description": "Get full event details including title, dates, type, and aggregate engagement stats.",
+      "parameters": [
+        {
+          "name": "eventId",
+          "type": "integer",
+          "required": true,
+          "description": "Path parameter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "event_polls",
+      "category": "Event Analytics",
+      "name": "Polls",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/poll",
+      "content_type": "application/json",
+      "description": "Get poll questions and responses for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_presenter_chat",
+      "category": "Event Analytics",
+      "name": "Presentation Manager Chat Logs",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/presenterchat",
+      "content_type": "application/json",
+      "description": "Get presenter-to-presenter chat logs from an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_presenters",
+      "category": "Event Analytics",
+      "name": "Event Presenters",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/presenter",
+      "content_type": "application/json",
+      "description": "Get presenters assigned to a specific event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_registrants",
+      "category": "Event Analytics",
+      "name": "Event Registrants",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/registrant",
+      "content_type": "application/json",
+      "description": "List registrants for a specific event. Paginated. Can filter for no-shows.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "noshow",
+          "type": "string",
+          "required": false,
+          "description": "Y/N"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "event_resources",
+      "category": "Event Analytics",
+      "name": "Resources Viewed",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/resource",
+      "content_type": "application/json",
+      "description": "Get resource download/view activity for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_surveys",
+      "category": "Event Analytics",
+      "name": "Surveys",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/survey",
+      "content_type": "application/json",
+      "description": "Get survey questions and responses for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "register_attendee",
+      "category": "Registration",
+      "name": "REST Registration",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/registrant",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Register a person for an event. Requires email, firstname, lastname. Supports custom fields.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "firstname",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "lastname",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "company",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "jobtitle",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std1",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std2",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std3",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std4",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std5",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std6",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "std7",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "honorrequired",
+          "type": "boolean",
+          "required": false,
+          "description": "Query param: honor required fields"
+        },
+        {
+          "name": "honorvalidation",
+          "type": "boolean",
+          "required": false,
+          "description": "Query param: honor field validation"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "update_event_registrant",
+      "category": "Registration",
+      "name": "Update Registrant (Event Level)",
+      "method": "PATCH",
+      "path": "/v2/client/{clientId}/event/{eventId}/registrant",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Update registrant fields at event level.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "firstname",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "lastname",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "company",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "jobtitle",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "honorrequired",
+          "type": "boolean",
+          "required": false,
+          "description": "Query param"
+        },
+        {
+          "name": "honorvalidation",
+          "type": "boolean",
+          "required": false,
+          "description": "Query param"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "update_client_registrant",
+      "category": "Registration",
+      "name": "Update Registrant (Client Level)",
+      "method": "PATCH",
+      "path": "/v2/client/{clientId}/registrant/{email}",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Update registrant fields across all events at client level.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": false,
+          "description": "New email address"
+        },
+        {
+          "name": "firstname",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "lastname",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "company",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "jobtitle",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "forget_registrant",
+      "category": "Registration",
+      "name": "Forget Registrant",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/forget",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "GDPR: Nullify all PII for registrant(s). Email becomes {id}-deleted, names become 'deleted'.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Comma-separated for multiple"
+        },
+        {
+          "name": "eventid",
+          "type": "string",
+          "required": false,
+          "description": "Optional event scope"
+        }
+      ],
+      "notes": "GDPR compliance endpoint."
+    },
+    {
+      "id": "forget_all_event",
+      "category": "Registration",
+      "name": "Forget All (Event Level)",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/forgetall",
+      "content_type": "application/json",
+      "description": "GDPR: Nullify all PII for all registrants in an event.",
+      "parameters": [],
+      "notes": "GDPR. Irreversible."
+    },
+    {
+      "id": "forget_all_workspace",
+      "category": "Registration",
+      "name": "Forget All (Workspace Level)",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/forgetall",
+      "content_type": "application/json",
+      "description": "GDPR: Nullify all PII for all registrants across the entire workspace.",
+      "parameters": [],
+      "notes": "DESTRUCTIVE. Irreversible. Affects all events."
+    },
+    {
+      "id": "remove_registration",
+      "category": "Registration",
+      "name": "Remove Registration",
+      "method": "DELETE",
+      "path": "/v2/client/{clientId}/event/{eventId}/registrant/{email}",
+      "content_type": "application/json",
+      "description": "Remove a registrant from an event by email.",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Path parameter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "copy_webinar",
+      "category": "Event Management",
+      "name": "Copy a Webinar",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Copy an existing webinar to create a new event with the same settings.",
+      "parameters": [
+        {
+          "name": "eventsource",
+          "type": "integer",
+          "required": true,
+          "description": "Query param: source event ID"
+        },
+        {
+          "name": "liveStart",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "liveDuration",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "languageCd",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "campaignCode",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tagCampaign",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "customAccountTag",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "archiveAvailable",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "testevent",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "hybrid",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "venue",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "address",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "promotionalSummary",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "countryCd",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "create_webinar",
+      "category": "Event Management",
+      "name": "Create a Webinar",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Create a new webinar with full configuration options.",
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "liveStart",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "liveDuration",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "eventType",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "languageCd",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "eventAbstract",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "campaignCode",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "countryCd",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tagCampaign",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "customAccountTag",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "archiveAvailable",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "promotionalSummary",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "testevent",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "hybrid",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "venue",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "address",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "create_related_content",
+      "category": "Event Management",
+      "name": "Create Related Content",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/relatedcontent",
+      "content_type": "multipart/form-data",
+      "description": "Upload related content (file or URL) for an event.",
+      "parameters": [
+        {
+          "name": "matchname",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Resource or URL"
+        },
+        {
+          "name": "file",
+          "type": "string",
+          "required": false,
+          "description": "File upload"
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "create_speaker_bio",
+      "category": "Event Management",
+      "name": "Create Speaker Bio",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/speakerbio",
+      "content_type": "multipart/form-data",
+      "description": "Create a speaker bio with optional image for an event.",
+      "parameters": [
+        {
+          "name": "metadata",
+          "type": "string",
+          "required": false,
+          "description": "JSON with speaker details"
+        },
+        {
+          "name": "file",
+          "type": "string",
+          "required": false,
+          "description": "Speaker image"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "create_survey_questions",
+      "category": "Event Management",
+      "name": "Create Survey Questions",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/surveyquestions",
+      "content_type": "application/json",
+      "description": "Create survey questions for an event.",
+      "parameters": [
+        {
+          "name": "metadata",
+          "type": "string",
+          "required": true,
+          "description": "JSON body with surveyquestions array"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "delete_speaker_bio",
+      "category": "Event Management",
+      "name": "Delete Speaker Bio",
+      "method": "DELETE",
+      "path": "/v2/client/{clientId}/event/{eventId}/speakerbio",
+      "content_type": "application/json",
+      "description": "Delete all speaker bios for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "delete_vtt_files",
+      "category": "Event Management",
+      "name": "Delete VTT Files",
+      "method": "DELETE",
+      "path": "/v2/client/{clientId}/event/{eventId}/vtt",
+      "content_type": "application/json",
+      "description": "Delete VTT caption files for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "delete_webinar",
+      "category": "Event Management",
+      "name": "Delete Webinar",
+      "method": "DELETE",
+      "path": "/v2/client/{clientId}/event/{eventId}",
+      "content_type": "application/json",
+      "description": "Delete a webinar entirely.",
+      "parameters": [],
+      "notes": "Irreversible."
+    },
+    {
+      "id": "edit_webinar",
+      "category": "Event Management",
+      "name": "Edit a Webinar",
+      "method": "PUT",
+      "path": "/v2/client/{clientId}/event/{eventId}",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Edit a webinar (full replacement). All required fields must be provided.",
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "liveStart",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "liveDuration",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "eventType",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "languageCd",
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "campaignCode",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "countryCd",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": "Full PUT \u2014 omitted optional fields reset to defaults."
+    },
+    {
+      "id": "update_webinar",
+      "category": "Event Management",
+      "name": "Update a Webinar",
+      "method": "PUT",
+      "path": "/v2/client/{clientId}/event/{eventId}",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Update specific webinar fields (partial update). Only provided fields change.",
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "liveStart",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "liveDuration",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "eventType",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "languageCd",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "countryCd",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tagCampaign",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "campaignCode",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "archiveAvailable",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "promotionalSummary",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "customAccountTag",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "enableRegistration",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": "Partial PUT \u2014 only send fields to change."
+    },
+    {
+      "id": "upload_document",
+      "category": "Event Management",
+      "name": "Media Manager Upload Document",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/mediamanager/document",
+      "content_type": "multipart/form-data",
+      "description": "Upload a document to Media Manager.",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "string",
+          "required": true,
+          "description": "Document file"
+        },
+        {
+          "name": "metadata",
+          "type": "string",
+          "required": false,
+          "description": "Optional JSON with id, title"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "upload_video",
+      "category": "Event Management",
+      "name": "Media Manager Upload Video",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/mediamanager/uploadvideo",
+      "content_type": "multipart/form-data",
+      "description": "Upload a video to Media Manager.",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "string",
+          "required": true,
+          "description": "Video file"
+        },
+        {
+          "name": "metadata",
+          "type": "string",
+          "required": false,
+          "description": "Optional JSON with id, title"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "event_slides_listing",
+      "category": "Event Management",
+      "name": "Slide Listing",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/slides",
+      "content_type": "application/json",
+      "description": "Get the slide listing for an event.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "update_calendar_reminder",
+      "category": "Event Management",
+      "name": "Update Email Calendar Reminder",
+      "method": "PUT",
+      "path": "/v2/client/{clientId}/event/{eventId}/calendarreminder",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Update calendar reminder settings for an event.",
+      "parameters": [
+        {
+          "name": "reminder",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "location",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "update_email_notification",
+      "category": "Event Management",
+      "name": "Update Email Notification",
+      "method": "PUT",
+      "path": "/v2/client/{clientId}/event/{eventId}/email/{emailId}",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Update an email notification template for an event.",
+      "parameters": [
+        {
+          "name": "emailId",
+          "type": "integer",
+          "required": true,
+          "description": "Path parameter"
+        },
+        {
+          "name": "activated",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "whentosend",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "goodafter",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "fromlabel",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "replyto",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "upload_slides",
+      "category": "Event Management",
+      "name": "Upload Slides",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/slides",
+      "content_type": "multipart/form-data",
+      "description": "Upload PowerPoint slides for an event.",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "string",
+          "required": true,
+          "description": "PowerPoint file"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "update_text_banner",
+      "category": "Event Management",
+      "name": "Update Text With Banner Widget",
+      "method": "POST",
+      "path": "/v2/client/{clientId}/event/{eventId}/textwithbanner",
+      "content_type": "application/x-www-form-urlencoded",
+      "description": "Update the text-with-banner widget for an event.",
+      "parameters": [
+        {
+          "name": "metadata",
+          "type": "string",
+          "required": true,
+          "description": "JSON string with widget config"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "ehub_content",
+      "category": "Content Listings",
+      "name": "Engagement Hub Content Listing",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/ehub/{gatewayId}/content",
+      "content_type": "application/json",
+      "description": "Get content listing for an Engagement Hub.",
+      "parameters": [
+        {
+          "name": "gatewayId",
+          "type": "integer",
+          "required": true,
+          "description": "Path parameter: Engagement Hub gateway ID"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "media_manager_list",
+      "category": "Content Listings",
+      "name": "Media Manager Derivative Content",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/mediamanager",
+      "content_type": "application/json",
+      "description": "List Media Manager derivative content items. Paginated.",
+      "parameters": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pageOffset",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "itemsPerPage",
+          "type": "integer",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "media_manager_detail",
+      "category": "Content Listings",
+      "name": "Media Manager Content Detail",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/mediamanager/{mediaId}",
+      "content_type": "application/json",
+      "description": "Get a single Media Manager derivative content item.",
+      "parameters": [
+        {
+          "name": "mediaId",
+          "type": "integer",
+          "required": true,
+          "description": "Path parameter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "custom_account_tags",
+      "category": "Helper Endpoints",
+      "name": "Custom Account Tags",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/customaccounttag",
+      "content_type": "application/json",
+      "description": "Get custom account tags configured for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "account_managers",
+      "category": "Helper Endpoints",
+      "name": "Account Managers",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/accountmanager",
+      "content_type": "application/json",
+      "description": "Get account manager contacts for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_types",
+      "category": "Helper Endpoints",
+      "name": "Event Types",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/eventtypes",
+      "content_type": "application/json",
+      "description": "Get available event types (webcast, simulive, etc.).",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "language_codes",
+      "category": "Helper Endpoints",
+      "name": "Language Codes",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/languages",
+      "content_type": "application/json",
+      "description": "Get available language codes for event configuration.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "registration_fields",
+      "category": "Helper Endpoints",
+      "name": "Registration Fields",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/event/{eventId}/regfield",
+      "content_type": "application/json",
+      "description": "Get registration form fields configured for an event.",
+      "parameters": [
+        {
+          "name": "eventId",
+          "type": "integer",
+          "required": true,
+          "description": "Path parameter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "replacement_tokens",
+      "category": "Helper Endpoints",
+      "name": "Replacement Tokens",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/tokens",
+      "content_type": "application/json",
+      "description": "Get available replacement tokens for email templates.",
+      "parameters": [
+        {
+          "name": "context",
+          "type": "string",
+          "required": false,
+          "description": "Optional context filter"
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "sales_reps",
+      "category": "Helper Endpoints",
+      "name": "Sales Rep Contacts",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/salesrep",
+      "content_type": "application/json",
+      "description": "Get sales rep contacts for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "signal_contacts",
+      "category": "Helper Endpoints",
+      "name": "Signal Contacts",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/signalrep",
+      "content_type": "application/json",
+      "description": "Get signal contacts for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "technical_reps",
+      "category": "Helper Endpoints",
+      "name": "Technical Rep Contacts",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/technicalrep",
+      "content_type": "application/json",
+      "description": "Get technical rep contacts for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "timezones",
+      "category": "Helper Endpoints",
+      "name": "Timezones",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/timezones",
+      "content_type": "application/json",
+      "description": "Get available timezone codes for event scheduling.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_managers",
+      "category": "Helper Endpoints",
+      "name": "Event Managers",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/eventmanager",
+      "content_type": "application/json",
+      "description": "Get event manager contacts for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "event_profiles",
+      "category": "Helper Endpoints",
+      "name": "Event Profiles",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/eventprofile",
+      "content_type": "application/json",
+      "description": "Get event profile templates for the client.",
+      "parameters": [],
+      "notes": ""
+    },
+    {
+      "id": "users_list",
+      "category": "Helper Endpoints",
+      "name": "Users",
+      "method": "GET",
+      "path": "/v2/client/{clientId}/users",
+      "content_type": "application/json",
+      "description": "List platform users for the client. Same endpoint as Client Analytics > Users.",
+      "parameters": [],
+      "notes": "Alias of client_users endpoint."
+    }
+  ]
+}
