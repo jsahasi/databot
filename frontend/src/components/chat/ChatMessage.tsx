@@ -300,6 +300,7 @@ function ContentArticlesInline({ articles }: { articles: any[] }) {
                   />
                   <button
                     onClick={() => setExpandedIdx(isExpanded ? null : idx)}
+                    aria-expanded={isExpanded}
                     style={{
                       marginTop: '0.35rem', fontSize: '0.7rem', color: accentColor,
                       background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,

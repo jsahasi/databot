@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import { useChatContext } from '../../context/ChatContext'
 
 const DOC_BASES = [
@@ -194,7 +195,7 @@ export default function ChatSidebar() {
             Recent Changes
           </p>
           <div
-            dangerouslySetInnerHTML={{ __html: recentChanges }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(recentChanges) }}
             style={{ fontSize: '0.72rem' }}
           />
         </div>

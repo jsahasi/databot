@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import DOMPurify from 'dompurify'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
         setPos({ x: r.left + r.width / 2, y: r.top })
       }}
       onMouseLeave={() => setPos(null)}
+      onKeyDown={e => { if (e.key === 'Escape') setPos(null) }}
       style={{ display: 'contents' }}
     >
       {children}
@@ -226,7 +228,7 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
         const html = content
         return html ? (
           <div
-            dangerouslySetInnerHTML={{ __html: html }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
             style={{
               maxHeight: 220, overflowY: 'auto',
               background: 'var(--color-bg)', border: '1px solid var(--color-border)',
@@ -253,6 +255,8 @@ function PerformanceSection({ kpis, loadingDetail, defaultCollapsed }: {
     <div>
       <button
         onClick={() => setCollapsed(c => !c)}
+        aria-label={collapsed ? 'Expand performance section' : 'Collapse performance section'}
+        aria-expanded={!collapsed}
         style={{
           display: 'flex', alignItems: 'center', gap: '0.3rem',
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -278,7 +282,7 @@ function PerformanceSection({ kpis, loadingDetail, defaultCollapsed }: {
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
-                  {kpi.icon} {kpi.label}
+                  <span aria-hidden="true">{kpi.icon}</span> {kpi.label}
                 </div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
                   {kpi.value}
@@ -1039,6 +1043,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
               </span>
               <button
                 onClick={() => setShowExistingEvents(v => !v)}
+                aria-label="Toggle existing events visibility"
                 aria-pressed={showExistingEvents}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.4rem',

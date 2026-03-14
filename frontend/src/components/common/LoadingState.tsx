@@ -7,6 +7,7 @@ export default function LoadingState({ message = 'Loading...' }: LoadingStatePro
     <div
       role="status"
       aria-live="polite"
+      aria-label={message}
       style={{
         display: 'flex',
         flexDirection: 'column',

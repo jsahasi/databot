@@ -600,7 +600,7 @@ export default function ChatPanel() {
         padding: '0.875rem 2rem',
       }}>
         {activeAgent && (
-          <p aria-live="polite" aria-atomic="true" style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.375rem' }}>
+          <p id="chat-status" aria-live="polite" aria-atomic="true" style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.375rem' }}>
             {activeAgent.replace('_', ' ')} is thinking...
           </p>
         )}
@@ -643,13 +643,16 @@ export default function ChatPanel() {
           </button>
 
           {/* Text input */}
+          <label htmlFor="chat-input" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Type your message</label>
           <textarea
+            id="chat-input"
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Or type your message to chat here..."
-            aria-label="Chat message input"
+            aria-label="Type your message"
+            aria-describedby={activeAgent ? 'chat-status' : undefined}
             autoFocus
             rows={1}
             style={{
