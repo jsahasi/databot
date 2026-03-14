@@ -97,9 +97,12 @@ export default function ChatPanel() {
   const storedPerms: string[] = JSON.parse(sessionStorage.getItem('adminPermissions') || '[]')
   const filteredExperiences = filterByPermissions(EXPERIENCE_LINKS, storedPerms)
   const filteredConfigLinks = filterByPermissions(CONFIG_LINKS, storedPerms)
+  const hasAnalytics = storedPerms.length === 0 || storedPerms.includes('view-analytics')
   const filteredSuggestions = SUGGESTIONS.filter(s => {
     if (s.text === 'Experiences' && filteredExperiences.length === 0) return false
     if (s.text === 'Configure environment' && filteredConfigLinks.length === 0) return false
+    // Hide data agent tiles if no view-analytics permission
+    if (!hasAnalytics && s.agent === 'data') return false
     return true
   })
   const filteredHowDoI = HOW_DO_I_OPTIONS.filter(opt => {
