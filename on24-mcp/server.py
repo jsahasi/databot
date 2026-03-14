@@ -72,6 +72,203 @@ if "remove_registrant" not in BLOCKLIST:
             return {"success": False, "error": e.message}
 
 
+# ── Additional Write Tools ──
+
+if "copy_webinar" not in BLOCKLIST:
+    @mcp.tool()
+    async def copy_webinar(source_event_id: int, live_start: str, live_duration: int = 0, title: str = "",
+                           language_cd: str = "", time_zone: str = "", campaign_code: str = "",
+                           archive_available: str = "", testevent: str = "") -> dict:
+        """Copy a webinar from an existing event. liveStart is required."""
+        try:
+            kw = {k: v for k, v in {"liveDuration": live_duration or None, "title": title or None,
+                   "languageCd": language_cd or None, "timeZone": time_zone or None,
+                   "campaignCode": campaign_code or None, "archiveAvailable": archive_available or None,
+                   "testevent": testevent or None}.items() if v is not None}
+            return await _client().copy_webinar(source_event_id, live_start, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "create_webinar" not in BLOCKLIST:
+    @mcp.tool()
+    async def create_webinar(title: str, live_start: str, live_duration: int, event_type: str,
+                             language_cd: str, time_zone: str, event_abstract: str = "",
+                             campaign_code: str = "", country_cd: str = "") -> dict:
+        """Create a webinar with full form-urlencoded parameters."""
+        try:
+            kw = {k: v for k, v in {"eventAbstract": event_abstract or None,
+                   "campaignCode": campaign_code or None, "countryCd": country_cd or None}.items() if v}
+            return await _client().create_webinar(title, live_start, live_duration, event_type, language_cd, time_zone, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "edit_webinar" not in BLOCKLIST:
+    @mcp.tool()
+    async def edit_webinar(event_id: int, title: str, live_start: str, live_duration: int,
+                           event_type: str, language_cd: str, campaign_code: str = "", country_cd: str = "") -> dict:
+        """Edit a webinar (full PUT). All required fields must be provided."""
+        try:
+            kw = {k: v for k, v in {"campaignCode": campaign_code or None, "countryCd": country_cd or None}.items() if v}
+            return await _client().edit_webinar(event_id, title, live_start, live_duration, event_type, language_cd, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "update_webinar" not in BLOCKLIST:
+    @mcp.tool()
+    async def update_webinar(event_id: int, title: str = "", live_start: str = "", live_duration: int = 0,
+                             event_type: str = "", language_cd: str = "", time_zone: str = "",
+                             campaign_code: str = "", archive_available: str = "", enable_registration: str = "") -> dict:
+        """Update specific webinar fields (partial PUT)."""
+        try:
+            kw = {k: v for k, v in {"title": title or None, "liveStart": live_start or None,
+                   "liveDuration": live_duration or None, "eventType": event_type or None,
+                   "languageCd": language_cd or None, "timeZone": time_zone or None,
+                   "campaignCode": campaign_code or None, "archiveAvailable": archive_available or None,
+                   "enableRegistration": enable_registration or None}.items() if v is not None}
+            return await _client().update_webinar(event_id, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "delete_webinar" not in BLOCKLIST:
+    @mcp.tool()
+    async def delete_webinar(event_id: int) -> dict:
+        """Delete a webinar. Irreversible."""
+        try:
+            return await _client().delete_webinar(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "update_event_registrant" not in BLOCKLIST:
+    @mcp.tool()
+    async def update_event_registrant(event_id: int, email: str, firstname: str = "", lastname: str = "",
+                                      company: str = "", jobtitle: str = "") -> dict:
+        """Update a registrant at event level."""
+        try:
+            kw = {k: v for k, v in {"firstname": firstname or None, "lastname": lastname or None,
+                   "company": company or None, "jobtitle": jobtitle or None}.items() if v is not None}
+            return await _client().update_event_registrant(event_id, email, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "update_client_registrant" not in BLOCKLIST:
+    @mcp.tool()
+    async def update_client_registrant(email: str, firstname: str = "", lastname: str = "",
+                                       new_email: str = "", company: str = "", jobtitle: str = "") -> dict:
+        """Update a registrant at client level across all events."""
+        try:
+            kw = {k: v for k, v in {"firstname": firstname or None, "lastname": lastname or None,
+                   "email": new_email or None, "company": company or None, "jobtitle": jobtitle or None}.items() if v is not None}
+            return await _client().update_client_registrant(email, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "forget_registrant" not in BLOCKLIST:
+    @mcp.tool()
+    async def forget_registrant(email: str, event_id: int = 0) -> dict:
+        """GDPR: Nullify all PII for registrant(s). Comma-separate emails for multiple."""
+        try:
+            return await _client().forget_registrant(email, event_id if event_id else None)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "forget_all_event_registrants" not in BLOCKLIST:
+    @mcp.tool()
+    async def forget_all_event_registrants(event_id: int) -> dict:
+        """GDPR: Nullify all PII for all registrants in an event. Irreversible."""
+        try:
+            return await _client().forget_all_event_registrants(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "forget_all_workspace_registrants" not in BLOCKLIST:
+    @mcp.tool()
+    async def forget_all_workspace_registrants() -> dict:
+        """GDPR: Nullify all PII for all registrants across workspace. DESTRUCTIVE."""
+        try:
+            return await _client().forget_all_workspace_registrants()
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "create_survey_questions" not in BLOCKLIST:
+    @mcp.tool()
+    async def create_survey_questions(event_id: int, survey_questions_json: str) -> dict:
+        """Create survey questions for an event. Pass JSON array of question objects."""
+        import json as _json
+        try:
+            questions = _json.loads(survey_questions_json)
+            return await _client().create_survey_questions(event_id, questions)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "delete_speaker_bios" not in BLOCKLIST:
+    @mcp.tool()
+    async def delete_speaker_bios(event_id: int) -> dict:
+        """Delete all speaker bios for an event."""
+        try:
+            return await _client().delete_speaker_bios(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "delete_vtt_files" not in BLOCKLIST:
+    @mcp.tool()
+    async def delete_vtt_files(event_id: int) -> dict:
+        """Delete VTT caption files for an event."""
+        try:
+            return await _client().delete_vtt_files(event_id)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "update_calendar_reminder" not in BLOCKLIST:
+    @mcp.tool()
+    async def update_calendar_reminder(event_id: int, reminder: str = "", subject: str = "",
+                                       location: str = "", body: str = "") -> dict:
+        """Update calendar reminder for an event."""
+        try:
+            kw = {k: v for k, v in {"reminder": reminder or None, "subject": subject or None,
+                   "location": location or None, "body": body or None}.items() if v is not None}
+            return await _client().update_calendar_reminder(event_id, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "update_email_notification" not in BLOCKLIST:
+    @mcp.tool()
+    async def update_email_notification(event_id: int, email_id: int, activated: str = "",
+                                        whentosend: str = "", subject: str = "", body: str = "",
+                                        fromlabel: str = "", replyto: str = "") -> dict:
+        """Update an email notification for an event."""
+        try:
+            kw = {k: v for k, v in {"activated": activated or None, "whentosend": whentosend or None,
+                   "subject": subject or None, "body": body or None,
+                   "fromlabel": fromlabel or None, "replyto": replyto or None}.items() if v is not None}
+            return await _client().update_email_notification(event_id, email_id, **kw)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
+if "update_text_with_banner" not in BLOCKLIST:
+    @mcp.tool()
+    async def update_text_with_banner(event_id: int, metadata: str) -> dict:
+        """Update text-with-banner widget. metadata is a JSON string."""
+        try:
+            return await _client().update_text_with_banner(event_id, metadata)
+        except ON24APIError as e:
+            return {"success": False, "error": e.message}
+
+
 # ── Read Tools ──
 
 if "list_events" not in BLOCKLIST:

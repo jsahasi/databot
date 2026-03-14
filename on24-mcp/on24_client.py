@@ -60,11 +60,145 @@ class ON24Client:
     async def remove_registration(self, event_id: int, email: str) -> dict:
         return await self._request("DELETE", f"event/{event_id}/registrant/{email}")
 
+    # ── Additional Write Operations ──
+
+    async def copy_webinar(self, source_event_id: int, live_start: str, **kwargs: Any) -> dict:
+        form: dict = {"liveStart": live_start}
+        for k, v in kwargs.items():
+            if v is not None:
+                form[k] = str(v) if isinstance(v, int) else v
+        return await self._form_request("POST", "event", form, params={"eventsource": source_event_id})
+
+    async def create_webinar(self, title: str, live_start: str, live_duration: int,
+                             event_type: str, language_cd: str, time_zone: str, **kwargs: Any) -> dict:
+        form: dict = {"title": title, "liveStart": live_start, "liveDuration": str(live_duration),
+                      "eventType": event_type, "languageCd": language_cd, "timeZone": time_zone}
+        for k, v in kwargs.items():
+            if v is not None:
+                form[k] = str(v) if isinstance(v, int) else v
+        return await self._form_request("POST", "event", form)
+
+    async def edit_webinar(self, event_id: int, title: str, live_start: str, live_duration: int,
+                           event_type: str, language_cd: str, **kwargs: Any) -> dict:
+        form: dict = {"title": title, "liveStart": live_start, "liveDuration": str(live_duration),
+                      "eventType": event_type, "languageCd": language_cd}
+        for k, v in kwargs.items():
+            if v is not None:
+                form[k] = str(v) if isinstance(v, int) else v
+        return await self._form_request("PUT", f"event/{event_id}", form)
+
+    async def update_webinar(self, event_id: int, **kwargs: Any) -> dict:
+        form: dict = {}
+        for k, v in kwargs.items():
+            if v is not None:
+                form[k] = str(v) if isinstance(v, int) else v
+        return await self._form_request("PUT", f"event/{event_id}", form)
+
+    async def delete_webinar(self, event_id: int) -> dict:
+        return await self._delete(f"event/{event_id}")
+
+    async def update_event_registrant(self, event_id: int, email: str, **kwargs: Any) -> dict:
+        form: dict = {"email": email}
+        for k, v in kwargs.items():
+            if v is not None:
+                form[k] = v
+        return await self._form_request("PATCH", f"event/{event_id}/registrant", form)
+
+    async def update_client_registrant(self, email: str, **kwargs: Any) -> dict:
+        form: dict = {}
+        for k, v in kwargs.items():
+            if v is not None:
+                form[k] = v
+        return await self._form_request("PATCH", f"registrant/{email}", form)
+
+    async def forget_registrant(self, email: str, event_id: int | None = None) -> dict:
+        form: dict = {"email": email}
+        if event_id is not None:
+            form["eventid"] = str(event_id)
+        return await self._form_request("POST", "forget", form)
+
+    async def forget_all_event_registrants(self, event_id: int) -> dict:
+        return await self._form_request("POST", f"event/{event_id}/forgetall", {})
+
+    async def forget_all_workspace_registrants(self) -> dict:
+        return await self._form_request("POST", "forgetall", {})
+
+    async def create_survey_questions(self, event_id: int, survey_questions: list) -> dict:
+        return await self._request("POST", f"event/{event_id}/surveyquestions",
+                                   {"metadata": {"surveyquestions": survey_questions}})
+
+    async def delete_speaker_bios(self, event_id: int) -> dict:
+        return await self._delete(f"event/{event_id}/speakerbio")
+
+    async def delete_vtt_files(self, event_id: int) -> dict:
+        return await self._delete(f"event/{event_id}/vtt")
+
+    async def update_calendar_reminder(self, event_id: int, **kwargs: Any) -> dict:
+        form: dict = {k: v for k, v in kwargs.items() if v is not None}
+        return await self._form_request("PUT", f"event/{event_id}/calendarreminder", form)
+
+    async def update_email_notification(self, event_id: int, email_id: int, **kwargs: Any) -> dict:
+        form: dict = {k: v for k, v in kwargs.items() if v is not None}
+        return await self._form_request("PUT", f"event/{event_id}/email/{email_id}", form)
+
+    async def update_text_with_banner(self, event_id: int, metadata: str) -> dict:
+        return await self._form_request("POST", f"event/{event_id}/textwithbanner", {"metadata": metadata})
+
+    async def upload_document(self, file: tuple, metadata: dict | None = None) -> dict:
+        import json as _json
+        form = {"metadata": _json.dumps(metadata)} if metadata else None
+        return await self._multipart_request("POST", "mediamanager/document", form, {"file": file})
+
+    async def upload_video(self, file: tuple, metadata: dict | None = None) -> dict:
+        import json as _json
+        form = {"metadata": _json.dumps(metadata)} if metadata else None
+        return await self._multipart_request("POST", "mediamanager/uploadvideo", form, {"file": file})
+
+    async def upload_slides(self, event_id: int, file: tuple) -> dict:
+        return await self._multipart_request("POST", f"event/{event_id}/slides", files={"file": file})
+
+    async def upload_related_content(self, event_id: int, matchname: str, name: str,
+                                     content_type: str, file: tuple | None = None, url: str | None = None) -> dict:
+        form: dict = {"matchname": matchname, "name": name, "type": content_type}
+        if url:
+            form["url"] = url
+        files = {"file": file} if file else None
+        return await self._multipart_request("POST", f"event/{event_id}/relatedcontent", form, files)
+
+    async def create_speaker_bio(self, event_id: int, metadata: dict, file: tuple | None = None) -> dict:
+        import json as _json
+        form: dict = {"metadata": _json.dumps(metadata)}
+        files = {"file": file} if file else None
+        return await self._multipart_request("POST", f"event/{event_id}/speakerbio", form, files)
+
     # ── Read Operations ──
 
     async def _get(self, endpoint: str, params: dict | None = None) -> dict[str, Any]:
         async with httpx.AsyncClient(base_url=self.base_url, headers=self._headers, timeout=30.0) as client:
             resp = await client.get(self._path(endpoint), params=params)
+        if resp.status_code >= 400:
+            raise ON24APIError(resp.status_code, resp.text)
+        return resp.json()
+
+    async def _form_request(self, method: str, endpoint: str, form_data: dict,
+                            params: dict | None = None) -> dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url, headers=self._headers, timeout=30.0) as client:
+            resp = await client.request(method, self._path(endpoint), data=form_data, params=params)
+        if resp.status_code >= 400:
+            raise ON24APIError(resp.status_code, resp.text)
+        return resp.json()
+
+    async def _multipart_request(self, method: str, endpoint: str,
+                                 form_data: dict | None = None, files: dict | None = None) -> dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url, headers=self._headers, timeout=30.0) as client:
+            resp = await client.request(method, self._path(endpoint), data=form_data, files=files)
+        if resp.status_code >= 400:
+            raise ON24APIError(resp.status_code, resp.text)
+        return resp.json()
+
+    async def _delete(self, endpoint: str) -> dict[str, Any]:
+        async with httpx.AsyncClient(base_url=self.base_url, headers=self._headers, timeout=30.0) as client:
+            resp = await client.delete(self._path(endpoint))
         if resp.status_code >= 400:
             raise ON24APIError(resp.status_code, resp.text)
         return resp.json()
