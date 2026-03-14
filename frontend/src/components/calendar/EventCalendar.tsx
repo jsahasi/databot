@@ -33,6 +33,7 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onEventToChat?: (event: CalendarEvent) => void
+  proposedMode?: boolean
 }
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
@@ -756,7 +757,7 @@ function DayView({
 
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
-export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props) {
+export default function EventCalendar({ isOpen, onClose, onEventToChat, proposedMode = false }: Props) {
   const today = new Date()
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [dayDate, setDayDate] = useState(today)
@@ -771,6 +772,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [showExistingEvents, setShowExistingEvents] = useState(false)
 
   const fetchEvents = useCallback(async (y: number, m: number) => {
     setLoading(true)
@@ -780,6 +782,21 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props)
     } catch { /* ignore */ }
     finally { setLoading(false) }
   }, [])
+
+  // Reset to today + toggle off whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const d = new Date()
+      setYear(d.getFullYear())
+      setMonth(d.getMonth())
+      setDayDate(d)
+      const ws = new Date(d)
+      ws.setDate(d.getDate() - d.getDay())
+      ws.setHours(0, 0, 0, 0)
+      setWeekStart(ws)
+      setShowExistingEvents(false)
+    }
+  }, [isOpen])
 
   // Fetch when month changes or modal opens
   useEffect(() => {
@@ -808,7 +825,16 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props)
     setWeekStart(ws)
   }
 
+  // In proposed mode, back navigation is blocked at the current period
+  const canGoPrev = !proposedMode || (() => {
+    const t = new Date()
+    if (view === 'month') return year > t.getFullYear() || (year === t.getFullYear() && month > t.getMonth())
+    if (view === 'week') { const prevWeek = new Date(weekStart); prevWeek.setDate(prevWeek.getDate() - 7); return prevWeek >= new Date(t.getFullYear(), t.getMonth(), t.getDate() - t.getDay()) }
+    return dayDate > t
+  })()
+
   const navigatePrev = () => {
+    if (!canGoPrev) return
     if (view === 'month') {
       if (month === 0) { setYear(y => y - 1); setMonth(11) }
       else setMonth(m => m - 1)
@@ -861,16 +887,21 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props)
     }
   }, [view, dayDate])
 
+  // In proposed mode: hide all existing events unless toggle is on; also strip past events
+  const visibleEvents = proposedMode
+    ? (showExistingEvents ? events.filter(e => { const d = toLocal(e.start_time); return d ? d >= today : true }) : [])
+    : events
+
   // Filter events for current view
-  const filteredEvents = view === 'week' ? events.filter(e => {
+  const filteredEvents = view === 'week' ? visibleEvents.filter(e => {
     const d = toLocal(e.start_time)
     if (!d) return false
     const wEnd = new Date(weekStart); wEnd.setDate(weekStart.getDate() + 7)
     return d >= weekStart && d < wEnd
-  }) : view === 'day' ? events.filter(e => {
+  }) : view === 'day' ? visibleEvents.filter(e => {
     const d = toLocal(e.start_time)
     return d ? sameDay(d, dayDate) : false
-  }) : events
+  }) : visibleEvents
 
   if (!isOpen) return null
 
@@ -918,7 +949,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props)
           </button>
 
           {/* Navigation */}
-          <button onClick={navigatePrev} aria-label="Previous" style={navBtnStyle}>
+          <button onClick={navigatePrev} aria-label="Previous" disabled={!canGoPrev} style={{ ...navBtnStyle, opacity: canGoPrev ? 1 : 0.25, cursor: canGoPrev ? 'pointer' : 'default' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <button onClick={navigateNext} aria-label="Next" style={navBtnStyle}>
@@ -938,6 +969,38 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat }: Props)
           {loading && <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Loading…</span>}
 
           <div style={{ flex: 1 }} />
+
+          {proposedMode && (
+            <>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#8b5cf6', background: 'rgba(139,92,246,0.1)', padding: '0.2rem 0.6rem', borderRadius: 4 }}>
+                Proposed Calendar
+              </span>
+              <button
+                onClick={() => setShowExistingEvents(v => !v)}
+                aria-pressed={showExistingEvents}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.25rem 0.75rem', fontSize: '0.775rem',
+                  background: showExistingEvents ? 'rgba(139,92,246,0.15)' : 'transparent',
+                  border: `1px solid ${showExistingEvents ? '#8b5cf6' : 'var(--color-border)'}`,
+                  borderRadius: 6, cursor: 'pointer',
+                  color: showExistingEvents ? '#8b5cf6' : 'var(--color-text-secondary)',
+                }}
+              >
+                <span style={{
+                  width: 28, height: 16, borderRadius: 8, display: 'inline-flex', alignItems: 'center',
+                  background: showExistingEvents ? '#8b5cf6' : 'var(--color-border)',
+                  transition: 'background 0.15s', flexShrink: 0,
+                }}>
+                  <span style={{
+                    width: 12, height: 12, borderRadius: '50%', background: '#fff',
+                    marginLeft: showExistingEvents ? 14 : 2, transition: 'margin 0.15s',
+                  }} />
+                </span>
+                Show existing events
+              </button>
+            </>
+          )}
 
           <button onClick={onClose} aria-label="Close calendar" style={{
             background: 'none', border: 'none', cursor: 'pointer',

@@ -3,7 +3,9 @@ import { useChat } from '../hooks/useChat'
 
 interface CalendarContextValue {
   isCalendarOpen: boolean
+  calendarProposedMode: boolean
   openCalendar: () => void
+  openProposedCalendar: () => void
   closeCalendar: () => void
 }
 
@@ -14,11 +16,14 @@ const ChatContext = createContext<ChatContextValue | null>(null)
 export function ChatProvider({ children }: { children: ReactNode }) {
   const chat = useChat()
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [calendarProposedMode, setCalendarProposedMode] = useState(false)
 
   const value: ChatContextValue = {
     ...chat,
     isCalendarOpen,
-    openCalendar: () => setIsCalendarOpen(true),
+    calendarProposedMode,
+    openCalendar: () => { setCalendarProposedMode(false); setIsCalendarOpen(true) },
+    openProposedCalendar: () => { setCalendarProposedMode(true); setIsCalendarOpen(true) },
     closeCalendar: () => setIsCalendarOpen(false),
   }
 

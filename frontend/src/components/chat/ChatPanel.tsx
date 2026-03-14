@@ -43,7 +43,7 @@ const CONFIG_LINKS = [
 ]
 
 export default function ChatPanel() {
-  const { messages, isProcessing, activeAgent, sendMessage, openCalendar, resetChat } = useChatContext()
+  const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, resetChat } = useChatContext()
   const [input, setInput] = useState('')
   const [showHowDoI, setShowHowDoI] = useState(false)
   const [showExperiences, setShowExperiences] = useState(false)
@@ -162,7 +162,8 @@ export default function ChatPanel() {
                       key={i}
                       aria-label={`Suggest: ${s}`}
                       onClick={() => {
-                        if (s === 'Recent events' || s === 'View proposed calendar') { openCalendar() }
+                        if (s === 'Recent events') { openCalendar() }
+                        else if (s === 'View proposed calendar') { openProposedCalendar() }
                         else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
@@ -477,7 +478,8 @@ export default function ChatPanel() {
                         onClick={() => {
                           if (s === 'Home') { resetChat() }
                           else if (s === 'How do I...?') { setShowHowDoI(true) }
-                          else if (s === 'Recent events' || s === 'View proposed calendar') { openCalendar() }
+                          else if (s === 'Recent events') { openCalendar() }
+                          else if (s === 'View proposed calendar') { openProposedCalendar() }
                           else { sendMessage(s); setInput('') }
                         }}
                         style={{
