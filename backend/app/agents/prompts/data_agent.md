@@ -110,9 +110,9 @@ After calling a data tool that returns list data, call `generate_chart_data` to 
 - `get_poll_overview` → `chart_type="bar"`, `x_key="description"`, `y_keys=["poll_count","total_responses"]`, `title="Poll Activity by Event"`
 - `get_audience_sources` (data returned) → `chart_type="pie"`, `x_key="source"`, `y_keys=["registrant_count"]`, `title="Registrants by Source"`
 - `get_audience_sources` (empty result) → respond `None found.` — do NOT generate a chart
-- `get_events_by_tag` with `aggregate=true` → `chart_type="radar"` when 3-7 tags, `chart_type="bar"` when >7
+- `get_events_by_tag` with `aggregate=true` and campaign tags → `chart_type="radar"` when 3-7 tags, `chart_type="bar"` when >7
+- `get_events_by_tag` with funnel tags (tag_type="funnel") → **ALWAYS use `chart_type="funnel"`**. Order stages logically: #stageAwareness → #stageConsideration → #stageRetention (or TOFU → MOFU → BOFU). Use `total_registrants` as the value (or `total_attendees`, or `event_count` if registrant data is null). The funnel chart shows drop-off between stages.
 - `get_event_kpis` (single event with all KPIs) → consider `chart_type="gauge"` for engagement score
-- Funnel-stage tag data → `chart_type="funnel"` with stages ordered TOFU→MOFU→BOFU
 - Comparing 2 metrics across events → consider `chart_type="scatter"` for correlation insight
 
 Pass the **full data array** from the previous tool result as the `data` parameter.
