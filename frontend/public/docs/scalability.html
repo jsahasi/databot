@@ -144,59 +144,10 @@
     </div>
   </div>
 
-  <h2>3. Anthropic API Cost Projection</h2>
+  <h2>3. Critical Bottlenecks &amp; Mitigations</h2>
 
   <div class="card">
-    <div class="card-title">Per-Message Cost Breakdown (Claude Sonnet 4)</div>
-    <table>
-      <tr><th>Component</th><th>Tokens</th><th>Rate</th><th>Cost</th></tr>
-      <tr><td>Input tokens (system prompt + user + history)</td><td>~2,000/call × 3 calls</td><td>$3.00/M tokens</td><td>$0.018</td></tr>
-      <tr><td>Output tokens (agent response)</td><td>~500/call × 3 calls</td><td>$15.00/M tokens</td><td>$0.023</td></tr>
-      <tr><th colspan="3">Cost per user message</th><th>~$0.04</th></tr>
-      <tr><th colspan="3">With prompt caching (90% input discount)</th><th>~$0.025</th></tr>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Annual Cost by Scale</div>
-    <table>
-      <tr><th>Scenario</th><th>DAU</th><th>Msgs/day</th><th>Annual msgs</th><th>Without caching</th><th>With prompt caching</th></tr>
-      <tr>
-        <td><strong>Low</strong> (2K concurrent, 8hr/day)</td>
-        <td>~5,000</td><td>40,000</td><td>10M</td>
-        <td class="priority-med">~$400K</td>
-        <td class="priority-low">~$250K</td>
-      </tr>
-      <tr>
-        <td><strong>Medium</strong> (4K concurrent)</td>
-        <td>~10,000</td><td>80,000</td><td>20M</td>
-        <td class="priority-high">~$800K</td>
-        <td class="priority-med">~$500K</td>
-      </tr>
-      <tr>
-        <td><strong>High</strong> (6K concurrent)</td>
-        <td>~15,000</td><td>120,000</td><td>30M</td>
-        <td class="priority-high">~$1.2M</td>
-        <td class="priority-med">~$750K</td>
-      </tr>
-    </table>
-    <p style="font-size:0.78rem; color:var(--text2); margin-top:0.5rem;">Prompt caching requires adding <code>cache_control: {"type": "ephemeral"}</code> to the system prompt in each agent's <code>messages.create()</code> call. 5-minute TTL. No code changes beyond that one field.</p>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Cost Reduction Strategies</div>
-    <ul>
-      <li><strong>Prompt caching</strong> — 90% input token discount for cached system prompts. Saves $150K–$450K/yr.</li>
-      <li><strong>Haiku for routing</strong> — Use Claude Haiku ($0.25/$1.25 per M tokens) for orchestrator classification, Sonnet for sub-agents. Saves ~30% on orchestrator calls.</li>
-      <li><strong>Response caching</strong> — Cache identical queries (SHA256 hash) for 5 min in Redis. Eliminates redundant LLM calls for common questions ("show attendance trends").</li>
-      <li><strong>Batch tool calls</strong> — Reduce multi-round tool loops by designing tools to return richer payloads in fewer calls.</li>
-    </ul>
-  </div>
-
-  <h2>4. Critical Bottlenecks &amp; Mitigations</h2>
-
-  <div class="card">
-    <h3>4.1 Anthropic API Rate Limits <span class="tag red">Critical</span></h3>
+    <h3>3.1 Anthropic API Rate Limits <span class="tag red">Critical</span></h3>
     <p>Each user message triggers 2–4 Anthropic API calls (orchestrator classification + sub-agent tool loop). At 6K concurrent, this is ~160 calls/second.</p>
     <ul>
       <li><strong>Prompt caching:</strong> Add <code>cache_control</code> to system prompts — 90% input cost reduction, minimal code change</li>
@@ -207,7 +158,7 @@
   </div>
 
   <div class="card">
-    <h3>4.2 ON24 Master DB Connection Pool <span class="tag amber">High</span></h3>
+    <h3>3.2 ON24 Master DB Connection Pool <span class="tag amber">High</span></h3>
     <p>External read-only DB shared across all workers. Current config: 3 connections per worker × 5 workers = 15 total.</p>
     <ul>
       <li><strong>Current (dev):</strong> 15 connections — adequate for ~25-50 concurrent users</li>
@@ -218,7 +169,7 @@
   </div>
 
   <div class="card">
-    <h3>4.3 WebSocket Connection Management <span class="tag amber">High</span></h3>
+    <h3>3.3 WebSocket Connection Management <span class="tag amber">High</span></h3>
     <p>WebSocket connections are inherently sticky to a single worker (TCP). In-memory conversation history works without shared state.</p>
     <ul>
       <li><strong>Current (dev):</strong> 5 workers handle ~10 WS connections each — no issues</li>
@@ -229,7 +180,7 @@
   </div>
 
   <div class="card">
-    <h3>4.4 Single-Container Architecture <span class="tag amber">High</span></h3>
+    <h3>3.4 Single-Container Architecture <span class="tag amber">High</span></h3>
     <p>Current docker-compose runs one backend container with 5 workers. No horizontal scaling, no failover.</p>
     <ul>
       <li><strong>Scale horizontally:</strong> <code>docker compose up --scale backend=3</code> (15 total workers)</li>
@@ -238,7 +189,7 @@
     </ul>
   </div>
 
-  <h2>5. Recommended Architecture (6K Concurrent)</h2>
+  <h2>4. Recommended Architecture (6K Concurrent)</h2>
   <div class="card">
     <table>
       <tr><th>Layer</th><th>Component</th><th>Instances</th><th>Notes</th></tr>
@@ -252,9 +203,9 @@
     </table>
   </div>
 
-  <h2>6. Load Testing Plan</h2>
+  <h2>5. Load Testing Plan</h2>
 
-  <h3>6.1 Tools</h3>
+  <h3>5.1 Tools</h3>
   <div class="card">
     <table>
       <tr><th>Tool</th><th>Purpose</th><th>Why</th></tr>
@@ -265,7 +216,7 @@
     </table>
   </div>
 
-  <h3>6.2 Test Scenarios</h3>
+  <h3>5.2 Test Scenarios</h3>
   <div class="card">
     <table>
       <tr><th>#</th><th>Scenario</th><th>VUs</th><th>Duration</th><th>Metrics</th></tr>
@@ -321,7 +272,7 @@
     </table>
   </div>
 
-  <h3>6.3 Success Criteria</h3>
+  <h3>5.3 Success Criteria</h3>
   <div class="card">
     <table>
       <tr><th>Metric</th><th>Target (2K)</th><th>Target (6K)</th></tr>
@@ -334,7 +285,7 @@
     </table>
   </div>
 
-  <h2>7. Quick Wins (Low-Effort, High-Impact)</h2>
+  <h2>6. Quick Wins (Low-Effort, High-Impact)</h2>
   <div class="card">
     <table>
       <tr><th>#</th><th>Action</th><th>Impact</th><th>Effort</th></tr>
