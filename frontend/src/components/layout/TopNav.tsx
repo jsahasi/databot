@@ -16,7 +16,9 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
   const [switching, setSwitching] = useState(false)
   const [admins, setAdmins] = useState<AdminUser[]>([])
   const [selectedAdmin, setSelectedAdmin] = useState<string>('')
+  // Stored for programmatic access (e.g., window.__adminPermissions)
   const [adminPermissions, setAdminPermissions] = useState<string[]>([])
+  useEffect(() => { (window as any).__adminPermissions = adminPermissions }, [adminPermissions])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
