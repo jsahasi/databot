@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.db.on24_db import get_pool, get_tenant_client_ids
 
@@ -30,8 +30,7 @@ async def list_admins():
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, timeout=8.0)
 
-    return {
-        "admins": [
+    return {"admins": [
             {
                 "admin_id": r["admin_id"],
                 "email": r["email"],
@@ -40,4 +39,35 @@ async def list_admins():
             }
             for r in rows
         ]
+    }
+
+
+@router.get("/admins/{admin_id}/permissions")
+async def get_admin_permissions(admin_id: int):
+    """Return active permission prop_codes for an admin (value='Yes')."""
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+
+    # Verify admin belongs to this client hierarchy
+    check_sql = """
+        SELECT 1 FROM on24master.admin_x_client
+        WHERE admin_id = $1 AND client_id = ANY($2::bigint[])
+        LIMIT 1
+    """
+    async with pool.acquire() as conn:
+        exists = await conn.fetchrow(check_sql, admin_id, client_ids, timeout=5.0)
+        if not exists:
+            raise HTTPException(status_code=404, detail="Admin not found")
+
+        sql = """
+            SELECT prop_code
+            FROM on24master.admin_property_info
+            WHERE admin_id = $1 AND value = 'Yes'
+            ORDER BY prop_code
+        """
+        rows = await conn.fetch(sql, admin_id, timeout=5.0)
+
+    return {
+        "admin_id": admin_id,
+        "permissions": [r["prop_code"] for r in rows],
     }

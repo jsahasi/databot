@@ -16,6 +16,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
   const [switching, setSwitching] = useState(false)
   const [admins, setAdmins] = useState<AdminUser[]>([])
   const [selectedAdmin, setSelectedAdmin] = useState<string>('')
+  const [adminPermissions, setAdminPermissions] = useState<string[]>([])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
@@ -88,7 +89,22 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           <select
             id="admin-select"
             value={selectedAdmin}
-            onChange={e => setSelectedAdmin(e.target.value)}
+            onChange={e => {
+              const email = e.target.value
+              setSelectedAdmin(email)
+              if (!email) { setAdminPermissions([]); return }
+              const admin = admins.find(a => a.email === email)
+              if (admin) {
+                fetch(`/api/admins/${admin.admin_id}/permissions`)
+                  .then(r => r.json())
+                  .then(d => {
+                    const perms: string[] = d.permissions || []
+                    setAdminPermissions(perms)
+                    alert(`${email} (${admin.profile})\n\nPermissions (${perms.length}):\n${perms.join('\n')}`)
+                  })
+                  .catch(() => setAdminPermissions([]))
+              }
+            }}
             style={{
               fontSize: '0.75rem',
               padding: '0.2rem 0.4rem',
