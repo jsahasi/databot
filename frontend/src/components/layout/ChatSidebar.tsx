@@ -22,7 +22,7 @@ export default function ChatSidebar() {
   const [docsOpen, setDocsOpen] = useState(false)
   const docsRef = useRef<HTMLDivElement>(null)
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
-  const themeParam = isDark ? '?theme=dark' : ''
+  const themeParam = isDark ? '?theme=dark' : '?theme=light'
   const docLinks = DOC_BASES.map(d => ({ label: d.label, href: d.path + themeParam }))
 
   // Close docs dropdown on outside click
