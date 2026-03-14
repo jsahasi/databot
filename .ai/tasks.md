@@ -315,7 +315,7 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Add backend tests for on24_query_tools (mock asyncpg pool) — 47 tests, commit 496eed2
 - [x] Frontend Vitest component tests (KPICard, ErrorState, LoadingState, AgentIndicator) — 23 tests, commit 496eed2
 - [x] Frontend Playwright E2E tests — 8 tests (app load, chat, calendar, docs, a11y)
-- [ ] Multi-client: implement per-request context var for tenant ID
+- [x] Multi-client: per-request context var for tenant ID — already implemented in chat.py (set_request_client_id + hierarchy validation)
 - [x] ~~Recent Chats: persist chat history in localStorage~~ — removed from scope
 - [x] Marketer + director regression test prompts — test_persona_prompts.py loads 300 prompts from JSON, commit 0826421
 
