@@ -744,90 +744,101 @@ async def query_audience_sources(
 
 async def query_events_by_tag(
     tag: str | None = None,
-    tag_type: str = "category",
+    tag_type: str | None = None,
     months: int = 12,
     aggregate: bool = False,
     limit: int = 50,
 ) -> list[dict]:
-    """Query events by meta tag (category or application) from event_x_meta_tags.
+    """Query events by tag from tags_created table.
 
-    tag_type: 'category' or 'application'
+    Tags have tag_type: 'campaign' (e.g. Webinars, EMEA, Demo) or 'funnel' (e.g. #stageAwareness).
     tag: value to filter by (case-insensitive ILIKE). Omit to list all tags with counts.
+    tag_type: 'campaign' or 'funnel'. Omit to search all tag types.
     aggregate: if True, return per-tag aggregated KPIs instead of individual events.
     """
     client_ids = await get_tenant_client_ids()
     pool = await get_pool()
     months = _clamp_months(months)
 
+    type_filter = "AND tc.tag_type = $4" if tag_type else ""
+
     if tag is None:
         # List all distinct tags with event counts
-        col = "mt.category" if tag_type == "category" else "mt.application"
         sql = f"""
-            SELECT {col} AS tag, COUNT(DISTINCT mt.event_id) AS event_count,
+            SELECT tc.tag_name AS tag, tc.tag_type, COUNT(DISTINCT tc.event_id) AS event_count,
                    ROUND(AVG(des.engagement_score_avg)::numeric, 1) AS avg_engagement,
                    SUM(des.registrant_count) AS total_registrants,
                    SUM(des.attendee_count) AS total_attendees
-            FROM on24master.event_x_meta_tags mt
-            JOIN on24master.event e ON mt.event_id = e.event_id
+            FROM on24master.tags_created tc
+            JOIN on24master.event e ON tc.event_id = e.event_id
             LEFT JOIN on24master.dw_event_session des ON des.event_id = e.event_id
-            WHERE e.client_id = ANY($1::bigint[])
-              AND {col} IS NOT NULL
+            WHERE tc.client_id = ANY($1::bigint[])
               AND e.goodafter >= NOW() - ($2 || ' months')::interval
               {_EXCL_TEST}
-            GROUP BY {col}
+              {type_filter}
+            GROUP BY tc.tag_name, tc.tag_type
             ORDER BY event_count DESC
             LIMIT $3
         """
+        params: list = [client_ids, str(months), limit]
+        if tag_type:
+            params.append(tag_type)
         async with pool.acquire() as conn:
-            rows = await conn.fetch(sql, client_ids, str(months), limit, timeout=_QUERY_TIMEOUT)
+            rows = await conn.fetch(sql, *params, timeout=_QUERY_TIMEOUT)
         return [_serialize(dict(row)) for row in rows]
 
     if aggregate:
         # Aggregate KPIs grouped by tag value
-        col = "mt.category" if tag_type == "category" else "mt.application"
         sql = f"""
-            SELECT {col} AS tag,
+            SELECT tc.tag_name AS tag, tc.tag_type,
                    COUNT(DISTINCT e.event_id) AS event_count,
                    SUM(des.registrant_count) AS total_registrants,
                    SUM(des.attendee_count) AS total_attendees,
                    ROUND(AVG(des.engagement_score_avg)::numeric, 1) AS avg_engagement,
                    ROUND(AVG(CASE WHEN des.registrant_count > 0
                        THEN des.attendee_count * 100.0 / des.registrant_count END)::numeric, 1) AS avg_conversion_rate
-            FROM on24master.event_x_meta_tags mt
-            JOIN on24master.event e ON mt.event_id = e.event_id
+            FROM on24master.tags_created tc
+            JOIN on24master.event e ON tc.event_id = e.event_id
             LEFT JOIN on24master.dw_event_session des ON des.event_id = e.event_id
-            WHERE e.client_id = ANY($1::bigint[])
-              AND {col} ILIKE '%' || $2 || '%'
+            WHERE tc.client_id = ANY($1::bigint[])
+              AND tc.tag_name ILIKE '%' || $2 || '%'
               AND e.goodafter >= NOW() - ($3 || ' months')::interval
               {_EXCL_TEST}
-            GROUP BY {col}
+              {type_filter}
+            GROUP BY tc.tag_name, tc.tag_type
             ORDER BY event_count DESC
             LIMIT $4
         """
+        params = [client_ids, tag, str(months), limit]
+        if tag_type:
+            params.append(tag_type)
         async with pool.acquire() as conn:
-            rows = await conn.fetch(sql, client_ids, tag, str(months), limit, timeout=_QUERY_TIMEOUT)
+            rows = await conn.fetch(sql, *params, timeout=_QUERY_TIMEOUT)
         return [_serialize(dict(row)) for row in rows]
 
     # List individual events matching tag
-    col = "mt.category" if tag_type == "category" else "mt.application"
     sql = f"""
         SELECT e.event_id, e.description, e.goodafter, e.event_type,
-               mt.category, mt.application,
+               tc.tag_name, tc.tag_type,
                des.registrant_count, des.attendee_count,
                ROUND(des.engagement_score_avg::numeric, 1) AS avg_engagement
-        FROM on24master.event_x_meta_tags mt
-        JOIN on24master.event e ON mt.event_id = e.event_id
+        FROM on24master.tags_created tc
+        JOIN on24master.event e ON tc.event_id = e.event_id
         LEFT JOIN on24master.dw_event_session des ON des.event_id = e.event_id
-        WHERE e.client_id = ANY($1::bigint[])
-          AND {col} ILIKE '%' || $2 || '%'
+        WHERE tc.client_id = ANY($1::bigint[])
+          AND tc.tag_name ILIKE '%' || $2 || '%'
           AND e.goodafter >= NOW() - ($3 || ' months')::interval
           {_EXCL_TEST}
           {_MIN_REGS_SUBQ}
+          {type_filter}
         ORDER BY e.goodafter DESC
         LIMIT $4
     """
+    params = [client_ids, tag, str(months), limit]
+    if tag_type:
+        params.append(tag_type)
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, tag, str(months), limit, timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, *params, timeout=_QUERY_TIMEOUT)
     return [_serialize(dict(row)) for row in rows]
 
 

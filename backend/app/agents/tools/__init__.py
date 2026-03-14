@@ -247,19 +247,22 @@ DATA_AGENT_TOOLS = [
     {
         "name": "get_events_by_tag",
         "description": (
-            "Query events by meta tag (category or application). ON24 events can be tagged with "
-            "category (e.g. 'Marketing') and application (e.g. 'Lead Generation', 'Customer Engagement'). "
-            "Use this when the user asks about events with a specific tag, or wants engagement metrics grouped by tag. "
+            "Query events by tag. Tags come from the tags_created table and have two types: "
+            "'campaign' (e.g. Webinars, EMEA, APAC, Demo, Customer Marketing, AI - NA, Partner Marketing) "
+            "and 'funnel' (e.g. #stageAwareness, #stageConsideration, #stageEvaluation, #stageRetention). "
+            "Tags reflect campaigns, regions, or event series. "
+            "Use this when the user asks about events with a specific tag, campaign, or series, "
+            "or wants engagement metrics grouped by tag. "
             "Omit tag to list all available tags with event counts. Set aggregate=true for per-tag KPI rollups."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "tag": {"type": "string", "description": "Tag value to filter by (case-insensitive). Omit to list all tags."},
+                "tag": {"type": "string", "description": "Tag name to filter by (case-insensitive). Omit to list all tags with counts."},
                 "tag_type": {
                     "type": "string",
-                    "enum": ["category", "application"],
-                    "description": "Which tag field to query: 'category' or 'application' (default: category)",
+                    "enum": ["campaign", "funnel"],
+                    "description": "Filter by tag type. Omit to search all types.",
                 },
                 "months": {"type": "integer", "description": "Look-back window in months (default 12)"},
                 "aggregate": {"type": "boolean", "description": "If true, return per-tag aggregated KPIs instead of individual events"},
