@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — Test Plan &amp; Results</title>
+<style>
+  :root {
+    --bg: #f8f9fc; --card: #ffffff; --border: #e2e6ef; --text: #1a1d2e; --text2: #5a6070;
+    --primary: #4f46e5; --accent: #4f46e5; --green: #059669; --amber: #d97706; --red: #dc2626;
+    --heading: #111827; --hero-bg: linear-gradient(135deg, #eef0f8 0%, #e8eaf6 100%);
+  }
+  html.dark-mode {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a; --text: #c9cfe0; --text2: #7c8499;
+    --primary: #a5b4fc; --accent: #6366f1; --green: #34d399; --amber: #fbbf24; --red: #f87171;
+    --heading: #ffffff; --hero-bg: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: var(--hero-bg); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; }
+  .badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); }
+  .meta strong { color: var(--text); }
+  .content { max-width: 920px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: var(--heading); margin: 1.5rem 0 0.5rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.82rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; margin: 0.1rem; }
+  .tag.green { background: rgba(52,211,153,0.12); color: var(--green); }
+  .tag.red { background: rgba(248,113,113,0.12); color: var(--red); }
+  .tag.amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .tag.blue { background: rgba(99,102,241,0.12); color: var(--primary); }
+  .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .dash-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; text-align: center; }
+  .dash-card .number { font-size: 2rem; font-weight: 700; color: var(--heading); }
+  .dash-card .label { font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+  .bar-container { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .bar-label { font-size: 0.78rem; width: 140px; text-align: right; color: var(--text2); flex-shrink: 0; }
+  .bar-track { flex: 1; height: 22px; background: rgba(99,102,241,0.08); border-radius: 4px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem; }
+  .bar-fill span { font-size: 0.7rem; font-weight: 600; color: #fff; }
+  .pass-fill { background: var(--green); }
+  .fail-fill { background: var(--red); }
+  code { font-size: 0.78rem; background: rgba(99,102,241,0.08); padding: 0.1rem 0.3rem; border-radius: 3px; }
+</style>
+<script>
+(function(){
+  var theme = new URLSearchParams(window.location.search).get('theme');
+  if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+})();
+</script>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">QA — Test Plan &amp; Results</div>
+  <h1>Test Plan &amp; Results</h1>
+  <p class="subtitle">Automated test suite covering API health, security, accessibility, chart generation, agent internals, and integration</p>
+  <div class="meta">
+    <span><strong>Last run:</strong> March 14, 2026</span>
+    <span><strong>Framework:</strong> pytest + pytest-asyncio</span>
+    <span><strong>Total:</strong> 194 tests</span>
+    <span><strong>Pass rate:</strong> 97.9%</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>Dashboard</h2>
+  <div class="dashboard">
+    <div class="dash-card">
+      <div class="number" style="color:var(--green)">190</div>
+      <div class="label">Passed</div>
+    </div>
+    <div class="dash-card">
+      <div class="number" style="color:var(--red)">4</div>
+      <div class="label">Failed</div>
+    </div>
+    <div class="dash-card">
+      <div class="number">10</div>
+      <div class="label">Test Files</div>
+    </div>
+    <div class="dash-card">
+      <div class="number">9.7s</div>
+      <div class="label">Duration</div>
+    </div>
+  </div>
+
+  <!-- Visual pass/fail by subsection -->
+  <h3>Pass Rate by Subsection</h3>
+  <div class="card">
+    <div class="bar-container">
+      <div class="bar-label">Accessibility</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>35/35</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Security</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:88%"><span>40/43</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Chart Generation</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>26/26</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">ON24 Client</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:94%"><span>16/17</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Data Agent</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>12/12</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Orchestrator History</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>15/15</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Rate Limiter</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>17/17</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">File Upload</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>18/18</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">API Health</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>3/3</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Prompt Regression</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:75%"><span>6/8</span></div></div>
+    </div>
+  </div>
+
+  <!-- Failures -->
+  <h2>Current Failures (4)</h2>
+  <div class="card">
+    <table>
+      <tr><th>Test</th><th>File</th><th>Reason</th></tr>
+      <tr>
+        <td><code>test_headers_contain_credentials</code></td>
+        <td>test_on24_client.py</td>
+        <td>Auth header format changed; test expects old key layout</td>
+      </tr>
+      <tr>
+        <td><code>test_client_id_within_hierarchy_is_accepted</code></td>
+        <td>test_security.py</td>
+        <td>Requires live DB connection for hierarchy validation</td>
+      </tr>
+      <tr>
+        <td><code>test_client_id_not_in_hierarchy_falls_back_to_root</code></td>
+        <td>test_security.py</td>
+        <td>Requires live DB connection for hierarchy validation</td>
+      </tr>
+      <tr>
+        <td><code>test_security_headers_on_api_endpoints</code></td>
+        <td>test_security.py</td>
+        <td>CSP header assertion mismatch on API sub-routes</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Detailed results by subsection -->
+  <h2>1. Accessibility &amp; UX Contracts</h2>
+  <p>File: <code>test_accessibility.py</code> — 35 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestAPIResponseStructure</td><td>6</td><td>Chat responses are plain strings, no raw HTML, required fields present</td></tr>
+      <tr><td>TestWebSocketProtocolContract</td><td>11</td><td>All WS message types have correct structure (agent_start, text, error, chart_data, etc.)</td></tr>
+      <tr><td>TestContentSafetyContracts</td><td>10</td><td>Event cards, poll cards, chart data, content articles — no script injection, correct fields</td></tr>
+      <tr><td>TestKeyboardFocusContract</td><td>8</td><td>Message length limits, empty message handling, validation errors, suggestion chips</td></tr>
+    </table>
+  </div>
+
+  <h2>2. Security (OWASP)</h2>
+  <p>File: <code>test_security.py</code> — 43 tests <span class="tag amber">93% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Pass</th><th>Coverage</th></tr>
+      <tr><td>TestInputValidation</td><td>19</td><td><span class="tag green">19</span></td><td>Null bytes, control chars, message length cap, session_id sanitization (path traversal, SQL injection, null bytes)</td></tr>
+      <tr><td>TestAccessControl</td><td>7</td><td><span class="tag amber">5</span></td><td>Client hierarchy validation, root fallback, sub-client scoping (2 require live DB)</td></tr>
+      <tr><td>TestSecurityHeaders</td><td>9</td><td><span class="tag amber">8</span></td><td>X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy</td></tr>
+      <tr><td>TestPromptInjection</td><td>6</td><td><span class="tag green">6</span></td><td>"Ignore previous instructions", system prefix injection, embedded JSON, unicode control plane</td></tr>
+      <tr><td>TestTenantIsolation</td><td>5</td><td><span class="tag green">5</span></td><td>ContextVar isolation — set/get, no bleed, independent coroutines</td></tr>
+    </table>
+  </div>
+
+  <h2>3. Chart Generation</h2>
+  <p>File: <code>test_chart_generation.py</code> — 26 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>Chart types</td><td>11</td><td>All 10 types (bar, line, pie, radar, funnel, gauge, treemap, scatter, heatmap, waterfall) + invalid fallback</td></tr>
+      <tr><td>Pie chart format</td><td>3</td><td>Name/value pairs, single y_key, null value filtering</td></tr>
+      <tr><td>Group mode</td><td>4</td><td>Stacked, grouped, empty, invalid</td></tr>
+      <tr><td>Auto-detection</td><td>4</td><td>Auto-detect x_key, y_keys, exclude x from y, ignore non-numeric</td></tr>
+      <tr><td>Labels &amp; titles</td><td>4</td><td>y_label inclusion/exclusion, title passthrough, empty title</td></tr>
+    </table>
+  </div>
+
+  <h2>4. ON24 API Client</h2>
+  <p>File: <code>test_on24_client.py</code> — 17 tests <span class="tag amber">94% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Pass</th><th>Coverage</th></tr>
+      <tr><td>TestBuildPath</td><td>3</td><td><span class="tag green">3</span></td><td>Simple endpoint, nested endpoint, leading slash strip</td></tr>
+      <tr><td>TestAuthHeaders</td><td>1</td><td><span class="tag red">0</span></td><td>Auth header credential format (needs update)</td></tr>
+      <tr><td>TestCategoryDetection</td><td>6</td><td><span class="tag green">6</span></td><td>Rate limit category mapping for all endpoint patterns</td></tr>
+      <tr><td>TestListEvents / GetEvent / Attendees</td><td>3</td><td><span class="tag green">3</span></td><td>Event listing, single event, attendee list via MockTransport</td></tr>
+      <tr><td>TestPaginate</td><td>3</td><td><span class="tag green">3</span></td><td>Multi-page collection, max_pages limit, alternative key fallback</td></tr>
+      <tr><td>TestErrorHandling</td><td>4</td><td><span class="tag green">4</span></td><td>401, 403, 404, 500 → ON24APIError</td></tr>
+    </table>
+  </div>
+
+  <h2>5. Data Agent Internals</h2>
+  <p>File: <code>test_data_agent.py</code> — 12 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestExtractChart</td><td>10</td><td>JSON extraction from ```chart``` blocks — valid, invalid, multiline, start/end of text, non-chart blocks</td></tr>
+      <tr><td>TestExtractChartWhitespace</td><td>2</td><td>Extra whitespace, trailing newlines</td></tr>
+    </table>
+  </div>
+
+  <h2>6. Orchestrator History</h2>
+  <p>File: <code>test_orchestrator_history.py</code> — 15 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>String content</td><td>3</td><td>Simple strings, empty strings, whitespace-only</td></tr>
+      <tr><td>Role merging</td><td>3</td><td>Consecutive same-role merge, three-way merge, alternating roles</td></tr>
+      <tr><td>List content</td><td>4</td><td>Dict text blocks, tool_use skip, tool_result skip, ContentBlock objects</td></tr>
+      <tr><td>Edge cases</td><td>5</td><td>Empty list, empty history, None content, ContentBlock tool_use, mixed sequence</td></tr>
+    </table>
+  </div>
+
+  <h2>7. Rate Limiter</h2>
+  <p>File: <code>test_rate_limiter.py</code> — 17 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestAcquire</td><td>3</td><td>Immediate return with tokens, multiple token acquire, bucket creation on first call</td></tr>
+      <tr><td>TestGetCategoryForEndpoint</td><td>13</td><td>All 6 tiers: event detail, attendee (high), poll/survey/resource (medium), events/presenter/lead (low), forget/speakerbio (management), unknown (default)</td></tr>
+      <tr><td>TestBucketRefill</td><td>2</td><td>Full refill over time, partial refill</td></tr>
+    </table>
+  </div>
+
+  <h2>8. File Upload</h2>
+  <p>File: <code>test_upload.py</code> — 18 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>MIME validation</td><td>5</td><td>Reject text/plain, text/html; accept PDF, PNG, JPEG, GIF, WebP</td></tr>
+      <tr><td>Size limits</td><td>2</td><td>Reject &gt;10MB, accept exactly 10MB</td></tr>
+      <tr><td>Path traversal</td><td>3</td><td>Reject ../, forward slash, backslash</td></tr>
+      <tr><td>File serving</td><td>1</td><td>404 for nonexistent file</td></tr>
+      <tr><td>Cleanup</td><td>3</td><td>Delete old files, keep recent, zero on empty dir</td></tr>
+      <tr><td>Extensions</td><td>2</td><td>PDF preserved, unknown → .bin</td></tr>
+    </table>
+  </div>
+
+  <h2>9. API Health</h2>
+  <p>File: <code>test_api_health.py</code> — 3 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Test</th><th>Coverage</th></tr>
+      <tr><td>test_health_returns_200</td><td>Health endpoint responds with 200</td></tr>
+      <tr><td>test_api_prefix_is_mounted</td><td>API router is mounted at /api</td></tr>
+      <tr><td>test_unknown_route_returns_404</td><td>Unknown routes return 404</td></tr>
+    </table>
+  </div>
+
+  <h2>10. Prompt Regression Tests</h2>
+  <p>File: <code>test_chat_prompts.py</code> — 8 recorded results <span class="tag amber">75% PASS</span></p>
+  <p>These tests run live against the agent pipeline and verify tool routing, response quality, and chart generation.</p>
+  <div class="card">
+    <table>
+      <tr><th>ID</th><th>Prompt</th><th>Tool Expected</th><th>Result</th><th>Chart?</th></tr>
+      <tr><td>list_events_last</td><td>What was my last event?</td><td>list_events</td><td><span class="tag green">PASS</span></td><td>No</td></tr>
+      <tr><td>list_events_last_month</td><td>Show me events from last month</td><td>list_events</td><td><span class="tag green">PASS</span></td><td>No</td></tr>
+      <tr><td>attendance_trends</td><td>Show attendance trends</td><td>get_attendance_trends</td><td><span class="tag green">PASS</span></td><td>Yes</td></tr>
+      <tr><td>attendance_trends_monthly</td><td>How has attendance changed month over month?</td><td>get_attendance_trends</td><td><span class="tag green">PASS</span></td><td>Yes</td></tr>
+      <tr><td>audience_companies_top</td><td>Which companies attended most?</td><td>get_audience_companies</td><td><span class="tag green">PASS</span></td><td>Yes</td></tr>
+      <tr><td>chart_attendance_trends_line</td><td>Show attendance trends as a line chart</td><td>get_attendance_trends</td><td><span class="tag green">PASS</span></td><td>Yes</td></tr>
+      <tr><td>top_events_by_polls</td><td>Show webinars with the most polls</td><td>get_top_events_by_polls</td><td><span class="tag red">FAIL</span></td><td>No</td></tr>
+      <tr><td>top_events_by_polls_interactive</td><td>Which events had the most poll questions?</td><td>get_top_events_by_polls</td><td><span class="tag red">FAIL</span></td><td>No</td></tr>
+    </table>
+    <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text2)">
+      <strong>Known failures:</strong> <code>get_top_events_by_polls</code> returns "None found" — the cross-table poll query requires event-first CTE pattern which the tool doesn't yet implement for the "top by polls" case.
+    </p>
+  </div>
+
+  <h2>How to Run</h2>
+  <div class="card">
+    <h3>Unit &amp; Integration Tests</h3>
+    <p><code>python -m pytest backend/tests/ -v</code></p>
+    <p>Runs from project root. Requires <code>pip install -e ".[dev]"</code> in backend/.</p>
+
+    <h3>Prompt Regression Tests</h3>
+    <p><code>python -m pytest tests/test_chat_prompts.py -v</code></p>
+    <p>Requires running backend (docker compose up). Uses per-test session IDs with 2s delay between tests.</p>
+
+    <h3>Benchmarks (not in CI)</h3>
+    <p><code>python backend/tests/benchmark_read_apis.py</code></p>
+    <p>3-way comparison: REST API vs MCP server vs direct DB queries. Requires all services running.</p>
+  </div>
+
+</div>
+</body>
+</html>

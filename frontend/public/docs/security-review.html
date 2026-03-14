@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — Security Review</title>
+<style>
+  :root {
+    --bg: #f8f9fc; --card: #ffffff; --border: #e2e6ef; --text: #1a1d2e; --text2: #5a6070;
+    --primary: #4f46e5; --accent: #4f46e5; --green: #059669; --amber: #d97706; --red: #dc2626;
+    --heading: #111827; --hero-bg: linear-gradient(135deg, #eef0f8 0%, #e8eaf6 100%);
+  }
+  html.dark-mode {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a; --text: #c9cfe0; --text2: #7c8499;
+    --primary: #a5b4fc; --accent: #6366f1; --green: #34d399; --amber: #fbbf24; --red: #f87171;
+    --heading: #ffffff; --hero-bg: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: var(--hero-bg); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; }
+  .badge { display: inline-block; background: var(--red); color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); flex-wrap: wrap; }
+  .meta strong { color: var(--text); }
+  .content { max-width: 920px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: var(--heading); margin: 1.5rem 0 0.5rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { color: var(--text); margin-bottom: 0.35rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.82rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .tag.green { background: rgba(52,211,153,0.12); color: var(--green); }
+  .tag.red { background: rgba(248,113,113,0.12); color: var(--red); }
+  .tag.amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .tag.blue { background: rgba(99,102,241,0.12); color: var(--primary); }
+  code { font-size: 0.78rem; background: rgba(99,102,241,0.08); padding: 0.1rem 0.3rem; border-radius: 3px; }
+  .finding { border-left: 3px solid var(--border); padding-left: 1rem; margin-bottom: 1.25rem; }
+  .finding.critical { border-left-color: var(--red); }
+  .finding.high { border-left-color: #f97316; }
+  .finding.medium { border-left-color: var(--amber); }
+  .finding.low { border-left-color: var(--green); }
+  .finding.info { border-left-color: var(--primary); }
+  .severity { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .severity.critical { color: var(--red); }
+  .severity.high { color: #f97316; }
+  .severity.medium { color: var(--amber); }
+  .severity.low { color: var(--green); }
+  .severity.info { color: var(--primary); }
+  .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .dash-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+  .dash-card .number { font-size: 1.8rem; font-weight: 700; color: var(--heading); }
+  .dash-card .label { font-size: 0.72rem; color: var(--text2); margin-top: 0.2rem; }
+</style>
+<script>
+(function(){
+  var theme = new URLSearchParams(window.location.search).get('theme');
+  if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+})();
+</script>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">Security — OWASP Review</div>
+  <h1>Security Review</h1>
+  <p class="subtitle">Application security assessment covering OWASP Top 10, AI-specific risks, and infrastructure hardening</p>
+  <div class="meta">
+    <span><strong>Date:</strong> March 14, 2026</span>
+    <span><strong>Scope:</strong> Backend API, frontend, WebSocket, agent pipeline, database access</span>
+    <span><strong>Methodology:</strong> Static code review + dynamic test suite</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>Executive Summary</h2>
+  <div class="dashboard">
+    <div class="dash-card"><div class="number" style="color:var(--red)">0</div><div class="label">Critical</div></div>
+    <div class="dash-card"><div class="number" style="color:#f97316">3</div><div class="label">High</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--amber)">5</div><div class="label">Medium</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--green)">4</div><div class="label">Low</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--primary)">3</div><div class="label">Info</div></div>
+  </div>
+
+  <h2>Controls Already In Place</h2>
+  <div class="card">
+    <table>
+      <tr><th>Control</th><th>Implementation</th><th>Status</th></tr>
+      <tr><td>Security headers</td><td>Custom middleware in <code>main.py</code>: X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>Input sanitization</td><td>Null byte stripping, control char removal, message length cap (4000 chars) in <code>chat.py</code></td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>Session ID validation</td><td>Path traversal, SQL injection, null byte detection — alphanumeric + hyphen/underscore only</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>Prompt injection defense</td><td>Strip known injection patterns before LLM processing</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>Tenant isolation</td><td>ContextVar-based client_id scoping, recursive CTE hierarchy, <code>WHERE client_id = ANY($N)</code></td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>SQL parameterization</td><td>All ON24 DB queries use <code>$N</code> parameterized queries via asyncpg</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>File upload validation</td><td>MIME allowlist (PDF, PNG, JPEG, GIF, WebP), 10MB limit, path traversal rejection</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>HTML sanitization</td><td>DOMPurify 3.3.3 for all <code>dangerouslySetInnerHTML</code> content from ON24 DB</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>SSL certs for ON24 DB</td><td>Temp cert files with <code>shutil.rmtree</code> in finally blocks</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>Admin confirmation flow</td><td>Write operations require explicit user confirmation before execution</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>Audit logging</td><td>Every agent tool call logged to <code>agent_audit_logs</code> table</td><td><span class="tag green">Active</span></td></tr>
+      <tr><td>MCP write blocklist</td><td>20 write tools blocked by default via <code>USE_MCP_BLOCKLIST</code></td><td><span class="tag green">Active</span></td></tr>
+    </table>
+  </div>
+
+  <h2>Findings</h2>
+
+  <!-- HIGH -->
+  <h3>High Severity</h3>
+
+  <div class="finding high">
+    <p><span class="severity high">HIGH</span> — <strong>SEC-01: No Authentication on WebSocket or REST API</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/api/chat.py</code>, <code>backend/app/main.py</code></p>
+    <p>No authentication middleware. Any user on the network can connect to the WebSocket and query data. The <code>/ws/chat</code> endpoint accepts connections without verifying identity.</p>
+    <p><strong>Risk:</strong> Unauthorized access to all ON24 analytics data for client 10710 and sub-clients.</p>
+    <p><strong>Recommendation:</strong> Implement JWT or OAuth2 bearer token authentication. Validate tokens on WebSocket upgrade and all API routes. Integrate with ON24 SSO (SAML/OIDC).</p>
+  </div>
+
+  <div class="finding high">
+    <p><span class="severity high">HIGH</span> — <strong>SEC-02: No Rate Limiting on User-Facing Endpoints</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/api/chat.py</code>, <code>backend/app/main.py</code></p>
+    <p>The ON24 REST API has rate limiting, but user-facing endpoints (chat, calendar, hierarchy) have none. A single user or bot could exhaust Anthropic API quota or create a denial-of-service.</p>
+    <p><strong>Risk:</strong> Resource exhaustion, Anthropic API cost explosion, degraded service for all users.</p>
+    <p><strong>Recommendation:</strong> Add per-IP or per-session rate limiting via <code>slowapi</code> or custom middleware. Suggested limits: 20 msg/min per user, 100 REST calls/min per IP.</p>
+  </div>
+
+  <div class="finding high">
+    <p><span class="severity high">HIGH</span> — <strong>SEC-03: CORS Configuration Too Permissive</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/main.py</code></p>
+    <p>CORS middleware likely allows all origins (<code>allow_origins=["*"]</code>) for development convenience. This permits cross-site requests from any domain.</p>
+    <p><strong>Risk:</strong> Cross-site request forgery, data exfiltration via malicious pages.</p>
+    <p><strong>Recommendation:</strong> Restrict <code>allow_origins</code> to the frontend domain(s) only. In production: <code>["https://nexus.on24.com"]</code>.</p>
+  </div>
+
+  <!-- MEDIUM -->
+  <h3>Medium Severity</h3>
+
+  <div class="finding medium">
+    <p><span class="severity medium">MEDIUM</span> — <strong>SEC-04: Anthropic API Key in Environment Variable</strong></p>
+    <p><strong>Location:</strong> <code>.env.local</code>, <code>backend/app/config.py</code></p>
+    <p>API keys stored in <code>.env.local</code> file. While gitignored, the key is passed to Docker containers via <code>env_file</code> and visible in <code>docker inspect</code>.</p>
+    <p><strong>Recommendation:</strong> Use a secrets manager (AWS Secrets Manager, HashiCorp Vault) in production. For Docker: use Docker secrets or mount as read-only file.</p>
+  </div>
+
+  <div class="finding medium">
+    <p><span class="severity medium">MEDIUM</span> — <strong>SEC-05: WebSocket Has No Connection Limit</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/api/chat.py</code></p>
+    <p>No maximum concurrent WebSocket connections enforced. A malicious client could open thousands of connections to exhaust server resources.</p>
+    <p><strong>Recommendation:</strong> Track active connections with a counter. Reject new connections above threshold (e.g., 5,000). Add per-IP connection limit (e.g., 5).</p>
+  </div>
+
+  <div class="finding medium">
+    <p><span class="severity medium">MEDIUM</span> — <strong>SEC-06: Conversation History Stored In-Memory Only</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/agents/orchestrator.py</code></p>
+    <p>Conversation history is held in Python process memory. No encryption at rest. If process dumps or debug endpoints exist, history could be exposed.</p>
+    <p><strong>Recommendation:</strong> For sensitive deployments, encrypt conversation history in memory or persist to encrypted storage with TTL-based cleanup.</p>
+  </div>
+
+  <div class="finding medium">
+    <p><span class="severity medium">MEDIUM</span> — <strong>SEC-07: Admin Agent Can Execute Write Operations</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/agents/admin_agent.py</code></p>
+    <p>Admin agent can create events, add/remove registrants via ON24 API. While a confirmation flow exists, the user identity is not verified — any connected user can confirm.</p>
+    <p><strong>Recommendation:</strong> Tie admin operations to authenticated user with role-based access control (RBAC). Only users with "admin" role should be able to confirm write operations.</p>
+  </div>
+
+  <div class="finding medium">
+    <p><span class="severity medium">MEDIUM</span> — <strong>SEC-08: Feedback Endpoint Writes to Disk Without Auth</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/api/chat.py</code> — <code>POST /api/feedback</code></p>
+    <p>Feedback is appended to <code>data/improvement-inbox-*.txt</code> without authentication. Could be abused to fill disk or inject misleading training data.</p>
+    <p><strong>Recommendation:</strong> Add rate limiting (5 feedback submissions per session per hour). Validate content length. Consider writing to database instead of flat files.</p>
+  </div>
+
+  <!-- LOW -->
+  <h3>Low Severity</h3>
+
+  <div class="finding low">
+    <p><span class="severity low">LOW</span> — <strong>SEC-09: Debug Mode May Be Enabled in Production</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/config.py</code> — <code>DEBUG</code> env var</p>
+    <p>Debug mode is controlled by environment variable with no validation that it's disabled in production.</p>
+    <p><strong>Recommendation:</strong> Default <code>DEBUG=false</code>. Add startup warning if DEBUG is enabled and environment is production.</p>
+  </div>
+
+  <div class="finding low">
+    <p><span class="severity low">LOW</span> — <strong>SEC-10: No HTTPS Enforcement</strong></p>
+    <p><strong>Location:</strong> Docker Compose / nginx config</p>
+    <p>Application serves over HTTP. No TLS termination configured in Docker setup.</p>
+    <p><strong>Recommendation:</strong> Add TLS termination at load balancer or nginx. Use HSTS header. Redirect HTTP → HTTPS.</p>
+  </div>
+
+  <div class="finding low">
+    <p><span class="severity low">LOW</span> — <strong>SEC-11: Uploaded Files Served Without Content-Disposition</strong></p>
+    <p><strong>Location:</strong> File upload serving endpoint</p>
+    <p>Uploaded files may be served inline rather than as attachments, potentially allowing browser-executed content.</p>
+    <p><strong>Recommendation:</strong> Always serve uploaded files with <code>Content-Disposition: attachment</code>. Scan uploads for malware in production.</p>
+  </div>
+
+  <div class="finding low">
+    <p><span class="severity low">LOW</span> — <strong>SEC-12: SSL Cert Files Temporarily on Disk</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/db/on24_db.py</code></p>
+    <p>SSL certificates for ON24 DB are written to temp files. While cleanup is in finally blocks, a crash could leave certs on disk.</p>
+    <p><strong>Recommendation:</strong> Use <code>tempfile.mkdtemp</code> with restrictive permissions (0o700). Consider in-memory SSL context instead.</p>
+  </div>
+
+  <!-- INFO -->
+  <h3>Informational</h3>
+
+  <div class="finding info">
+    <p><span class="severity info">INFO</span> — <strong>SEC-13: Prompt Injection Defense Is Pattern-Based</strong></p>
+    <p>Current defense strips known patterns ("ignore previous instructions", "system:" prefix). Sophisticated prompt injection may bypass pattern matching.</p>
+    <p><strong>Recommendation:</strong> Consider output validation (check that agent responses don't leak system prompts). Add monitoring for unusual agent behavior patterns.</p>
+  </div>
+
+  <div class="finding info">
+    <p><span class="severity info">INFO</span> — <strong>SEC-14: Knowledge Base Uses Cosine Similarity Without Auth</strong></p>
+    <p>The knowledge base (637 articles / 2729 chunks) is accessible to all users. Content is ON24 help articles, not sensitive, but future additions should be tenant-scoped.</p>
+    <p><strong>Recommendation:</strong> If sensitive content is added to KB, implement per-tenant article scoping.</p>
+  </div>
+
+  <div class="finding info">
+    <p><span class="severity info">INFO</span> — <strong>SEC-15: Docker Image Uses Root User</strong></p>
+    <p>Backend Dockerfile may not specify a non-root user. Container processes running as root have broader attack surface.</p>
+    <p><strong>Recommendation:</strong> Add <code>USER nonroot</code> to Dockerfiles. Use distroless or slim base images.</p>
+  </div>
+
+  <h2>OWASP Top 10 Coverage</h2>
+  <div class="card">
+    <table>
+      <tr><th>OWASP Category</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>A01: Broken Access Control</td><td><span class="tag red">Gap</span></td><td>No authentication (SEC-01). Tenant isolation is strong once connected.</td></tr>
+      <tr><td>A02: Cryptographic Failures</td><td><span class="tag amber">Partial</span></td><td>No HTTPS (SEC-10). API keys in env vars (SEC-04). SSL certs handled correctly.</td></tr>
+      <tr><td>A03: Injection</td><td><span class="tag green">Strong</span></td><td>Parameterized SQL, input sanitization, prompt injection defense, DOMPurify.</td></tr>
+      <tr><td>A04: Insecure Design</td><td><span class="tag green">Good</span></td><td>Admin confirmation flow, MCP blocklist, audit logging.</td></tr>
+      <tr><td>A05: Security Misconfiguration</td><td><span class="tag amber">Partial</span></td><td>CORS too permissive (SEC-03). Security headers are good.</td></tr>
+      <tr><td>A06: Vulnerable Components</td><td><span class="tag green">Good</span></td><td>Recent dependency versions. DOMPurify 3.3.3 (latest).</td></tr>
+      <tr><td>A07: Auth Failures</td><td><span class="tag red">Gap</span></td><td>No authentication implemented (SEC-01).</td></tr>
+      <tr><td>A08: Software/Data Integrity</td><td><span class="tag green">Good</span></td><td>Docker health checks, gitignored secrets, no CDN integrity issues.</td></tr>
+      <tr><td>A09: Logging/Monitoring</td><td><span class="tag green">Good</span></td><td>Audit logging on all agent tool calls. Feedback tracking.</td></tr>
+      <tr><td>A10: SSRF</td><td><span class="tag green">Good</span></td><td>ON24 API base URL is config-controlled. No user-controlled URL fetching.</td></tr>
+    </table>
+  </div>
+
+  <h2>AI-Specific Security Considerations</h2>
+  <div class="card">
+    <table>
+      <tr><th>Risk</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>Prompt injection</td><td><span class="tag amber">Partial</span></td><td>Pattern-based strip; no output validation</td></tr>
+      <tr><td>Data exfiltration via AI</td><td><span class="tag green">Mitigated</span></td><td>Agents can only call pre-defined tools; no arbitrary code execution</td></tr>
+      <tr><td>Training data poisoning</td><td><span class="tag green">N/A</span></td><td>Uses Anthropic API, not custom training</td></tr>
+      <tr><td>Model output leakage</td><td><span class="tag amber">Partial</span></td><td>System prompts could be extracted; no output filtering</td></tr>
+      <tr><td>Cost attacks</td><td><span class="tag red">Gap</span></td><td>No per-user API cost limits (SEC-02)</td></tr>
+      <tr><td>Tool misuse</td><td><span class="tag green">Mitigated</span></td><td>Admin tools require confirmation; MCP write blocklist</td></tr>
+    </table>
+  </div>
+
+  <h2>Remediation Priority</h2>
+  <div class="card">
+    <table>
+      <tr><th>Priority</th><th>Finding</th><th>Effort</th></tr>
+      <tr><td><span class="tag red">P1</span></td><td>SEC-01: Add authentication (JWT/OAuth2)</td><td>2–3 days</td></tr>
+      <tr><td><span class="tag red">P1</span></td><td>SEC-02: Add user-facing rate limiting</td><td>0.5 day</td></tr>
+      <tr><td><span class="tag red">P1</span></td><td>SEC-03: Restrict CORS origins</td><td>0.5 hour</td></tr>
+      <tr><td><span class="tag amber">P2</span></td><td>SEC-05: WebSocket connection limits</td><td>0.5 day</td></tr>
+      <tr><td><span class="tag amber">P2</span></td><td>SEC-07: RBAC for admin operations</td><td>1 day (after auth)</td></tr>
+      <tr><td><span class="tag amber">P2</span></td><td>SEC-10: HTTPS / TLS termination</td><td>0.5 day</td></tr>
+      <tr><td><span class="tag blue">P3</span></td><td>SEC-04, SEC-06, SEC-08, SEC-09, SEC-11–15</td><td>Various</td></tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

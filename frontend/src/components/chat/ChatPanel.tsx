@@ -23,7 +23,7 @@ const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
   { text: 'Configure environment',     agent: 'config'                       },
   { text: 'Trends',                    agent: 'data'                         },
   { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
-  { text: 'Poll results overview',    agent: 'data'                         },
+  { text: 'Create Content',            agent: 'content'                      },
   { text: 'Explore Content',           agent: 'content'                      },
 ]
 
@@ -216,7 +216,7 @@ export default function ChatPanel() {
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
                         else if (s === 'Trends') { setShowTrends(true) }
                         else if (s === 'Explore Content') { setShowExploreContent(true) }
-                        else if (s === 'Poll results overview') { sendMessage('Poll results overview'); setInput('') }
+                        else if (s === 'Create Content') { setShowContentCreate(true) }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
                       }}
@@ -269,6 +269,7 @@ export default function ChatPanel() {
                     { label: 'Show campaigns',             prompt: 'Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type="campaign", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it "Leads by Campaign — Last 30 Days".', display: 'Show campaigns' },
                     { label: 'Performance by tags',        prompt: 'Show me performance by all tags used in the last month. Use get_events_by_tag with aggregate=true, months=1. List all tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag.', display: 'Performance by tags — last month' },
                     { label: 'Top events by engagement',   prompt: 'Show me the top 10 events by engagement score as a bar chart.', display: 'Top events by engagement' },
+                    { label: 'Poll trends',      prompt: 'Poll trends', display: 'Poll trends' },
                   ].map(({ label, prompt, display }) => (
                     <button key={label}
                       onClick={() => { sendMessage(prompt, display); setInput(''); setShowTrends(false) }}

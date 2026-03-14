@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ON24 Nexus — Scalability &amp; Load Testing Plan</title>
+<style>
+  :root {
+    --bg: #f8f9fc; --card: #ffffff; --border: #e2e6ef; --text: #1a1d2e; --text2: #5a6070;
+    --primary: #4f46e5; --accent: #4f46e5; --green: #059669; --amber: #d97706; --red: #dc2626;
+    --heading: #111827; --hero-bg: linear-gradient(135deg, #eef0f8 0%, #e8eaf6 100%);
+  }
+  html.dark-mode {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a; --text: #c9cfe0; --text2: #7c8499;
+    --primary: #a5b4fc; --accent: #6366f1; --green: #34d399; --amber: #fbbf24; --red: #f87171;
+    --heading: #ffffff; --hero-bg: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
+  .hero { background: var(--hero-bg); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; }
+  .badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); flex-wrap: wrap; }
+  .meta strong { color: var(--text); }
+  .content { max-width: 920px; margin: 0 auto; padding: 2.5rem 3.5rem; }
+  h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 0.95rem; font-weight: 600; color: var(--heading); margin: 1.5rem 0 0.5rem; }
+  p { color: var(--text); margin-bottom: 0.75rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+  li { color: var(--text); margin-bottom: 0.35rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 0.85rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.82rem; }
+  th { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .tag.green { background: rgba(52,211,153,0.12); color: var(--green); }
+  .tag.red { background: rgba(248,113,113,0.12); color: var(--red); }
+  .tag.amber { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .tag.blue { background: rgba(99,102,241,0.12); color: var(--primary); }
+  code { font-size: 0.78rem; background: rgba(99,102,241,0.08); padding: 0.1rem 0.3rem; border-radius: 3px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .priority-high { color: var(--red); font-weight: 600; }
+  .priority-med { color: var(--amber); font-weight: 600; }
+  .priority-low { color: var(--green); font-weight: 600; }
+</style>
+<script>
+(function(){
+  var theme = new URLSearchParams(window.location.search).get('theme');
+  if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+})();
+</script>
+</head>
+<body>
+<div class="hero">
+  <div class="badge">Infrastructure — Scalability</div>
+  <h1>Scalability Analysis &amp; Load Testing Plan</h1>
+  <p class="subtitle">Capacity planning for 3,000 daily users (2,000–6,000 concurrent) on ON24 staging</p>
+  <div class="meta">
+    <span><strong>Target:</strong> 2,000 concurrent (baseline) → 6,000 concurrent (peak)</span>
+    <span><strong>Date:</strong> March 14, 2026</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>1. Current Architecture Profile</h2>
+  <div class="card">
+    <table>
+      <tr><th>Component</th><th>Current Config</th><th>Bottleneck at 2K</th><th>Bottleneck at 6K</th></tr>
+      <tr>
+        <td><strong>Frontend (nginx)</strong></td>
+        <td>Single container, static build, port 3001</td>
+        <td class="priority-low">Fine — static assets</td>
+        <td class="priority-low">Fine — add CDN for assets</td>
+      </tr>
+      <tr>
+        <td><strong>Backend (FastAPI/uvicorn)</strong></td>
+        <td>Single process, asyncio, no worker config</td>
+        <td class="priority-med">CPU-bound on agent orchestration</td>
+        <td class="priority-high">Needs 4+ workers, horizontal scaling</td>
+      </tr>
+      <tr>
+        <td><strong>WebSocket connections</strong></td>
+        <td>Per-user persistent connection</td>
+        <td class="priority-med">~2K open sockets per process</td>
+        <td class="priority-high">Needs sticky sessions + multiple backends</td>
+      </tr>
+      <tr>
+        <td><strong>PostgreSQL (local)</strong></td>
+        <td>Single container, default config, asyncpg pool</td>
+        <td class="priority-low">Adequate for metadata</td>
+        <td class="priority-med">Tune max_connections, connection pooling</td>
+      </tr>
+      <tr>
+        <td><strong>ON24 master DB</strong></td>
+        <td>External (10.3.7.233:5458), read-only, pool via asyncpg</td>
+        <td class="priority-med">Pool size critical — shared resource</td>
+        <td class="priority-high">Connection contention, need PgBouncer</td>
+      </tr>
+      <tr>
+        <td><strong>Anthropic API</strong></td>
+        <td>Per-request API calls, no caching</td>
+        <td class="priority-high">Rate limits + latency (1-5s per call)</td>
+        <td class="priority-high">Major bottleneck — caching essential</td>
+      </tr>
+      <tr>
+        <td><strong>ON24 REST API</strong></td>
+        <td>Token-bucket rate limiter (6 tiers, 10-1000 req/min)</td>
+        <td class="priority-med">Rate limit ceiling at high tier</td>
+        <td class="priority-high">Need response caching layer</td>
+      </tr>
+      <tr>
+        <td><strong>MCP Server</strong></td>
+        <td>Single container, port 8001</td>
+        <td class="priority-low">Passthrough — bottleneck is ON24 API</td>
+        <td class="priority-med">Scale with backend</td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>2. Capacity Estimates</h2>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Memory per Connection</div>
+      <table>
+        <tr><td>WebSocket frame buffer</td><td>~4 KB</td></tr>
+        <tr><td>Conversation history (avg 10 turns)</td><td>~20 KB</td></tr>
+        <tr><td>Agent state (orchestrator + sub-agent)</td><td>~50 KB</td></tr>
+        <tr><td>asyncio task overhead</td><td>~2 KB</td></tr>
+        <tr><th>Total per active session</th><th>~76 KB</th></tr>
+        <tr><th>2,000 concurrent</th><th>~150 MB</th></tr>
+        <tr><th>6,000 concurrent</th><th>~450 MB</th></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Request Throughput</div>
+      <table>
+        <tr><td>Avg messages/user/session</td><td>~8</td></tr>
+        <tr><td>Avg session length</td><td>~15 min</td></tr>
+        <tr><td>Peak msg/sec (2K concurrent)</td><td>~18 msg/s</td></tr>
+        <tr><td>Peak msg/sec (6K concurrent)</td><td>~53 msg/s</td></tr>
+        <tr><td>Anthropic API calls/msg</td><td>2–4 (orchestrator + agent)</td></tr>
+        <tr><th>Peak Anthropic calls/sec (6K)</th><th>~160 calls/s</th></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>3. Critical Bottlenecks &amp; Mitigations</h2>
+
+  <div class="card">
+    <h3>3.1 Anthropic API Rate Limits <span class="tag red">Critical</span></h3>
+    <p>Each user message triggers 2–4 Anthropic API calls (orchestrator classification + sub-agent tool loop). At 6K concurrent, this is ~160 calls/second.</p>
+    <ul>
+      <li><strong>Mitigation 1:</strong> Cache frequent orchestrator classifications (e.g., "show attendance trends" → data_agent routing)</li>
+      <li><strong>Mitigation 2:</strong> Implement response caching for identical queries within time window (5 min TTL)</li>
+      <li><strong>Mitigation 3:</strong> Use Haiku for orchestrator routing (faster, cheaper), Sonnet for sub-agents</li>
+      <li><strong>Mitigation 4:</strong> Request Anthropic rate limit increase for production tier</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>3.2 WebSocket Connection Limits <span class="tag amber">High</span></h3>
+    <p>Single uvicorn process handles all WebSocket connections. OS file descriptor limit and Python GIL create ceiling.</p>
+    <ul>
+      <li><strong>Mitigation 1:</strong> Run 4 uvicorn workers: <code>uvicorn app.main:app --workers 4</code></li>
+      <li><strong>Mitigation 2:</strong> Add nginx load balancer with sticky sessions (ip_hash or cookie)</li>
+      <li><strong>Mitigation 3:</strong> Horizontal scaling — 2+ backend containers behind load balancer</li>
+      <li><strong>Mitigation 4:</strong> Consider Redis pub/sub for cross-worker message broadcasting</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>3.3 ON24 Master DB Connection Pool <span class="tag amber">High</span></h3>
+    <p>External read-only DB shared across all requests. Current pool has no explicit max size configuration.</p>
+    <ul>
+      <li><strong>Mitigation 1:</strong> Set explicit pool limits: <code>min_size=5, max_size=20</code></li>
+      <li><strong>Mitigation 2:</strong> Add PgBouncer as connection multiplexer between app and ON24 DB</li>
+      <li><strong>Mitigation 3:</strong> Cache hot queries (event lists, KPIs) with 60s TTL in Redis</li>
+      <li><strong>Mitigation 4:</strong> Read replica for analytics queries if available</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>3.4 ON24 REST API Rate Limits <span class="tag amber">High</span></h3>
+    <p>Token bucket rate limiter enforces 6 tiers (10–1000 req/min). Shared across all users.</p>
+    <ul>
+      <li><strong>Mitigation 1:</strong> Prefer direct DB queries over REST API for read operations</li>
+      <li><strong>Mitigation 2:</strong> Cache REST API responses (event details: 5 min, attendee lists: 2 min)</li>
+      <li><strong>Mitigation 3:</strong> Queue non-urgent API calls to smooth traffic spikes</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>3.5 Single-Container Architecture <span class="tag amber">High</span></h3>
+    <p>Current docker-compose runs one instance of each service. No horizontal scaling, no failover.</p>
+    <ul>
+      <li><strong>Mitigation 1:</strong> Use <code>docker compose up --scale backend=3</code></li>
+      <li><strong>Mitigation 2:</strong> Add nginx or Traefik as reverse proxy with health-check routing</li>
+      <li><strong>Mitigation 3:</strong> For production: Kubernetes or ECS with autoscaling groups</li>
+      <li><strong>Mitigation 4:</strong> Externalize session state to Redis (currently in-process memory)</li>
+    </ul>
+  </div>
+
+  <h2>4. Recommended Architecture (6K Concurrent)</h2>
+  <div class="card">
+    <table>
+      <tr><th>Layer</th><th>Component</th><th>Instances</th><th>Notes</th></tr>
+      <tr><td>CDN</td><td>CloudFront / nginx cache</td><td>1</td><td>Static assets + HTML docs</td></tr>
+      <tr><td>Load Balancer</td><td>nginx / ALB</td><td>1</td><td>Sticky sessions for WebSocket, health checks</td></tr>
+      <tr><td>Backend</td><td>FastAPI (uvicorn, 4 workers)</td><td>3 containers</td><td>12 total workers, ~500 WS each</td></tr>
+      <tr><td>Cache</td><td>Redis 7</td><td>1 (clustered)</td><td>Response cache, session state, pub/sub</td></tr>
+      <tr><td>Connection Pool</td><td>PgBouncer</td><td>1</td><td>Multiplex to ON24 master DB</td></tr>
+      <tr><td>Local DB</td><td>PostgreSQL 16</td><td>1</td><td>metadata, audit logs, knowledge base</td></tr>
+      <tr><td>MCP Server</td><td>FastMCP</td><td>2</td><td>Scale with backend</td></tr>
+    </table>
+  </div>
+
+  <h2>5. Load Testing Plan</h2>
+
+  <h3>5.1 Tools</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tool</th><th>Purpose</th><th>Why</th></tr>
+      <tr><td><strong>k6 (Grafana)</strong></td><td>Primary load testing</td><td>Native WebSocket support, JavaScript scripting, cloud execution</td></tr>
+      <tr><td><strong>Locust</strong></td><td>Alternative / comparison</td><td>Python-native, easy to model user behavior, real-time dashboard</td></tr>
+      <tr><td><strong>Artillery</strong></td><td>WebSocket-specific scenarios</td><td>YAML scenarios, built-in WS engine, CI/CD friendly</td></tr>
+      <tr><td><strong>pgbench</strong></td><td>Database stress test</td><td>PostgreSQL native, tests connection pool limits</td></tr>
+    </table>
+  </div>
+
+  <h3>5.2 Test Scenarios</h3>
+  <div class="card">
+    <table>
+      <tr><th>#</th><th>Scenario</th><th>VUs</th><th>Duration</th><th>Metrics</th></tr>
+      <tr>
+        <td>1</td>
+        <td><strong>Baseline — REST API</strong><br/>GET /health, GET /api/calendar, GET /api/status</td>
+        <td>100 → 500</td>
+        <td>5 min ramp</td>
+        <td>p95 latency, error rate, throughput</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>WebSocket Connect + Chat</strong><br/>Connect WS, send 3 messages, wait for responses, disconnect</td>
+        <td>100 → 2,000</td>
+        <td>10 min ramp + 5 min hold</td>
+        <td>Connection success rate, message round-trip, memory per VU</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>Sustained Chat Load</strong><br/>2,000 connected users, each sending 1 msg every 2 min</td>
+        <td>2,000</td>
+        <td>30 min hold</td>
+        <td>p50/p95/p99 latency, error rate, memory growth, DB pool utilization</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><strong>Peak Spike</strong><br/>Ramp from 2,000 → 6,000 in 2 min, hold 10 min</td>
+        <td>6,000</td>
+        <td>12 min</td>
+        <td>Connection failures, queue depth, recovery time</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><strong>Mixed Workload</strong><br/>60% chat, 20% calendar browse, 10% REST API, 10% idle WS</td>
+        <td>3,000</td>
+        <td>20 min</td>
+        <td>Per-endpoint latency, resource contention</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><strong>Database Stress</strong><br/>Heavy analytics queries (attendance trends, company lists, polls)</td>
+        <td>500</td>
+        <td>10 min</td>
+        <td>Query p95, connection pool exhaustion, ON24 DB load</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><strong>Endurance / Soak</strong><br/>1,000 concurrent for 4 hours</td>
+        <td>1,000</td>
+        <td>4 hours</td>
+        <td>Memory leaks, connection leaks, latency drift</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>5.3 ON24 Staging Environment Setup</h3>
+  <div class="card">
+    <ol>
+      <li><strong>Deploy to staging:</strong> Replicate docker-compose to ON24 staging infra with 3 backend replicas</li>
+      <li><strong>Point to QA DB:</strong> Switch <code>ON24_DB_URL</code> to QA instance (port 5459) — never load-test against PROD</li>
+      <li><strong>Mock Anthropic API:</strong> Use a local proxy (e.g., LiteLLM) with canned responses for load tests that don't need real AI — this isolates infrastructure bottlenecks from API rate limits</li>
+      <li><strong>Monitoring:</strong> Enable Prometheus metrics on FastAPI (<code>prometheus-fastapi-instrumentator</code>), Grafana dashboards for real-time p95/p99, connection counts, pool utilization</li>
+      <li><strong>k6 cloud or distributed:</strong> Run k6 from 2+ machines to avoid client-side bottleneck at 6K VUs</li>
+    </ol>
+  </div>
+
+  <h3>5.4 Success Criteria</h3>
+  <div class="card">
+    <table>
+      <tr><th>Metric</th><th>Target (2K)</th><th>Target (6K)</th></tr>
+      <tr><td>WebSocket connect success rate</td><td>&gt; 99.9%</td><td>&gt; 99.5%</td></tr>
+      <tr><td>Chat message p95 latency</td><td>&lt; 5s</td><td>&lt; 8s</td></tr>
+      <tr><td>REST API p95 latency</td><td>&lt; 200ms</td><td>&lt; 500ms</td></tr>
+      <tr><td>Error rate</td><td>&lt; 0.1%</td><td>&lt; 1%</td></tr>
+      <tr><td>Memory growth over 1 hour</td><td>&lt; 10%</td><td>&lt; 15%</td></tr>
+      <tr><td>DB pool utilization</td><td>&lt; 70%</td><td>&lt; 85%</td></tr>
+    </table>
+  </div>
+
+  <h2>6. Quick Wins (Implement Before Load Test)</h2>
+  <div class="card">
+    <ol>
+      <li><strong>Add Redis response cache</strong> — Cache identical chat queries (SHA256 of prompt) for 5 min. Eliminates redundant Anthropic calls.</li>
+      <li><strong>Configure uvicorn workers</strong> — <code>--workers 4</code> in Dockerfile CMD. Immediate 4x connection capacity.</li>
+      <li><strong>Set explicit DB pool sizes</strong> — <code>min_size=5, max_size=20</code> on both local and ON24 asyncpg pools.</li>
+      <li><strong>Add connection timeout</strong> — Set 30s timeout on ON24 DB pool acquire to prevent cascading failures.</li>
+      <li><strong>Enable gzip compression</strong> — Add GZipMiddleware for REST API responses (&gt;1KB).</li>
+    </ol>
+  </div>
+
+</div>
+</body>
+</html>
