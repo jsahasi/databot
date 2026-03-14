@@ -10,8 +10,7 @@ function LayoutInner() {
   const { isCalendarOpen, calendarProposedMode, proposedEvents, closeCalendar, sendMessage } = useChatContext()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <TopNav />
-      <AccountBreadcrumb />
+      <TopNav breadcrumb={<AccountBreadcrumb />} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <ChatSidebar />
         <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useChatContext } from '../../context/ChatContext'
 
-export default function TopNav() {
+export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
   const { isConnected, openCalendar } = useChatContext()
   const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
   const [dbEnv, setDbEnv] = useState<string>('')
@@ -55,6 +55,9 @@ export default function TopNav() {
           ON24 Nexus
         </span>
       </div>
+
+      {/* Breadcrumb (inline, separated by left border) */}
+      {breadcrumb}
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />

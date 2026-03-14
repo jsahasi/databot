@@ -45,7 +45,7 @@ export default function AccountBreadcrumb() {
 
   if (!data && !loading) return null
 
-  const { path = [], children = [], db_mode = 'PROD' } = data ?? {}
+  const { path = [], children = [] } = data ?? {}
 
   // Determine which nodes to display as breadcrumbs
   // Rules:
@@ -66,18 +66,6 @@ export default function AccountBreadcrumb() {
   const handleChildSelect = (child: ClientNode) => {
     setDropdownOpen(false)
     setSelectedClientId(child.client_id)
-  }
-
-  const dbBadgeStyle: React.CSSProperties = {
-    fontSize: '0.6rem',
-    fontWeight: 700,
-    padding: '0.15rem 0.45rem',
-    borderRadius: 4,
-    letterSpacing: '0.06em',
-    background: db_mode === 'QA' ? 'rgba(251,191,36,0.18)' : 'rgba(52,211,153,0.14)',
-    color: db_mode === 'QA' ? '#f59e0b' : '#34d399',
-    border: `1px solid ${db_mode === 'QA' ? 'rgba(251,191,36,0.35)' : 'rgba(52,211,153,0.3)'}`,
-    flexShrink: 0,
   }
 
   const crumbStyle = (active: boolean): React.CSSProperties => ({
@@ -107,11 +95,11 @@ export default function AccountBreadcrumb() {
         display: 'flex',
         alignItems: 'center',
         gap: '0.25rem',
-        padding: '0.35rem 1rem',
-        background: 'var(--color-card)',
-        borderBottom: '1px solid var(--color-border)',
-        minHeight: 32,
+        padding: '0 0.75rem',
         overflow: 'visible',
+        borderLeft: '1px solid var(--color-border)',
+        marginLeft: '0.75rem',
+        height: '100%',
       }}
     >
       {/* Breadcrumb nodes */}
@@ -273,11 +261,8 @@ export default function AccountBreadcrumb() {
         </>
       )}
 
-      {/* Spacer + DB mode badge */}
+      {/* Spacer — DB badge removed (shown in TopNav) */}
       <span style={{ flex: 1 }} />
-      {data && (
-        <span style={dbBadgeStyle}>{db_mode}</span>
-      )}
     </nav>
   )
 }
