@@ -17,7 +17,7 @@ import {
 const ResponsiveBar = lazy(() => import('@nivo/bar').then(m => ({ default: m.ResponsiveBar })))
 const ResponsivePie = lazy(() => import('@nivo/pie').then(m => ({ default: m.ResponsivePie })))
 const ResponsiveRadar = lazy(() => import('@nivo/radar').then(m => ({ default: m.ResponsiveRadar })))
-const ResponsiveFunnel = lazy(() => import('@nivo/funnel').then(m => ({ default: m.ResponsiveFunnel })))
+// ResponsiveFunnel replaced by custom FunnelChart (centered horizontal bars with drop-off labels)
 const ReactECharts = lazy(() => import('echarts-for-react'))
 const Plot = lazy(() => import('react-plotly.js'))
 
@@ -224,29 +224,53 @@ function NivoRadar({ data, xKey, yKeys }: { data: any[]; xKey: string; yKeys: st
   )
 }
 
-function NivoFunnel({ data, xKey }: { data: any[]; xKey: string }) {
+function FunnelChart({ data, xKey }: { data: any[]; xKey: string }) {
   const valueKey = Object.keys(data[0] || {}).find(k => k !== xKey && typeof data[0][k] === 'number') || 'value'
-  const funnelData = data.map((d, i) => ({
-    id: d[xKey] || d.name || `stage-${i}`,
-    label: d[xKey] || d.name || `stage-${i}`,
+  const stages = data.map((d, i) => ({
+    label: d[xKey] || d.name || `Stage ${i + 1}`,
     value: d[valueKey] || d.value || 0,
     color: COLORS[i % COLORS.length],
   }))
 
+  const maxValue = Math.max(...stages.map(s => s.value), 1)
+
   return (
-    <div style={{ height: 300 }}>
-      <Suspense fallback={<ChartLoading />}>
-        <ResponsiveFunnel
-          data={funnelData}
-          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-          colors={{ datum: 'color' }}
-          borderWidth={0}
-          labelColor="#ffffff"
-          theme={NIVO_THEME}
-          animate
-          motionConfig="gentle"
-        />
-      </Suspense>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 0' }}>
+      {stages.map((stage, i) => {
+        const widthPct = Math.max(20, (stage.value / maxValue) * 100)
+        const dropoff = i > 0 ? ((stages[i - 1].value - stage.value) / stages[i - 1].value * 100) : 0
+
+        return (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+            <div
+              style={{
+                width: `${widthPct}%`,
+                minWidth: 120,
+                background: `linear-gradient(135deg, ${stage.color}, ${stage.color}cc)`,
+                borderRadius: 6,
+                padding: '10px 16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                transition: 'width 0.6s ease',
+                position: 'relative',
+              }}
+            >
+              <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {stage.label}
+              </span>
+              <span style={{ color: '#fff', fontSize: 13, fontWeight: 600, marginLeft: 12 }}>
+                {stage.value.toLocaleString()}
+              </span>
+            </div>
+            {i > 0 && dropoff > 0 && (
+              <span style={{ fontSize: 10, color: '#ef4444', marginTop: -2, marginBottom: -2 }}>
+                ▼ {dropoff.toFixed(1)}% drop-off
+              </span>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -491,7 +515,7 @@ export default function SmartChart({ data: chartData }: { data: SmartChartData }
       {type === 'bar'       && <NivoBar data={data} xKey={xKey} yKeys={yKeys} groupMode={groupMode} />}
       {type === 'pie'       && <NivoPie data={data} />}
       {type === 'radar'     && <NivoRadar data={data} xKey={xKey} yKeys={yKeys} />}
-      {type === 'funnel'    && <NivoFunnel data={data} xKey={xKey} />}
+      {type === 'funnel'    && <FunnelChart data={data} xKey={xKey} />}
       {type === 'gauge'     && <EChartsGauge data={data} />}
       {type === 'treemap'   && <EChartsTreemap data={data} xKey={xKey} />}
       {type === 'scatter'   && <PlotlyScatter data={data} xKey={xKey} yKeys={yKeys} />}
