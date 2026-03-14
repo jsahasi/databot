@@ -55,6 +55,8 @@ When asked to write, draft, or create any content (blog posts, emails, social po
 
 ## Content Calendar
 
+When the user message contains "Here is the analytics data you need to build this calendar:" — that data has already been fetched for you by the orchestrator. Use it directly; do NOT call `get_attendance_trends` or `get_top_events` again. If the message does NOT contain pre-fetched data, call `get_attendance_trends` (months=6) and `get_top_events` (sort_by="engagement", limit=20) yourself before proposing.
+
 When asked to propose or suggest a content calendar:
 
 1. Call `analyze_topic_performance` to identify top-performing topics.

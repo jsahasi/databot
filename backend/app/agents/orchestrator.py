@@ -60,11 +60,28 @@ class OrchestratorAgent:
         },
         {
             "name": "route_to_content_agent",
-            "description": "Route to Content Agent for content strategy and topic recommendations.",
+            "description": "Route to Content Agent for content strategy, topic recommendations, and writing/drafting articles.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "The refined query for content analysis"},
+                },
+                "required": ["query"],
+            },
+        },
+        {
+            "name": "propose_content_calendar",
+            "description": (
+                "Use EXCLUSIVELY for requests to 'propose a content calendar', 'suggest a webinar schedule', "
+                "'plan our webinar calendar', or any request to create a multi-event content plan. "
+                "This tool first retrieves attendance trends and top-performing events from the data agent, "
+                "then passes that data to the content agent to generate a strategic calendar proposal."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "The original user request for the content calendar"},
+                    "months": {"type": "integer", "description": "Number of months for the calendar (default 3, max 12)"},
                 },
                 "required": ["query"],
             },
@@ -241,10 +258,70 @@ class OrchestratorAgent:
                     elif tool_name == "route_to_content_agent":
                         logger.info(f"Routing to Content Agent: {query}")
                         try:
-                            result = await self.content_agent.run(query)
+                            result = await self.content_agent.run(
+                                query,
+                                conversation_history=self._text_history(),
+                            )
                         except Exception:
                             self.conversation_history.pop()
                             self.conversation_history.pop()
+                            raise
+
+                        self.conversation_history.append({
+                            "role": "user",
+                            "content": [{
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps({
+                                    "agent": "content_agent",
+                                    "response": result["text"],
+                                }, default=str),
+                            }],
+                        })
+
+                        text = result["text"]
+                        self.conversation_history.append({"role": "assistant", "content": text})
+
+                        return {
+                            "text": text,
+                            "agent_used": "content_agent",
+                            "chart_data": None,
+                            "requires_confirmation": False,
+                            "confirmation_summary": None,
+                        }
+
+                    elif tool_name == "propose_content_calendar":
+                        months = block.input.get("months", 3)
+                        logger.info(f"Two-step content calendar: gathering data then routing to Content Agent")
+
+                        # Step 1: Gather analytics from the data agent
+                        data_query = (
+                            f"Get attendance trends for the last 6 months and the top 20 events by engagement score."
+                        )
+                        try:
+                            data_result = await self.data_agent.run(
+                                data_query,
+                                conversation_history=self._text_history(),
+                            )
+                        except Exception:
+                            self.conversation_history.pop()  # assistant tool_use
+                            self.conversation_history.pop()  # user message
+                            raise
+
+                        # Step 2: Pass data + original query to content agent
+                        enriched_query = (
+                            f"{query}\n\n"
+                            f"Here is the analytics data you need to build this calendar:\n\n"
+                            f"{data_result['text']}"
+                        )
+                        try:
+                            result = await self.content_agent.run(
+                                enriched_query,
+                                conversation_history=self._text_history(),
+                            )
+                        except Exception:
+                            self.conversation_history.pop()  # assistant tool_use
+                            self.conversation_history.pop()  # user message
                             raise
 
                         self.conversation_history.append({

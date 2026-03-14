@@ -366,6 +366,39 @@ CONTENT_AGENT_TOOLS = [
         },
     },
     {
+        "name": "get_attendance_trends",
+        "description": (
+            "Return monthly event cadence, attendance, and engagement trends from ON24 master DB. "
+            "Use this for content calendar work — it shows how many events ran per month, "
+            "registrants, attendees, and average engagement. Call with months=6 or months=12 for calendar planning."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "months": {"type": "integer", "description": "Number of past months to include (default 12)"},
+            },
+        },
+    },
+    {
+        "name": "get_top_events",
+        "description": (
+            "Retrieve top-performing events from ON24 master DB ranked by engagement score, attendees, or registrants. "
+            "Use this for content calendar work to identify which topics and titles resonate most. "
+            "Call with sort_by='engagement' and limit=20 to get the full picture of high-performing topics."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Number of top events to return (default 10)"},
+                "sort_by": {
+                    "type": "string",
+                    "enum": ["attendees", "engagement", "registrants"],
+                    "description": "Metric to rank events by (default: attendees)",
+                },
+            },
+        },
+    },
+    {
         "name": "analyze_topic_performance",
         "description": "Analyze which event types/topics drive the highest engagement and attendance rates.",
         "input_schema": {
@@ -407,6 +440,8 @@ CONTENT_AGENT_TOOLS = [
 
 CONTENT_TOOL_HANDLERS = {
     "get_ai_content": query_ai_content,
+    "get_attendance_trends": query_attendance_trends,
+    "get_top_events": query_top_events,
     "analyze_topic_performance": analyze_topic_performance,
     "compare_event_performance": compare_event_performance,
     "analyze_scheduling_patterns": analyze_scheduling_patterns,

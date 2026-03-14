@@ -303,6 +303,13 @@ async def websocket_chat(websocket: WebSocket):
                             if "no poll results for" in text.lower():
                                 poll_chip = "Show polls for the most recent event that had polls"
                                 suggestions = [poll_chip] + [s for s in suggestions if s != poll_chip][:4]
+                            # Inject "View proposed calendar" chip for content calendar responses
+                            if agent == "content_agent" and any(
+                                kw in text.lower() for kw in ("tofu", "mofu", "bofu", "funnel stage", "content calendar", "webinar plan", "proposed event")
+                            ):
+                                cal_chip = "View proposed calendar"
+                                if cal_chip not in suggestions:
+                                    suggestions = [cal_chip] + [s for s in suggestions if s != cal_chip][:4]
                             await ws.send_json({"type": "suggestions", "suggestions": suggestions})
                         except Exception:
                             pass  # Suggestions are best-effort; never block the user
