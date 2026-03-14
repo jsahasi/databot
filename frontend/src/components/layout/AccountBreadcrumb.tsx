@@ -111,7 +111,7 @@ export default function AccountBreadcrumb() {
         background: 'var(--color-card)',
         borderBottom: '1px solid var(--color-border)',
         minHeight: 32,
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       {/* Breadcrumb nodes */}
