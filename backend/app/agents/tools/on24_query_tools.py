@@ -742,6 +742,95 @@ async def query_audience_sources(
     return [_serialize(dict(row)) for row in rows]
 
 
+async def query_events_by_tag(
+    tag: str | None = None,
+    tag_type: str = "category",
+    months: int = 12,
+    aggregate: bool = False,
+    limit: int = 50,
+) -> list[dict]:
+    """Query events by meta tag (category or application) from event_x_meta_tags.
+
+    tag_type: 'category' or 'application'
+    tag: value to filter by (case-insensitive ILIKE). Omit to list all tags with counts.
+    aggregate: if True, return per-tag aggregated KPIs instead of individual events.
+    """
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+    months = _clamp_months(months)
+
+    if tag is None:
+        # List all distinct tags with event counts
+        col = "mt.category" if tag_type == "category" else "mt.application"
+        sql = f"""
+            SELECT {col} AS tag, COUNT(DISTINCT mt.event_id) AS event_count,
+                   ROUND(AVG(des.engagement_score_avg)::numeric, 1) AS avg_engagement,
+                   SUM(des.registrant_count) AS total_registrants,
+                   SUM(des.attendee_count) AS total_attendees
+            FROM on24master.event_x_meta_tags mt
+            JOIN on24master.event e ON mt.event_id = e.event_id
+            LEFT JOIN on24master.dw_event_session des ON des.event_id = e.event_id
+            WHERE e.client_id = ANY($1::bigint[])
+              AND {col} IS NOT NULL
+              AND e.goodafter >= NOW() - ($2 || ' months')::interval
+              {_EXCL_TEST}
+            GROUP BY {col}
+            ORDER BY event_count DESC
+            LIMIT $3
+        """
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, client_ids, str(months), limit, timeout=_QUERY_TIMEOUT)
+        return [_serialize(dict(row)) for row in rows]
+
+    if aggregate:
+        # Aggregate KPIs grouped by tag value
+        col = "mt.category" if tag_type == "category" else "mt.application"
+        sql = f"""
+            SELECT {col} AS tag,
+                   COUNT(DISTINCT e.event_id) AS event_count,
+                   SUM(des.registrant_count) AS total_registrants,
+                   SUM(des.attendee_count) AS total_attendees,
+                   ROUND(AVG(des.engagement_score_avg)::numeric, 1) AS avg_engagement,
+                   ROUND(AVG(CASE WHEN des.registrant_count > 0
+                       THEN des.attendee_count * 100.0 / des.registrant_count END)::numeric, 1) AS avg_conversion_rate
+            FROM on24master.event_x_meta_tags mt
+            JOIN on24master.event e ON mt.event_id = e.event_id
+            LEFT JOIN on24master.dw_event_session des ON des.event_id = e.event_id
+            WHERE e.client_id = ANY($1::bigint[])
+              AND {col} ILIKE '%' || $2 || '%'
+              AND e.goodafter >= NOW() - ($3 || ' months')::interval
+              {_EXCL_TEST}
+            GROUP BY {col}
+            ORDER BY event_count DESC
+            LIMIT $4
+        """
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, client_ids, tag, str(months), limit, timeout=_QUERY_TIMEOUT)
+        return [_serialize(dict(row)) for row in rows]
+
+    # List individual events matching tag
+    col = "mt.category" if tag_type == "category" else "mt.application"
+    sql = f"""
+        SELECT e.event_id, e.description, e.goodafter, e.event_type,
+               mt.category, mt.application,
+               des.registrant_count, des.attendee_count,
+               ROUND(des.engagement_score_avg::numeric, 1) AS avg_engagement
+        FROM on24master.event_x_meta_tags mt
+        JOIN on24master.event e ON mt.event_id = e.event_id
+        LEFT JOIN on24master.dw_event_session des ON des.event_id = e.event_id
+        WHERE e.client_id = ANY($1::bigint[])
+          AND {col} ILIKE '%' || $2 || '%'
+          AND e.goodafter >= NOW() - ($3 || ' months')::interval
+          {_EXCL_TEST}
+          {_MIN_REGS_SUBQ}
+        ORDER BY e.goodafter DESC
+        LIMIT $4
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, client_ids, tag, str(months), limit, timeout=_QUERY_TIMEOUT)
+    return [_serialize(dict(row)) for row in rows]
+
+
 async def query_resources(event_id: int, limit: int = 50) -> list[dict]:
     """Resource download activity for an event, grouped by resource name.
 

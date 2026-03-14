@@ -34,7 +34,6 @@ class ON24Client:
             "accessTokenKey": access_token_key or settings.on24_access_token_key,
             "accessTokenSecret": access_token_secret or settings.on24_access_token_secret,
             "Accept": "application/json",
-            "Content-Type": "application/json",
         }
         self._rate_limiter = RateLimiter()
         self._http_client: httpx.AsyncClient | None = None
@@ -94,7 +93,7 @@ class ON24Client:
         elif form_data is not None:
             # application/x-www-form-urlencoded
             kwargs["data"] = form_data
-        else:
+        elif json_body is not None:
             kwargs["json"] = json_body
 
         response = await client.request(method, path, **kwargs)

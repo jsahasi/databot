@@ -19,6 +19,7 @@ from app.agents.tools.on24_query_tools import (
     query_attendance_trends,
     query_audience_companies,
     query_audience_sources,
+    query_events_by_tag,
     query_resources,
     generate_chart_data,
     query_ai_content,
@@ -244,6 +245,29 @@ DATA_AGENT_TOOLS = [
         },
     },
     {
+        "name": "get_events_by_tag",
+        "description": (
+            "Query events by meta tag (category or application). ON24 events can be tagged with "
+            "category (e.g. 'Marketing') and application (e.g. 'Lead Generation', 'Customer Engagement'). "
+            "Use this when the user asks about events with a specific tag, or wants engagement metrics grouped by tag. "
+            "Omit tag to list all available tags with event counts. Set aggregate=true for per-tag KPI rollups."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tag": {"type": "string", "description": "Tag value to filter by (case-insensitive). Omit to list all tags."},
+                "tag_type": {
+                    "type": "string",
+                    "enum": ["category", "application"],
+                    "description": "Which tag field to query: 'category' or 'application' (default: category)",
+                },
+                "months": {"type": "integer", "description": "Look-back window in months (default 12)"},
+                "aggregate": {"type": "boolean", "description": "If true, return per-tag aggregated KPIs instead of individual events"},
+                "limit": {"type": "integer", "description": "Max results (default 50)"},
+            },
+        },
+    },
+    {
         "name": "get_resources",
         "description": (
             "Retrieve resource download/hit activity for a specific ON24 event. "
@@ -335,6 +359,7 @@ TOOL_HANDLERS = {
     "get_attendance_trends": query_attendance_trends,
     "get_audience_companies": query_audience_companies,
     "get_audience_sources": query_audience_sources,
+    "get_events_by_tag": query_events_by_tag,
     "get_resources": query_resources,
     "generate_chart_data": generate_chart_data,
     "get_ai_content": query_ai_content,

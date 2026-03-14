@@ -47,15 +47,15 @@ DB_QUERIES: dict[str, str] = {
         "ORDER BY goodafter DESC LIMIT 10"
     ),
     "list_client_attendees": (
-        "SELECT * FROM on24master.dw_attendee "
-        "WHERE client_id = ANY($1::bigint[]) "
+        "SELECT da.* FROM on24master.dw_attendee da "
+        "JOIN on24master.event e ON da.event_id = e.event_id "
+        "WHERE e.client_id = ANY($1::bigint[]) "
         "LIMIT 10"
     ),
     "list_client_registrants": (
         "SELECT eu.* FROM on24master.event_user eu "
         "JOIN on24master.event e ON eu.event_id = e.event_id "
         "WHERE e.client_id = ANY($1::bigint[]) "
-        "AND eu.userrole = 'Participant' "
         "LIMIT 10"
     ),
     "list_client_leads": (
