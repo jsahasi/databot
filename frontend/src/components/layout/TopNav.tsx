@@ -9,16 +9,13 @@ interface AdminUser {
 }
 
 export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
-  const { isConnected, openCalendar } = useChatContext()
+  const { isConnected, openCalendar, sendMessage } = useChatContext()
   const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
   const [dbEnv, setDbEnv] = useState<string>('')
   const [qaAvailable, setQaAvailable] = useState(false)
   const [switching, setSwitching] = useState(false)
   const [admins, setAdmins] = useState<AdminUser[]>([])
   const [selectedAdmin, setSelectedAdmin] = useState<string>('')
-  // Stored for programmatic access (e.g., window.__adminPermissions)
-  const [adminPermissions, setAdminPermissions] = useState<string[]>([])
-  useEffect(() => { (window as any).__adminPermissions = adminPermissions }, [adminPermissions])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
@@ -94,17 +91,39 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
             onChange={e => {
               const email = e.target.value
               setSelectedAdmin(email)
-              if (!email) { setAdminPermissions([]); return }
+              if (!email) { sessionStorage.removeItem('adminPermissions'); return }
               const admin = admins.find(a => a.email === email)
               if (admin) {
                 fetch(`/api/admins/${admin.admin_id}/permissions`)
                   .then(r => r.json())
                   .then(d => {
                     const perms: string[] = d.permissions || []
-                    setAdminPermissions(perms)
-                    alert(`${email} (${admin.profile})\n\nPermissions (${perms.length}):\n${perms.join('\n')}`)
+                    sessionStorage.setItem('adminPermissions', JSON.stringify(perms))
+                    // Map prop_codes to plain English
+                    const permLabels: Record<string, string> = {
+                      'create-event': 'Create events',
+                      'view-analytics': 'View analytics',
+                      'view-event-analytics': 'View event analytics',
+                      'view-webcasts': 'View Elite webcasts',
+                      'manage-brand-settings': 'Manage branding',
+                      'manage-engagement-hub': 'Manage Engagement Hub',
+                      'manage-target-experiences': 'Manage Target experiences',
+                      'manage-virtual-events': 'Manage GoLive virtual events',
+                      'manage-integrations': 'Manage integrations (Connect)',
+                      'manage-users': 'Manage users',
+                      'manage-meetups': 'Manage meetups',
+                      'elite-order-services': 'Order Elite services',
+                      'manage-audience-console': 'Manage Audience Console',
+                    }
+                    const readable = perms
+                      .filter(p => permLabels[p])
+                      .map(p => permLabels[p])
+                      .join(', ')
+                    const msg = `Simulating: ${admin.name} (${admin.profile}). Access: ${readable || 'standard permissions'}.\ndebug: ${perms.join(', ')}`
+                    // Send as a system-style message in chat
+                    sendMessage(msg, `Switched to ${admin.name} (${admin.profile})`)
                   })
-                  .catch(() => setAdminPermissions([]))
+                  .catch(() => sessionStorage.removeItem('adminPermissions'))
               }
             }}
             style={{

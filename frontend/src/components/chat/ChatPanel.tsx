@@ -42,6 +42,29 @@ const CONFIG_LINKS = [
   { label: 'Manage Users',          url: 'https://wcc.on24.com/webcast/manageusers' },
 ]
 
+// Permission → UI element mapping for filtering
+const PERM_FILTER: Record<string, string[]> = {
+  'view-webcasts':             ['Elite — Webinars'],
+  'manage-engagement-hub':    ['Engagement Hub'],
+  'manage-target-experiences': ['Target — Landing Pages'],
+  'manage-virtual-events':    ['GoLive — Virtual Events'],
+  'manage-brand-settings':    ['Branding'],
+  'manage-integrations':      ['Connect / Integrations'],
+}
+
+function filterByPermissions<T extends { label: string }>(items: T[], perms: string[]): T[] {
+  // If no admin selected (perms empty), show everything
+  if (perms.length === 0) return items
+  // Build set of labels to hide (permission exists but is NOT in the admin's active perms)
+  const hiddenLabels = new Set<string>()
+  for (const [perm, labels] of Object.entries(PERM_FILTER)) {
+    if (!perms.includes(perm)) {
+      labels.forEach(l => hiddenLabels.add(l))
+    }
+  }
+  return items.filter(item => !hiddenLabels.has(item.label))
+}
+
 export default function ChatPanel() {
   const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, setProposedEvents, resetChat } = useChatContext()
   const [input, setInput] = useState('')
@@ -68,6 +91,22 @@ export default function ChatPanel() {
     'How do I prepare as a presenter?',
     'How do I use Connect integrations?',
   ]
+
+  // Read permissions from sessionStorage (set by TopNav on admin selection)
+  const storedPerms: string[] = JSON.parse(sessionStorage.getItem('adminPermissions') || '[]')
+  const filteredExperiences = filterByPermissions(EXPERIENCE_LINKS, storedPerms)
+  const filteredConfigLinks = filterByPermissions(CONFIG_LINKS, storedPerms)
+  const filteredSuggestions = SUGGESTIONS.filter(s => {
+    if (s.text === 'Experiences' && filteredExperiences.length === 0) return false
+    if (s.text === 'Configure environment' && filteredConfigLinks.length === 0) return false
+    return true
+  })
+  const filteredHowDoI = HOW_DO_I_OPTIONS.filter(opt => {
+    if (storedPerms.length === 0) return true
+    if (opt.includes('Engagement Hub') && !storedPerms.includes('manage-engagement-hub')) return false
+    if (opt.includes('Connect integrations') && !storedPerms.includes('manage-integrations')) return false
+    return true
+  })
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -202,7 +241,7 @@ export default function ChatPanel() {
                 width: '100%',
                 maxWidth: 680,
               }}>
-                {SUGGESTIONS.map(({ text: s, agent, href }, i) => {
+                {filteredSuggestions.map(({ text: s, agent, href }, i) => {
                   const c = AGENT_COLORS[agent]
                   return (
                     <button
@@ -304,7 +343,7 @@ export default function ChatPanel() {
                   Which ON24 experience?
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
-                  {EXPERIENCE_LINKS.map(({ label, url }) => (
+                  {filteredExperiences.map(({ label, url }) => (
                     <a
                       key={label}
                       href={url}
@@ -356,7 +395,7 @@ export default function ChatPanel() {
                   What would you like to configure?
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
-                  {CONFIG_LINKS.map(({ label, url }) => (
+                  {filteredConfigLinks.map(({ label, url }) => (
                     <a
                       key={label}
                       href={url}
@@ -503,7 +542,7 @@ export default function ChatPanel() {
                   What would you like help with?
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
-                  {HOW_DO_I_OPTIONS.map((q, i) => (
+                  {filteredHowDoI.map((q, i) => (
                     <button
                       key={i}
                       aria-label={q}
