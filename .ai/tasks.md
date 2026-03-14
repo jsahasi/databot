@@ -314,7 +314,7 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Add query tools for dw_lead (lead/prospect analytics) — query_leads + query_lead_stats, commit 042b0a3
 - [x] Add backend tests for on24_query_tools (mock asyncpg pool) — 47 tests, commit 496eed2
 - [x] Frontend Vitest component tests (KPICard, ErrorState, LoadingState, AgentIndicator) — 23 tests, commit 496eed2
-- [ ] Frontend Playwright E2E tests
+- [x] Frontend Playwright E2E tests — 8 tests (app load, chat, calendar, docs, a11y)
 - [ ] Multi-client: implement per-request context var for tenant ID
 - [x] ~~Recent Chats: persist chat history in localStorage~~ — removed from scope
 - [x] Marketer + director regression test prompts — test_persona_prompts.py loads 300 prompts from JSON, commit 0826421
