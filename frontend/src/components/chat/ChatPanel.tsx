@@ -69,13 +69,14 @@ export default function ChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // When a message arrives with proposedEvents, store them in context
+  // When a message arrives with proposedEvents, store them in context and auto-open calendar
   useEffect(() => {
     const last = messages[messages.length - 1]
     if (last?.role === 'assistant' && last.proposedEvents?.length) {
       setProposedEvents(last.proposedEvents)
+      openProposedCalendar()
     }
-  }, [messages, setProposedEvents])
+  }, [messages, setProposedEvents, openProposedCalendar])
 
   // Restore focus to input whenever processing finishes
   useEffect(() => {

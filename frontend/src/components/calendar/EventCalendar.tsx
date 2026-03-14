@@ -1027,7 +1027,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
           {proposedMode && (
             <>
               <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#8b5cf6', background: 'rgba(139,92,246,0.1)', padding: '0.2rem 0.6rem', borderRadius: 4 }}>
-                Proposed Calendar{proposedEvents.length > 0 ? ` (${proposedEvents.length} events)` : ' — ask me to propose a content calendar first'}
+                Proposed Calendar{proposedEvents.length > 0 ? ` (${proposedEvents.length} events)` : ''}
               </span>
               <button
                 onClick={() => setShowExistingEvents(v => !v)}

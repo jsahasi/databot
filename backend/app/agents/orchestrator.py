@@ -352,10 +352,17 @@ class OrchestratorAgent:
                         })
 
                         text = result["text"]
-                        self.conversation_history.append({"role": "assistant", "content": text})
 
                         # Extract proposed_events JSON block from content agent response
                         proposed_events = _extract_proposed_events(text)
+                        if proposed_events:
+                            logger.info(f"Extracted {len(proposed_events)} proposed events from content agent")
+                            # Strip the raw JSON block from user-visible text
+                            text = re.sub(r"```proposed_events\s*\n.*?```", "", text, flags=re.DOTALL).strip()
+                        else:
+                            logger.warning("Content agent did not emit proposed_events JSON block")
+
+                        self.conversation_history.append({"role": "assistant", "content": text})
 
                         return {
                             "text": text,
