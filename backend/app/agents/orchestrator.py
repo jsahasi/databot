@@ -20,16 +20,24 @@ _ORCHESTRATOR_TEMPLATE = (Path(__file__).parent / "prompts" / "orchestrator.md")
 import re
 
 def _extract_proposed_events(text: str) -> list[dict] | None:
-    """Extract proposed_events JSON from a ```proposed_events fenced block."""
-    m = re.search(r"```proposed_events\s*\n(.*?)```", text, re.DOTALL)
-    if not m:
-        return None
-    try:
-        events = json.loads(m.group(1).strip())
-        if isinstance(events, list) and events:
-            return events
-    except (json.JSONDecodeError, TypeError):
-        logger.warning("Failed to parse proposed_events JSON from content agent")
+    """Extract proposed_events JSON from a fenced block in the content agent response."""
+    # Try exact tag first, then any fenced block containing a JSON array with date/title keys
+    for pattern in [
+        r"```proposed_events\s*\n(.*?)```",
+        r"```json\s*\n(\[.*?\])\s*```",
+        r"```\s*\n(\[\s*\{.*?\]\s*)```",
+    ]:
+        m = re.search(pattern, text, re.DOTALL)
+        if not m:
+            continue
+        try:
+            events = json.loads(m.group(1).strip())
+            if isinstance(events, list) and events and "title" in events[0]:
+                logger.info(f"Matched proposed_events via pattern: {pattern}")
+                return events
+        except (json.JSONDecodeError, TypeError):
+            continue
+    logger.warning("No proposed_events JSON block found in content agent response")
     return None
 
 
@@ -358,7 +366,7 @@ class OrchestratorAgent:
                         if proposed_events:
                             logger.info(f"Extracted {len(proposed_events)} proposed events from content agent")
                             # Strip the raw JSON block from user-visible text
-                            text = re.sub(r"```proposed_events\s*\n.*?```", "", text, flags=re.DOTALL).strip()
+                            text = re.sub(r"```(?:proposed_events|json)?\s*\n\[.*?\]\s*```", "", text, flags=re.DOTALL).strip()
                         else:
                             logger.warning("Content agent did not emit proposed_events JSON block")
 
