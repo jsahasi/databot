@@ -7,6 +7,7 @@ export interface ProposedEvent {
   time: string        // HH:MM
   duration_minutes: number
   funnel_stage?: string
+  theme?: string
   topic?: string
 }
 

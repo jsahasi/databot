@@ -35,6 +35,7 @@ interface ProposedEvent {
   time: string        // HH:MM (24h)
   duration_minutes: number
   funnel_stage?: string
+  theme?: string
   topic?: string
 }
 
@@ -316,6 +317,7 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
     // Show proposed event metadata instead of KPIs
     const anyEv = event as any
     if (anyEv._funnel_stage) kpis.push({ label: 'Funnel Stage', value: anyEv._funnel_stage, icon: '🎯' })
+    if (anyEv._theme) kpis.push({ label: 'Campaign Theme', value: anyEv._theme, icon: '📣' })
     if (anyEv._topic) kpis.push({ label: 'Topic', value: anyEv._topic, icon: '💡' })
   } else if (!event.is_future) {
     kpis.push({ label: 'Registrants', value: (event.registrant_count ?? 0).toLocaleString(), icon: '👥' })
@@ -935,8 +937,9 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
     is_future: true,
     _proposed: true,
     _funnel_stage: pe.funnel_stage,
+    _theme: pe.theme,
     _topic: pe.topic,
-  } as CalendarEvent & { _proposed?: boolean; _funnel_stage?: string; _topic?: string }))
+  } as CalendarEvent & { _proposed?: boolean; _funnel_stage?: string; _theme?: string; _topic?: string }))
 
   // In proposed mode: show proposed events + optionally existing future events
   const visibleEvents = proposedMode

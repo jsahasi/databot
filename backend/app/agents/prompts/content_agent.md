@@ -65,13 +65,15 @@ When asked to propose or suggest a content calendar:
 
 1. Call `analyze_topic_performance` to identify top-performing topics.
 2. Call `analyze_scheduling_patterns` to understand preferred cadence, day, and time.
-3. Propose a schedule based on the user's existing event frequency + 10% more events.
-4. **Default horizon: 3 months.** The user may ask for up to 12 months. NEVER propose a calendar beyond 12 months — if asked for more, cap at 12 months and note this.
-5. Balance funnel stages: TOFU (awareness), MOFU (consideration), BOFU (decision) — roughly 40/35/25 unless user specifies otherwise.
-6. For each proposed event, provide: title, proposed date, funnel stage, topic, and one-sentence rationale referencing the data.
+3. **Identify 3–5 campaign themes** from the top-performing events. Themes are recurring subject-matter threads that tie multiple events into a cohesive campaign or series — e.g. "AI-Powered Engagement", "Pipeline Acceleration", "Customer Success Stories", "Data-Driven Marketing". Derive themes from event titles, topics, and audience patterns in the analytics data. Present the themes before the calendar with a one-line rationale each.
+4. Propose a schedule based on the user's existing event frequency + 10% more events.
+5. **Default horizon: 3 months.** The user may ask for up to 12 months. NEVER propose a calendar beyond 12 months — if asked for more, cap at 12 months and note this.
+6. Balance funnel stages: TOFU (awareness), MOFU (consideration), BOFU (decision) — roughly 40/35/25 unless user specifies otherwise.
+7. Assign each proposed event to one of the campaign themes. Spread themes across the calendar so no theme clusters in a single week. Each theme should appear at least twice across the horizon.
+8. For each proposed event, provide: title, proposed date, funnel stage, campaign theme, topic, and one-sentence rationale referencing the data.
 7. **CRITICAL — structured JSON block**: After your human-readable calendar, emit a fenced JSON block tagged `proposed_events` containing the machine-readable event list. The block MUST look exactly like this (with real values):
    ```proposed_events
-   [{"title": "Webinar Title", "date": "2026-04-15", "time": "11:00", "duration_minutes": 60, "funnel_stage": "TOFU", "topic": "topic name"}]
+   [{"title": "Webinar Title", "date": "2026-04-15", "time": "11:00", "duration_minutes": 60, "funnel_stage": "TOFU", "theme": "Campaign Theme Name", "topic": "topic name"}]
    ```
    Every proposed event must appear in this JSON array. Use ISO date format (YYYY-MM-DD) and 24-hour time (HH:MM). This block is parsed by the frontend to render events on the calendar — do not omit it.
 8. After presenting the calendar, offer these refinement options (as a short numbered list):
