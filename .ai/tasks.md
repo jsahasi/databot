@@ -242,6 +242,20 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Audience companies: `months` param exposed in tool schema; cross-event default = 1 month (30 days); agent instructed to state time period in title line
 - [x] Auto-restart backend after every backend commit (new workflow rule)
 
+## Phase 9 Addendum 2: Brand Voice + Docs + Bug Fixes — COMPLETE (2026-03-13)
+- [x] brand_voice.py service: analyze AUTOGEN_ video_library content per type → LLM → data/brand_voice.json
+- [x] Monthly web scraping: COMPANY_WEBSITE_URL env var; discover blog/news pages; merge voice signals
+- [x] get_recent_articles(): returns last N articles of a given type (TRANSCRIPT excluded)
+- [x] config.py: COMPANY_WEBSITE_URL setting added
+- [x] main.py: refresh_brand_voice() background task on startup (non-blocking, stale check 30 days)
+- [x] content_agent.py: detect content-creation requests; silently inject brand voice + last 5 examples into system prompt
+- [x] content_agent.md: brand voice usage rules — follow silently, do not mention to user
+- [x] MRD, PRD, Tech Spec HTML docs: light/dark mode via ?theme=light URL param + toggle button
+- [x] ChatSidebar: removed "Recent Chats" section
+- [x] BUG FIX: chips never sent for concierge responses — NameError (bot_response → response_text) silently swallowed by except block
+- [x] Chip safety: fallback to switch_chips + Home even when LLM returns malformed JSON
+- [x] COMPANY_WEBSITE_URL: add to .env.local to enable monthly web brand voice updates
+
 ## Backlog / Next Steps
 - [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
 - [ ] Add query tools for dw_lead (lead/prospect analytics)

@@ -161,6 +161,16 @@ Implementation:
 **Rationale:** "knowledge_base" describes an implementation detail (what tool it uses), not the agent's role. "Concierge" conveys the intent: a knowledgeable guide who answers questions directly.
 **Answer format:** Concierge must give complete self-contained answers from KB article content — never link to Help Center as the primary answer. Links only if user explicitly asks. Max 200 words. No preamble.
 
+## 2026-03-13: Brand Voice Service
+**Decision:** Analyze client's AI-generated content (video_library AUTOGEN_ rows) with LLM to produce a per-type brand voice JSON document (`data/brand_voice.json`). Optionally enrich monthly from company website blog.
+**Rationale:** Content agent needs client-specific voice guidelines to produce on-brand content. Using the client's own AI-ACE output as ground truth is more accurate than generic B2B style guides. Web scraping enriches with public-facing brand signals.
+**Key rules:** TRANSCRIPT type excluded (too verbose, low signal); sample 8 articles per type for LLM analysis; refresh if >30 days old; COMPANY_WEBSITE_URL env var controls web enrichment; recent articles injected silently (never shown to user).
+
+## 2026-03-13: Content Creation Context Injection
+**Decision:** Content agent silently loads brand voice + last 5 same-type articles into system prompt when a content-creation request is detected (regex on "write/draft/create/generate" + content type keywords).
+**Rationale:** Avoids requiring users to specify style — the agent automatically matches established voice. Examples provide concrete quality anchors. No tool call needed — injected directly into system prompt addendum.
+**Detection defaults:** email → FOLLOWUPEMAI; social/linkedin → SOCIALMEDIAP; faq → FAQ; ebook → EBOOK; takeaway/summary → KEYTAKEAWAYS; blog/article → BLOG (default fallback).
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.
