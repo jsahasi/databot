@@ -23,7 +23,7 @@ const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
   { text: 'Configure environment',     agent: 'config'                       },
   { text: 'Trends',                    agent: 'data'                         },
   { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
-  { text: 'Event data exploration',    agent: 'data'                         },
+  { text: 'Performance by tags',        agent: 'data'                         },
   { text: 'Explore Content',           agent: 'content'                      },
 ]
 
@@ -177,7 +177,7 @@ export default function ChatPanel() {
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
                         else if (s === 'Explore Content') { setShowExploreContent(true) }
-                        else if (s === 'Event data exploration') { sendMessage('What is the event ID?'); setInput('') }
+                        else if (s === 'Performance by tags') { sendMessage('Show me performance by tags used in the last month. List all event tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag.', 'Show me performance by tags in the last month'); setInput('') }
                         else if (href) { window.open(href, '_blank', 'noreferrer') }
                         else { sendMessage(s); setInput('') }
                       }}
