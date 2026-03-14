@@ -141,14 +141,18 @@ async def get_client_path(client_id: int, root_id: int, pool: asyncpg.Pool) -> l
         if current == root_id:
             break
         try:
+            # A sub_client can have multiple parent entries in client_hierarchy.
+            # Prefer the root (shortest path) or the one closest to root.
+            # ORDER BY: root_id first, then smallest client_id as tiebreaker.
             row = await pool.fetchrow(
                 """
                 SELECT client_id FROM on24master.client_hierarchy
                 WHERE sub_client_id = $1
                   AND client_id != sub_client_id
+                ORDER BY (client_id = $2) DESC, client_id ASC
                 LIMIT 1
                 """,
-                current, timeout=5,
+                current, root_id, timeout=5,
             )
         except Exception as e:
             logger.warning(f"Path walk at {current}: {e}")
@@ -163,8 +167,14 @@ async def get_client_path(client_id: int, root_id: int, pool: asyncpg.Pool) -> l
 
     path_ids.reverse()  # root → leaf
 
-    # Ensure root is always the first node even if walk stopped early
-    if path_ids[0] != root_id:
+    # Ensure root is always the first node.
+    # If root appears somewhere in the middle (e.g. walk went past root due to
+    # ambiguous parent entries), truncate everything before it.
+    if root_id in path_ids:
+        root_idx = path_ids.index(root_id)
+        if root_idx > 0:
+            path_ids = path_ids[root_idx:]
+    else:
         path_ids.insert(0, root_id)
 
     # Fetch names in one round-trip
