@@ -107,8 +107,15 @@ async def health():
 @app.get("/api/status")
 async def app_status():
     """Return app status including which ON24 DB environment is active."""
-    from app.db.on24_db import get_active_env
+    from app.db.on24_db import get_active_env, get_pool
     env = get_active_env()
+    # If no pool exists yet, try to create one so we can report the actual state
+    if not env:
+        try:
+            await get_pool()
+            env = get_active_env()
+        except Exception:
+            env = "disconnected"
     return {
         "on24_db": env or "disconnected",
         "qa_available": bool(settings.on24_db_url_qa),
