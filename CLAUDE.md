@@ -57,3 +57,7 @@ dashboard, keyinsightssummary, reportsdashboard, portalsummaryreports, targetAna
 - Admin confirmation: `requires_confirmation=True` → frontend dialog → `{"confirmed": true}`
 - Knowledge base: Postgres REAL[] + OpenAI text-embedding-3-small + numpy cosine similarity
 - Brand voice: `data/brand_voice.json` auto-generated from AUTOGEN_ content; content agent injects silently
+- Prompt caching: `cache_control: {"type": "ephemeral"}` on all `messages.create` system prompts
+- Redis: response cache (2-min TTL) for data/concierge queries; container `redis:7-alpine`
+- Backend: 5 gunicorn workers × 3 asyncpg connections = 15 total ON24 DB connections
+- Simulated Admin: TopNav dropdown → `/api/admins` + `/api/admins/{id}/permissions` → sessionStorage → UI filtering

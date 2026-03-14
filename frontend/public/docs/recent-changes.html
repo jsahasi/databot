@@ -21,14 +21,20 @@
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot indigo"></span>Lead analytics tools (dw_lead)</div>
-  <div class="desc">Two new data agent tools: get_leads (filterable by company/job title) and get_lead_stats (total leads, monthly trends, top companies, acquisition sources). Queries 105M-row dw_lead table with direct client_id scoping.</div>
+  <div class="title"><span class="dot amber"></span>Simulated Admin + permission-based UI</div>
+  <div class="desc">TopNav admin dropdown with 108 active admins. Selecting an admin fetches permissions from admin_property_info, stores in sessionStorage, and filters UI: home tiles, experience links, config links, and how-to options hidden when the admin lacks the corresponding permission.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot blue"></span>Comprehensive test suite (76+ backend, 23 frontend)</div>
-  <div class="desc">53 backend tests for all query tools (mocked asyncpg pool), plus security, a11y, charts, and API tests. 23 Vitest component tests for KPICard, ErrorState, LoadingState, AgentIndicator. 300 persona regression prompts ready (200 marketer + 100 director).</div>
+  <div class="title"><span class="dot indigo"></span>Prompt caching + Redis response cache</div>
+  <div class="desc">Anthropic prompt caching (cache_control ephemeral) on all agent calls — 90% input token discount. Redis 7 response cache with 2-min TTL for data/concierge queries. 5 gunicorn workers with 3 DB connections each (capacity ~25-50 concurrent users).</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 14, 2026</div>
+  <div class="title"><span class="dot blue"></span>Lead analytics + comprehensive test suite</div>
+  <div class="desc">dw_lead query tools (get_leads, get_lead_stats). 247 backend tests (all passing), 23 Vitest component tests, 8 Playwright E2E tests, 300 persona regression prompts. 7 pre-existing test failures fixed.</div>
 </div>
 
 <div class="item">

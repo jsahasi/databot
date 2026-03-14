@@ -205,6 +205,18 @@ Implementation:
 **Decision:** Applied 15+ WCAG fixes: skip-to-content link, focus-visible outlines, aria-live regions, aria-expanded on collapsible sections, dark mode contrast (#94a0b8 for text-secondary), chat input labels, chart role="img", DOMPurify on calendar HTML.
 **Rationale:** VPAT audit revealed multiple Partially Supports criteria. Fixes bring 9 criteria to full Supports status. 4 items remain open (calendar keyboard nav, chart axes contrast, calendar responsive 320px, chart data tables).
 
+## 2026-03-14: Permission-Based UI Filtering (Simulated Admin)
+**Decision:** Admin permissions from `admin_property_info` (prop_code where value='Yes') stored in sessionStorage. UI elements filtered based on permission presence. No admin selected = show everything.
+**Permission mapping:** view-webcasts→Elite, manage-engagement-hub→Hub, manage-target-experiences→Target, manage-virtual-events→GoLive, manage-brand-settings→Branding, manage-integrations→Connect, manage-users→Users, view-analytics→data agent tiles.
+
+## 2026-03-14: Anthropic Prompt Caching
+**Decision:** Added `cache_control: {"type": "ephemeral"}` to all 6 `messages.create` calls (system prompt parameter changed from string to list of content blocks).
+**Rationale:** 90% input token discount on cached system prompts (5-min TTL). No behavioral change. Estimated $150K–$450K/yr savings at scale.
+
+## 2026-03-14: Redis Response Cache
+**Decision:** Added Redis 7 container + `response_cache.py`. SHA256(prompt.lower()) + client_id as cache key. 2-minute TTL. Only caches data_agent and concierge responses (not admin/content). Graceful degradation if Redis unavailable.
+**Rationale:** Eliminates redundant LLM calls for repeated questions within 2 minutes. Skip for confirmed actions and short messages (<6 chars).
+
 ## 2026-03-14: Gunicorn Multi-Worker Backend (5 workers × 3 DB conns)
 **Decision:** Switched from single uvicorn to gunicorn with 5 UvicornWorker processes, each with a 3-connection asyncpg pool (15 total ON24 DB connections).
 **Rationale:** Single worker supported ~5-10 concurrent users. 5 workers scales to ~25-50. WebSocket connections are inherently sticky to one worker (TCP), so in-memory conversation history works without shared state or Redis. DB pool reduced from 10 to 3 per worker to stay under connection limits (5×3=15 vs 1×10=10). UVICORN_WORKERS env var allows tuning without rebuilding.

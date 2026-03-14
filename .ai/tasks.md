@@ -309,15 +309,30 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] WCAG 2.1 AA fixes: skip link, focus-visible outlines, aria-live regions, aria-expanded, contrast fix (#94a0b8), chat labels, chart roles, DOMPurify on calendar HTML
 - [x] VPAT regenerated: 9 criteria upgraded from Partially Supports to Supports
 
-## Backlog / Next Steps
-- [x] Tag-based event search and filtering — query_events_by_tag implemented (tags_created table: campaign + funnel types)
-- [x] Add query tools for dw_lead (lead/prospect analytics) — query_leads + query_lead_stats, commit 042b0a3
-- [x] Add backend tests for on24_query_tools (mock asyncpg pool) — 47 tests, commit 496eed2
-- [x] Frontend Vitest component tests (KPICard, ErrorState, LoadingState, AgentIndicator) — 23 tests, commit 496eed2
+## Phase 11: Infrastructure + Admin Simulation — COMPLETE (2026-03-14)
+- [x] Backend tests for on24_query_tools — 53 tests with mocked asyncpg pool
+- [x] Frontend Vitest component tests — 23 tests (KPICard, ErrorState, LoadingState, AgentIndicator)
 - [x] Frontend Playwright E2E tests — 8 tests (app load, chat, calendar, docs, a11y)
-- [x] Multi-client: per-request context var for tenant ID — already implemented in chat.py (set_request_client_id + hierarchy validation)
-- [x] ~~Recent Chats: persist chat history in localStorage~~ — removed from scope
-- [x] Marketer + director regression test prompts — test_persona_prompts.py loads 300 prompts from JSON, commit 0826421
+- [x] dw_lead query tools — query_leads + query_lead_stats with tool schemas
+- [x] Persona regression test runner — 300 prompts (200 marketer + 100 director)
+- [x] CLAUDE.md compacted 198→47 lines; .ai/architecture.md created
+- [x] Gunicorn 5 workers × 3 DB conns (capacity ~25-50 concurrent users)
+- [x] Anthropic prompt caching — cache_control ephemeral on all 6 messages.create calls
+- [x] Redis response cache — 2-min TTL, SHA256 key, data/concierge agents only
+- [x] Simulated Admin dropdown — TopNav select with permissions from admin_property_info
+- [x] Permission-based UI filtering — sessionStorage, home tiles + config + experiences filtered
+- [x] Content agent topic suggestions — MANDATORY when no topic given, no clarifying questions
+- [x] Orchestrator routing — content before data, numbered selection support
+- [x] Calendar print fix — visibility-based CSS (was blank page due to child selector)
+- [x] Dark mode fixes — input text, cursor, status indicator colors
+- [x] CSP fix for docs — inline scripts for theme detection
+- [x] 7 pre-existing test failures fixed (auth headers, security tests)
+
+## Backlog / Next Steps
+- [ ] Documents dropdown nav on each HTML doc (navigate between docs without returning to app)
+- [ ] Reload admin dropdown when client_id changes via breadcrumb
+- [ ] Agent permission awareness — suppress deep links to products the user lacks access to in agent responses
+- [ ] Tag-based event search — query_events_by_tag implemented but not yet surfaced as home tile
 
 ## Verified ON24 Schema (on24master)
 
