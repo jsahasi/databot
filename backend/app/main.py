@@ -41,11 +41,13 @@ async def _refresh_brand_voice():
 
 
 async def _ingest_knowledge_base():
-    """Ingest Zendesk articles into Postgres (runs as background task)."""
+    """Ingest Zendesk articles and API reference into Postgres (runs as background task)."""
     try:
-        from app.db.knowledge_base import ingest_zendesk_articles
+        from app.db.knowledge_base import ingest_zendesk_articles, ingest_api_reference
         count = await ingest_zendesk_articles()
-        logger.info(f"Knowledge base: {count} articles ingested")
+        logger.info(f"Knowledge base: {count} Zendesk articles ingested")
+        api_count = await ingest_api_reference()
+        logger.info(f"Knowledge base: {api_count} API endpoints ingested")
     except Exception as e:
         logger.warning(f"Knowledge base ingestion failed (non-fatal): {e}")
 

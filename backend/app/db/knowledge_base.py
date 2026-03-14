@@ -20,6 +20,7 @@ from app.db.session import async_session_factory
 logger = logging.getLogger(__name__)
 
 _ZENDESK_FILE = Path("/app/data/zendesk_articles.json")
+_API_REF_FILE = Path("/app/data/on24_api_reference.json")
 _EMBED_MODEL = "text-embedding-3-small"
 _EMBED_DIMS = 1536
 _BATCH_SIZE = 100  # OpenAI embeddings per API call
@@ -121,6 +122,113 @@ async def ingest_zendesk_articles() -> int:
     return len(articles)
 
 
+async def ingest_api_reference() -> int:
+    """Ingest ON24 API reference endpoints into the knowledge base.
+
+    Each endpoint becomes a searchable document alongside Zendesk articles.
+    Does NOT clear existing rows — call after ingest_zendesk_articles.
+    Returns endpoint count.
+    """
+    if not _API_REF_FILE.exists():
+        logger.warning(f"API reference file not found: {_API_REF_FILE}")
+        return 0
+
+    data = json.loads(_API_REF_FILE.read_text(encoding="utf-8"))
+    endpoints = data.get("endpoints", [])
+    auth = data.get("authentication", {})
+    base_urls = data.get("base_urls", {})
+
+    # Build a preamble chunk for general API info
+    preamble = (
+        f"ON24 REST API v2 Overview\n\n"
+        f"Base URLs: NA={base_urls.get('na','')}, EU={base_urls.get('eu','')}, "
+        f"QA={base_urls.get('qa','')}\n"
+        f"Authentication: {auth.get('description', '')}\n"
+        f"Headers: {', '.join(auth.get('headers', []))}\n"
+        f"Total endpoints: {len(endpoints)}"
+    )
+
+    rows: list[dict] = []
+    # Preamble chunk
+    rows.append({
+        "article_id": "api_ref_overview",
+        "title": "ON24 REST API v2 Overview",
+        "url": "",
+        "chunk_index": 0,
+        "content": preamble,
+    })
+
+    for ep in endpoints:
+        ep_id = ep.get("id", "unknown")
+        title = f"ON24 API: {ep.get('name', '')} ({ep.get('method', '')} {ep.get('path', '')})"
+        # Build rich text for embedding
+        parts = [
+            title,
+            f"\nCategory: {ep.get('category', '')}",
+            f"Content-Type: {ep.get('content_type', 'application/json')}",
+            f"\n{ep.get('description', '')}",
+        ]
+        params = ep.get("parameters", [])
+        if params:
+            parts.append("\nParameters:")
+            for p in params:
+                req = " (required)" if p.get("required") else ""
+                parts.append(f"  - {p.get('name', '')}: {p.get('type', 'string')}{req} — {p.get('description', '')}")
+        notes = ep.get("notes", "")
+        if notes:
+            parts.append(f"\nNotes: {notes}")
+        resp = ep.get("response_fields", [])
+        if resp:
+            parts.append("\nResponse fields:")
+            for rf in resp:
+                parts.append(f"  - {rf.get('name', '')}: {rf.get('description', '')}")
+
+        body_text = "\n".join(parts)
+        for i, chunk in enumerate(_chunk_text(body_text)):
+            rows.append({
+                "article_id": f"api_{ep_id}",
+                "title": title,
+                "url": "",
+                "chunk_index": i,
+                "content": chunk,
+            })
+
+    if not rows:
+        logger.warning("No API endpoints to ingest")
+        return 0
+
+    all_texts = [r["content"] for r in rows]
+    embeddings: list[list[float]] = []
+    for start in range(0, len(all_texts), _BATCH_SIZE):
+        batch = all_texts[start : start + _BATCH_SIZE]
+        embeddings.extend(await _embed_batch(batch))
+        logger.info(f"Embedded API ref {min(start + _BATCH_SIZE, len(all_texts))}/{len(all_texts)} chunks")
+
+    for row, emb in zip(rows, embeddings):
+        row["embedding"] = emb
+
+    async with async_session_factory() as session:
+        # Remove old API ref rows only (keep Zendesk rows)
+        await session.execute(
+            text("DELETE FROM knowledge_base_articles WHERE article_id LIKE 'api_%'")
+        )
+        for start in range(0, len(rows), 500):
+            batch = rows[start : start + 500]
+            await session.execute(
+                text("""
+                    INSERT INTO knowledge_base_articles
+                        (article_id, title, url, chunk_index, content, embedding)
+                    VALUES
+                        (:article_id, :title, :url, :chunk_index, :content, :embedding)
+                """),
+                batch,
+            )
+        await session.commit()
+
+    logger.info(f"Ingested {len(endpoints)} API endpoints ({len(rows)} chunks) into knowledge base")
+    return len(endpoints)
+
+
 async def query_knowledge(query: str, n_results: int = 5) -> list[dict]:
     """Search the knowledge base for relevant ON24 platform articles.
 
@@ -140,6 +248,7 @@ async def query_knowledge(query: str, n_results: int = 5) -> list[dict]:
         # Attempt on-demand ingest
         logger.info("Knowledge base empty — triggering ingest")
         await ingest_zendesk_articles()
+        await ingest_api_reference()
         async with async_session_factory() as session:
             result = await session.execute(
                 text("SELECT article_id, title, url, chunk_index, content, embedding FROM knowledge_base_articles")
