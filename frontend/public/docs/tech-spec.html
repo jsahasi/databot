@@ -50,6 +50,12 @@
   .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 0.78rem; color: var(--text2); line-height: 1.9; margin-bottom: 1rem; white-space: pre; }
   .note { background: rgba(99,102,241,0.07); border-left: 3px solid var(--accent); padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin-bottom: 0.75rem; font-size: 0.85rem; }
   html.dark-mode .arch-diagram { background: #1a1d27; }
+  .diag-box { fill: var(--card); stroke: var(--border); }
+  .diag-box-accent { fill: rgba(99,102,241,0.1); stroke: var(--primary); }
+  .diag-box-blue { fill: rgba(59,130,246,0.1); stroke: #3b82f6; }
+  .diag-box-green { fill: rgba(5,150,105,0.1); stroke: var(--green); }
+  .diag-box-amber { fill: rgba(217,119,6,0.1); stroke: var(--amber); }
+  svg.diagram { width: 100%; max-width: 860px; display: block; margin: 1rem auto 1.5rem; overflow: visible; }
 </style>
 <script>
 (function(){
@@ -83,22 +89,73 @@
 <div class="content">
 
   <h2>1. System Architecture</h2>
-  <div class="arch-diagram">Browser (React 18 + TypeScript)
-      │  WebSocket /ws/chat  │  REST /api/*
-      ▼                      ▼
-  FastAPI (Python 3.12) — Uvicorn
-      │
-      ├── Orchestrator Agent ──▶ Data Agent      (11 tools, analytics queries)
-      │                    ├──▶ Concierge        (KB search, how-to answers)
-      │                    ├──▶ Content Agent    (topic analysis, scheduling)
-      │                    └──▶ Admin Agent      (ON24 write operations)
-      │
-      ├── ON24 Master DB (asyncpg, read-only, SSL)  ← 10.3.7.233:5458
-      ├── App DB (PostgreSQL 16, asyncpg + SQLAlchemy async)
-      │       ├── knowledge_base_articles (OpenAI embeddings REAL[])
-      │       ├── agent_audit_logs
-      │       └── (12 app models via Alembic)
-      └── OpenAI API (text-embedding-3-small)  ← KB ingestion only</div>
+
+  <svg class="diagram" viewBox="0 0 840 310" role="img" aria-label="System architecture diagram">
+    <defs>
+      <marker id="sa" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--border)"/></marker>
+      <marker id="sa2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--primary)"/></marker>
+      <marker id="sag" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--green)"/></marker>
+      <marker id="sab" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:#3b82f6"/></marker>
+    </defs>
+
+    <!-- Browser tier -->
+    <rect x="230" y="10" width="380" height="46" rx="8" class="diag-box-blue" stroke-width="2"/>
+    <text x="420" y="30" text-anchor="middle" font-size="11" font-weight="700" style="fill:#3b82f6;font-family:inherit">Browser — React 18 + TypeScript</text>
+    <text x="420" y="47" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Vite · TanStack Query · Recharts · WebSocket client</text>
+
+    <!-- WS + REST arrows -->
+    <line x1="360" y1="56" x2="340" y2="100" stroke-width="1.5" style="stroke:#3b82f6" marker-end="url(#sab)"/>
+    <line x1="480" y1="56" x2="500" y2="100" stroke-width="1.5" style="stroke:#3b82f6" marker-end="url(#sab)"/>
+    <text x="305" y="80" font-size="8" style="fill:var(--text2);font-family:inherit">WS /ws/chat</text>
+    <text x="490" y="80" font-size="8" style="fill:var(--text2);font-family:inherit">REST /api/*</text>
+
+    <!-- FastAPI -->
+    <rect x="230" y="105" width="380" height="46" rx="8" class="diag-box-accent" stroke-width="2"/>
+    <text x="420" y="125" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--primary);font-family:inherit">FastAPI + Uvicorn — Python 3.12</text>
+    <text x="420" y="142" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Orchestrator → Data / Concierge / Content / Admin agents · Anthropic SDK</text>
+
+    <!-- Agent arrows down-left + down-right -->
+    <line x1="420" y1="151" x2="420" y2="195" stroke-width="1.5" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
+
+    <!-- Agent boxes row -->
+    <rect x="30" y="200" width="115" height="40" rx="6" class="diag-box-accent" stroke-width="1.5"/>
+    <text x="87" y="216" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--primary);font-family:inherit">Data Agent</text>
+    <text x="87" y="231" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">11 analytics tools</text>
+
+    <rect x="160" y="200" width="115" height="40" rx="6" class="diag-box-green" stroke-width="1.5"/>
+    <text x="217" y="216" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--green);font-family:inherit">Concierge</text>
+    <text x="217" y="231" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">KB search</text>
+
+    <rect x="290" y="200" width="115" height="40" rx="6" class="diag-box-amber" stroke-width="1.5"/>
+    <text x="347" y="216" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--amber);font-family:inherit">Content Agent</text>
+    <text x="347" y="231" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">Topic analysis</text>
+
+    <rect x="420" y="200" width="115" height="40" rx="6" class="diag-box" stroke-width="1.5"/>
+    <text x="477" y="216" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--text);font-family:inherit">Admin Agent</text>
+    <text x="477" y="231" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">ON24 write ops</text>
+
+    <!-- Orchestrator fan-out arrows -->
+    <line x1="380" y1="175" x2="87" y2="200" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
+    <line x1="395" y1="195" x2="217" y2="200" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
+    <line x1="420" y1="195" x2="347" y2="200" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
+    <line x1="440" y1="195" x2="477" y2="200" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
+
+    <!-- ON24 DB -->
+    <rect x="560" y="200" width="155" height="52" rx="6" class="diag-box-green" stroke-width="1.5"/>
+    <text x="637" y="219" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--green);font-family:inherit">ON24 Master DB</text>
+    <text x="637" y="233" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">asyncpg · read-only · SSL</text>
+    <text x="637" y="244" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">10.3.7.233:5458 (PROD)</text>
+
+    <!-- App DB -->
+    <rect x="560" y="262" width="155" height="40" rx="6" class="diag-box-blue" stroke-width="1.5"/>
+    <text x="637" y="278" text-anchor="middle" font-size="9" font-weight="700" style="fill:#3b82f6;font-family:inherit">App DB — PostgreSQL 16</text>
+    <text x="637" y="293" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">KB articles · audit logs · 12 models</text>
+
+    <!-- FastAPI to DBs -->
+    <line x1="610" y1="151" x2="610" y2="198" stroke-width="1.5" style="stroke:var(--green)" stroke-dasharray="5,3" marker-end="url(#sag)"/>
+    <text x="625" y="178" font-size="8" style="fill:var(--text2);font-family:inherit">read-only</text>
+    <line x1="640" y1="151" x2="640" y2="260" stroke-width="1.5" style="stroke:#3b82f6" stroke-dasharray="5,3" marker-end="url(#sab)"/>
+  </svg>
 
   <h2>2. Technology Stack</h2>
   <table>

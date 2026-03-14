@@ -63,6 +63,18 @@
   .priority-low { color: var(--green); font-weight: 600; }
   html.dark-mode .arch-diagram { background: #1a1d27; }
   html.dark-mode pre { background: #0d1021; }
+  /* SVG diagram theming */
+  .diag-box { fill: var(--card); stroke: var(--border); }
+  .diag-box-accent { fill: rgba(99,102,241,0.1); stroke: var(--primary); }
+  .diag-box-green { fill: rgba(5,150,105,0.1); stroke: var(--green); }
+  .diag-box-amber { fill: rgba(217,119,6,0.1); stroke: var(--amber); }
+  .diag-box-red { fill: rgba(220,38,38,0.1); stroke: var(--red); }
+  .diag-text { fill: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .diag-text2 { fill: var(--text2); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .diag-primary { fill: var(--primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .diag-arrow { stroke: var(--border); fill: none; marker-end: url(#arr); }
+  .diag-arrow-accent { stroke: var(--primary); fill: none; marker-end: url(#arr-accent); }
+  svg.diagram { width: 100%; max-width: 780px; display: block; margin: 1rem auto 1.5rem; overflow: visible; }
 </style>
 <script>
 (function(){
@@ -100,6 +112,59 @@
   <p>ON24 customers generate rich webinar and experience data, but extracting actionable insights requires navigating 15+ fragmented analytics screens and manually cross-referencing reports. ON24 Nexus addresses this by providing a conversational AI interface that lets marketers and program managers ask natural-language questions and receive immediate, visualized answers — without leaving a single screen.</p>
 
   <h2>2. Market Problem</h2>
+
+  <!-- Before/After diagram -->
+  <svg class="diagram" viewBox="0 0 760 200" role="img" aria-label="Before and after comparison">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" class="diag-text2" style="fill:var(--border)"/></marker>
+      <marker id="arr-accent" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--primary)"/></marker>
+    </defs>
+    <!-- BEFORE label -->
+    <text x="170" y="22" text-anchor="middle" font-size="11" font-weight="700" class="diag-text2" style="fill:var(--text2);font-family:inherit">BEFORE — 15+ Fragmented Screens</text>
+    <!-- Six tiny screen boxes -->
+    <rect x="10" y="35" width="80" height="36" rx="5" class="diag-box" stroke-width="1"/>
+    <text x="50" y="56" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Dashboard</text>
+    <rect x="100" y="35" width="80" height="36" rx="5" class="diag-box" stroke-width="1"/>
+    <text x="140" y="56" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Smart Tips</text>
+    <rect x="10" y="85" width="80" height="36" rx="5" class="diag-box" stroke-width="1"/>
+    <text x="50" y="106" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Power Leads</text>
+    <rect x="100" y="85" width="80" height="36" rx="5" class="diag-box" stroke-width="1"/>
+    <text x="140" y="106" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Polls &amp; Surveys</text>
+    <rect x="10" y="135" width="80" height="36" rx="5" class="diag-box" stroke-width="1"/>
+    <text x="50" y="156" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Webcast Elite</text>
+    <rect x="100" y="135" width="80" height="36" rx="5" class="diag-box" stroke-width="1"/>
+    <text x="140" y="156" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Engagement Hub</text>
+    <!-- User frustrated arrow pointing left -->
+    <text x="175" y="100" text-anchor="middle" font-size="28" style="fill:var(--red)">✕</text>
+    <text x="175" y="125" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">30–60 min</text>
+    <text x="175" y="140" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">to answer one</text>
+    <text x="175" y="154" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">question</text>
+    <!-- Divider -->
+    <line x1="215" y1="25" x2="215" y2="185" stroke-width="1.5" stroke-dasharray="5,4" style="stroke:var(--border)"/>
+    <!-- AFTER label -->
+    <text x="487" y="22" text-anchor="middle" font-size="11" font-weight="700" class="diag-primary" style="fill:var(--primary);font-family:inherit">AFTER — One Conversational Interface</text>
+    <!-- Chat box -->
+    <rect x="230" y="60" width="160" height="80" rx="8" class="diag-box-accent" stroke-width="1.5"/>
+    <text x="310" y="88" text-anchor="middle" font-size="11" font-weight="700" class="diag-primary" style="fill:var(--primary);font-family:inherit">ON24 Nexus</text>
+    <text x="310" y="104" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">Natural language question</text>
+    <text x="310" y="118" text-anchor="middle" font-size="9" class="diag-text2" style="fill:var(--text2);font-family:inherit">→ Instant visualized answer</text>
+    <!-- Arrow right -->
+    <line x1="397" y1="100" x2="427" y2="100" class="diag-arrow-accent" stroke-width="1.5" marker-end="url(#arr-accent)"/>
+    <!-- Outcomes -->
+    <rect x="435" y="40" width="115" height="30" rx="6" class="diag-box-green" stroke-width="1"/>
+    <text x="492" y="59" text-anchor="middle" font-size="9" font-weight="600" style="fill:var(--green);font-family:inherit">&lt;30 sec insight</text>
+    <rect x="435" y="80" width="115" height="30" rx="6" class="diag-box-accent" stroke-width="1"/>
+    <text x="492" y="99" text-anchor="middle" font-size="9" font-weight="600" style="fill:var(--primary);font-family:inherit">Any team member</text>
+    <rect x="435" y="120" width="115" height="30" rx="6" class="diag-box-amber" stroke-width="1"/>
+    <text x="492" y="139" text-anchor="middle" font-size="9" font-weight="600" style="fill:var(--amber);font-family:inherit">No SQL / exports</text>
+    <!-- Connecting lines -->
+    <line x1="550" y1="55" x2="580" y2="55" style="stroke:var(--border)" stroke-width="1"/>
+    <line x1="550" y1="95" x2="580" y2="95" style="stroke:var(--border)" stroke-width="1"/>
+    <line x1="550" y1="135" x2="580" y2="135" style="stroke:var(--border)" stroke-width="1"/>
+    <line x1="580" y1="55" x2="580" y2="135" style="stroke:var(--border)" stroke-width="1"/>
+    <text x="600" y="100" text-anchor="middle" font-size="20" style="fill:var(--green)">✓</text>
+  </svg>
+
   <h3>Pain Points</h3>
   <ul>
     <li><strong>Fragmentation:</strong> ON24 analytics are spread across Dashboard, Smart Tips, Webcast Elite, Engagement Hub, Power Leads, Polls &amp; Surveys, and more — each requiring separate navigation.</li>
@@ -134,6 +199,37 @@
       <div><span class="tag amber">Topic analysis</span><span class="tag amber">Engagement</span><span class="tag amber">Poll insights</span></div>
     </div>
   </div>
+
+  <!-- Persona → Need → Feature map -->
+  <svg class="diagram" viewBox="0 0 760 130" role="img" aria-label="Persona to feature mapping">
+    <defs><marker id="arr2" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" style="fill:var(--border)"/></marker></defs>
+    <!-- Personas column -->
+    <text x="80" y="18" text-anchor="middle" font-size="10" font-weight="700" class="diag-text2" style="fill:var(--text2);font-family:inherit">PERSONAS</text>
+    <rect x="10" y="25" width="140" height="22" rx="5" class="diag-box" stroke-width="1"/><text x="80" y="40" text-anchor="middle" font-size="9" class="diag-text" style="fill:var(--text);font-family:inherit">Demand Gen Manager</text>
+    <rect x="10" y="52" width="140" height="22" rx="5" class="diag-box" stroke-width="1"/><text x="80" y="67" text-anchor="middle" font-size="9" class="diag-text" style="fill:var(--text);font-family:inherit">Program Manager</text>
+    <rect x="10" y="79" width="140" height="22" rx="5" class="diag-box" stroke-width="1"/><text x="80" y="94" text-anchor="middle" font-size="9" class="diag-text" style="fill:var(--text);font-family:inherit">Marketing Ops</text>
+    <rect x="10" y="106" width="140" height="22" rx="5" class="diag-box" stroke-width="1"/><text x="80" y="121" text-anchor="middle" font-size="9" class="diag-text" style="fill:var(--text);font-family:inherit">Content Strategist</text>
+    <!-- Arrows to Nexus -->
+    <line x1="150" y1="36" x2="210" y2="65" style="stroke:var(--border)" stroke-width="1" marker-end="url(#arr2)"/>
+    <line x1="150" y1="63" x2="210" y2="65" style="stroke:var(--border)" stroke-width="1" marker-end="url(#arr2)"/>
+    <line x1="150" y1="90" x2="210" y2="65" style="stroke:var(--border)" stroke-width="1" marker-end="url(#arr2)"/>
+    <line x1="150" y1="117" x2="210" y2="65" style="stroke:var(--border)" stroke-width="1" marker-end="url(#arr2)"/>
+    <!-- Nexus box -->
+    <rect x="215" y="40" width="110" height="50" rx="8" class="diag-box-accent" stroke-width="1.5"/>
+    <text x="270" y="62" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--primary);font-family:inherit">ON24 Nexus</text>
+    <text x="270" y="78" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">AI co-pilot</text>
+    <!-- Arrows to capabilities -->
+    <line x1="325" y1="55" x2="360" y2="36" style="stroke:var(--primary)" stroke-width="1" marker-end="url(#arr-accent)"/>
+    <line x1="325" y1="63" x2="360" y2="63" style="stroke:var(--primary)" stroke-width="1" marker-end="url(#arr-accent)"/>
+    <line x1="325" y1="71" x2="360" y2="90" style="stroke:var(--primary)" stroke-width="1" marker-end="url(#arr-accent)"/>
+    <line x1="325" y1="71" x2="360" y2="117" style="stroke:var(--primary)" stroke-width="1" marker-end="url(#arr-accent)"/>
+    <!-- Capabilities -->
+    <text x="440" y="18" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--text2);font-family:inherit">CAPABILITIES</text>
+    <rect x="365" y="25" width="150" height="22" rx="5" class="diag-box-accent" stroke-width="1"/><text x="440" y="40" text-anchor="middle" font-size="9" style="fill:var(--primary);font-family:inherit">Conversational Analytics</text>
+    <rect x="365" y="52" width="150" height="22" rx="5" class="diag-box-green" stroke-width="1"/><text x="440" y="67" text-anchor="middle" font-size="9" style="fill:var(--green);font-family:inherit">Platform How-To (Concierge)</text>
+    <rect x="365" y="79" width="150" height="22" rx="5" class="diag-box-amber" stroke-width="1"/><text x="440" y="94" text-anchor="middle" font-size="9" style="fill:var(--amber);font-family:inherit">Event Calendar + KPIs</text>
+    <rect x="365" y="106" width="150" height="22" rx="5" class="diag-box" stroke-width="1"/><text x="440" y="121" text-anchor="middle" font-size="9" style="fill:var(--text);font-family:inherit">Content Intelligence</text>
+  </svg>
 
   <h2>4. Market Requirements</h2>
   <table>

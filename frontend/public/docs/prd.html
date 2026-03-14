@@ -54,6 +54,14 @@
   .dot-pink { background: #ec4899; }
   html.dark-mode .arch-diagram { background: #1a1d27; }
   html.dark-mode pre { background: #0d1021; }
+  .diag-box { fill: var(--card); stroke: var(--border); }
+  .diag-box-accent { fill: rgba(99,102,241,0.1); stroke: var(--primary); }
+  .diag-box-green { fill: rgba(5,150,105,0.1); stroke: var(--green); }
+  .diag-box-amber { fill: rgba(217,119,6,0.1); stroke: var(--amber); }
+  .diag-box-pink { fill: rgba(236,72,153,0.1); stroke: #ec4899; }
+  .diag-text { fill: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .diag-text2 { fill: var(--text2); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  svg.diagram { width: 100%; max-width: 780px; display: block; margin: 1rem auto 1.5rem; overflow: visible; }
 </style>
 <script>
 (function(){
@@ -143,6 +151,59 @@
   </ul>
 
   <h2>3. Agent Architecture</h2>
+
+  <!-- Agent routing diagram -->
+  <svg class="diagram" viewBox="0 0 760 195" role="img" aria-label="Agent routing architecture">
+    <defs>
+      <marker id="pa" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--border)"/></marker>
+      <marker id="pa2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--primary)"/></marker>
+      <marker id="pg" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--green)"/></marker>
+      <marker id="pam" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--amber)"/></marker>
+      <marker id="ppk" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:#ec4899"/></marker>
+    </defs>
+    <!-- User input -->
+    <rect x="10" y="77" width="110" height="44" rx="8" class="diag-box" stroke-width="1.5"/>
+    <text x="65" y="96" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--text);font-family:inherit">User Query</text>
+    <text x="65" y="112" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Natural language</text>
+    <!-- Arrow to orchestrator -->
+    <line x1="120" y1="99" x2="180" y2="99" stroke-width="1.5" style="stroke:var(--border)" marker-end="url(#pa)"/>
+    <!-- Orchestrator -->
+    <rect x="185" y="67" width="130" height="64" rx="8" class="diag-box-accent" stroke-width="2"/>
+    <text x="250" y="91" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--primary);font-family:inherit">Orchestrator</text>
+    <text x="250" y="107" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Classifies intent</text>
+    <text x="250" y="120" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Routes to specialist</text>
+    <!-- Arrows to agents -->
+    <line x1="315" y1="80" x2="380" y2="35" stroke-width="1.5" style="stroke:var(--primary)" marker-end="url(#pa2)"/>
+    <line x1="315" y1="90" x2="380" y2="80" stroke-width="1.5" style="stroke:var(--green)" marker-end="url(#pg)"/>
+    <line x1="315" y1="108" x2="380" y2="125" stroke-width="1.5" style="stroke:var(--amber)" marker-end="url(#pam)"/>
+    <line x1="315" y1="118" x2="380" y2="168" stroke-width="1.5" style="stroke:#ec4899" marker-end="url(#ppk)"/>
+    <!-- Data Agent -->
+    <rect x="385" y="15" width="150" height="40" rx="7" class="diag-box-accent" stroke-width="1.5"/>
+    <text x="460" y="31" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--primary);font-family:inherit">Data Agent</text>
+    <text x="460" y="46" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">11 analytics tools · charts</text>
+    <!-- Concierge -->
+    <rect x="385" y="60" width="150" height="40" rx="7" class="diag-box-green" stroke-width="1.5"/>
+    <text x="460" y="76" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--green);font-family:inherit">Concierge</text>
+    <text x="460" y="91" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">KB search · how-to answers</text>
+    <!-- Content Agent -->
+    <rect x="385" y="105" width="150" height="40" rx="7" class="diag-box-amber" stroke-width="1.5"/>
+    <text x="460" y="121" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--amber);font-family:inherit">Content Agent</text>
+    <text x="460" y="136" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Topic analysis · scheduling</text>
+    <!-- Admin Agent -->
+    <rect x="385" y="150" width="150" height="40" rx="7" class="diag-box-pink" stroke-width="1.5"/>
+    <text x="460" y="166" text-anchor="middle" font-size="10" font-weight="700" style="fill:#ec4899;font-family:inherit">Admin Agent</text>
+    <text x="460" y="181" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Create / update events</text>
+    <!-- Arrows to response -->
+    <line x1="535" y1="35" x2="600" y2="99" stroke-width="1" style="stroke:var(--border)" marker-end="url(#pa)"/>
+    <line x1="535" y1="80" x2="600" y2="99" stroke-width="1" style="stroke:var(--border)" marker-end="url(#pa)"/>
+    <line x1="535" y1="125" x2="600" y2="99" stroke-width="1" style="stroke:var(--border)" marker-end="url(#pa)"/>
+    <line x1="535" y1="170" x2="600" y2="99" stroke-width="1" style="stroke:var(--border)" marker-end="url(#pa)"/>
+    <!-- Response box -->
+    <rect x="605" y="77" width="120" height="44" rx="8" class="diag-box-green" stroke-width="1.5"/>
+    <text x="665" y="96" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--green);font-family:inherit">Response</text>
+    <text x="665" y="112" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Text + chart + cards</text>
+  </svg>
+
   <div class="card">
     <div class="agent-row"><div class="agent-dot dot-indigo"></div><div><strong>Data Agent</strong> — Handles all analytics queries. Has 11 tools covering events, KPIs, attendance trends, audience companies, poll results, Q&amp;A, resources, and chart generation.</div></div>
     <div class="agent-row"><div class="agent-dot dot-amber"></div><div><strong>Concierge</strong> — Answers platform how-to questions using a Postgres-backed knowledge base (OpenAI embeddings, cosine similarity). Delivers complete answers without external links.</div></div>
