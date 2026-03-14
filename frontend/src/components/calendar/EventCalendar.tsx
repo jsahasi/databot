@@ -244,6 +244,8 @@ function PerformanceSection({ kpis, loadingDetail, defaultCollapsed }: {
   defaultCollapsed: boolean
 }) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
+  // Auto-collapse when AI-ACE content loads after initial render
+  useEffect(() => { if (defaultCollapsed) setCollapsed(true) }, [defaultCollapsed])
   return (
     <div>
       <button
@@ -1063,14 +1065,18 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
             const style = document.createElement('style')
             style.id = 'calendar-print-style'
             style.textContent = `@media print {
-              body > *:not(.calendar-modal-overlay) { display: none !important; }
-              .calendar-modal-overlay { position: static !important; background: none !important; }
-              .calendar-modal-overlay > div { position: static !important; width: 100% !important; height: auto !important; max-height: none !important; box-shadow: none !important; border: none !important; }
+              body > * { display: none !important; visibility: hidden !important; }
+              body > .calendar-modal-overlay,
+              body > .calendar-modal-overlay * { display: block !important; visibility: visible !important; }
+              .calendar-modal-overlay { position: static !important; background: white !important; inset: auto !important; z-index: auto !important; display: block !important; }
+              .calendar-modal-overlay > div { position: static !important; width: 100% !important; height: auto !important; max-height: none !important; max-width: none !important; box-shadow: none !important; border: none !important; overflow: visible !important; border-radius: 0 !important; }
               .calendar-print-hide { display: none !important; }
+              * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             }`
             document.head.appendChild(style)
-            window.print()
-            document.getElementById('calendar-print-style')?.remove()
+            const cleanup = () => document.getElementById('calendar-print-style')?.remove()
+            window.addEventListener('afterprint', cleanup, { once: true })
+            requestAnimationFrame(() => window.print())
           }} aria-label="Print calendar" style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: 1, padding: '0.2rem',

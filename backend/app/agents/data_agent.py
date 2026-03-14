@@ -153,18 +153,25 @@ class DataAgent:
                                 if tool_name == "get_ai_content" and isinstance(result, list) and len(result) > 0:
                                     content_articles = result
 
-                                # Capture event card for single-event queries
+                                # Capture event card for single-event queries (with KPIs)
                                 if tool_name == "get_event_detail" and isinstance(result, dict) and result.get("event_id"):
+                                    eid_detail = result["event_id"]
+                                    kpi_data: dict = {}
+                                    try:
+                                        from app.agents.tools.on24_query_tools import compute_event_kpis as _compute_kpis
+                                        kpi_data = await _compute_kpis(eid_detail) or {}
+                                    except Exception:
+                                        pass
                                     event_card = {
-                                        "event_id": result["event_id"],
+                                        "event_id": eid_detail,
                                         "title": result.get("description") or result.get("title") or "",
                                         "start_time": result.get("goodafter") or result.get("start_time"),
                                         "end_time": result.get("goodtill") or result.get("end_time"),
                                         "event_type": result.get("event_type") or "",
-                                        "registrant_count": None,
-                                        "attendee_count": None,
-                                        "conversion_rate": None,
-                                        "engagement_score_avg": None,
+                                        "registrant_count": kpi_data.get("total_registrants"),
+                                        "attendee_count": kpi_data.get("total_attendees"),
+                                        "conversion_rate": kpi_data.get("conversion_rate"),
+                                        "engagement_score_avg": kpi_data.get("avg_engagement"),
                                     }
 
                                 if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
