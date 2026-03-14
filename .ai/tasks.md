@@ -283,6 +283,19 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Tech Ops document: background agent creating frontend/public/docs/tech-ops.html + ChatSidebar link (in progress)
 - [x] Security/accessibility test suite: background agent creating backend/tests/test_security.py + backend/tests/test_accessibility.py (in progress)
 
+## Phase 9 Addendum 4: Proposed Calendar Mode + MCP Server Plan — COMPLETE (2026-03-13)
+- [x] Proposed calendar mode: openProposedCalendar() in ChatContext (separate from openCalendar)
+- [x] EventCalendar proposedMode prop: back navigation disabled at current period; resets to today on open
+- [x] "Show existing events" toggle (default off): shows real future ON24 events when on, hides all when off
+- [x] "Proposed Calendar" badge in toolbar; past events always hidden in proposed mode
+- [x] "View proposed calendar" chip uses openProposedCalendar(); "Recent events" unchanged
+- [x] Orchestrator two-step flow: propose_content_calendar tool → data agent gathers analytics → content agent synthesizes calendar
+- [x] "View proposed calendar" chip auto-injected on content calendar responses
+- [x] sendMessage(content, displayText?) — display text in chat differs from LLM payload
+- [x] ON24 MCP server plan written: docs/superpowers/plans/2026-03-13-on24-mcp-server.md
+- [x] MCP server scaffold under way (background agent building on24-mcp/)
+- [x] API vs DB benchmark report under way (background agent)
+
 ## Backlog / Next Steps
 - [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
 - [ ] Add query tools for dw_lead (lead/prospect analytics)
