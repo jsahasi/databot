@@ -40,6 +40,7 @@ coverage.xml
 # Data / runtime
 data/chromadb/
 data/improvement-inbox-*.txt
+data/uploads/
 
 # Claude
 .claude/ralph-loop.local.md

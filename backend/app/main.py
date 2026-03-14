@@ -26,6 +26,9 @@ async def lifespan(app: FastAPI):
     bv_task = asyncio.create_task(_refresh_brand_voice())
     _background_tasks.add(bv_task)
     bv_task.add_done_callback(_background_tasks.discard)
+    # Startup: clean up expired uploads (>24h)
+    from app.api.upload import cleanup_old_uploads
+    cleanup_old_uploads()
     yield
     # Shutdown
     await close_pool()

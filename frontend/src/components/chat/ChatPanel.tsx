@@ -52,8 +52,11 @@ export default function ChatPanel() {
   const [showExploreContent, setShowExploreContent] = useState(false)
   const [showContentCreate, setShowContentCreate] = useState(false)
   const [showContentExplore, setShowContentExplore] = useState(false)
+  const [attachment, setAttachment] = useState<{ name: string; extractedText?: string | null } | null>(null)
+  const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const HOW_DO_I_OPTIONS = [
     'How do I set up a webinar?',
@@ -86,10 +89,44 @@ export default function ChatPanel() {
     }
   }, [isProcessing])
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = '' // reset so same file can be re-selected
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Upload failed' }))
+        alert(err.detail || 'Upload failed')
+        return
+      }
+      const data = await res.json()
+      setAttachment({ name: data.original_name, extractedText: data.extracted_text })
+    } catch {
+      alert('Upload failed — check your connection')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSend = () => {
     const trimmed = input.trim()
-    if (!trimmed) return
-    sendMessage(trimmed)
+    if (!trimmed && !attachment) return
+    let content = trimmed
+    let displayText: string | undefined
+    if (attachment) {
+      displayText = trimmed ? `${trimmed} [attached: ${attachment.name}]` : `[attached: ${attachment.name}]`
+      if (attachment.extractedText) {
+        content = `${trimmed}\n\n[Attached PDF: ${attachment.name}]\nContent:\n${attachment.extractedText}`
+      } else {
+        content = `${trimmed}\n\n[Attached file: ${attachment.name}]`
+      }
+      setAttachment(null)
+    }
+    sendMessage(content, displayText)
     setInput('')
     inputRef.current?.focus()
   }
@@ -566,19 +603,37 @@ export default function ChatPanel() {
             {activeAgent.replace('_', ' ')} is thinking...
           </p>
         )}
+        {attachment && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem', fontSize: '0.75rem', color: '#6366f1' }}>
+            <span style={{ background: 'rgba(99,102,241,0.1)', padding: '0.2rem 0.6rem', borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              {attachment.name}
+              <button onClick={() => setAttachment(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', fontSize: '0.85rem', padding: 0, lineHeight: 1 }}>&times;</button>
+            </span>
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           {/* Attachment icon */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+          />
           <button
             aria-label="Attach file"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
             style={{
               flexShrink: 0,
               width: 36, height: 36,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent',
               border: 'none',
-              cursor: 'pointer',
-              color: '#9ca3af',
+              cursor: uploading ? 'wait' : 'pointer',
+              color: attachment ? '#6366f1' : '#9ca3af',
               borderRadius: 6,
+              opacity: uploading ? 0.5 : 1,
             }}
           >
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
