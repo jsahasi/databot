@@ -1,7 +1,7 @@
 # DataBot — ON24 Analytics Platform
 
 ## What Is This
-Multi-agent application for exploring ON24 client webinar data (events, audiences, engagement) with data visualizations and AI-powered conversational analytics. All 6 development phases are complete.
+Multi-agent application for exploring ON24 client webinar data (events, audiences, engagement) with data visualizations and AI-powered conversational analytics. All 8 development phases complete.
 
 ## Tech Stack
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy (async), Alembic, httpx
@@ -21,7 +21,7 @@ backend/
     agents/       # AI agents (orchestrator, data, content, admin)
       tools/      # Tool schemas + handlers (__init__.py, query_tools, content_tools, admin_tools)
       prompts/    # System prompts per agent (.md files)
-    db/           # Session factory, repositories
+    db/           # Session factory, repositories, knowledge_base
   tests/          # 42 tests: pytest-asyncio, httpx MockTransport
   alembic/
     versions/     # 0001_initial_schema.py — full 12-table migration
@@ -32,6 +32,11 @@ frontend/
     hooks/        # useChat, useAnalytics, useEvents
     services/     # api.ts — typed API client
     types/        # TypeScript interfaces + react-plotly.d.ts declaration
+on24-mcp/         # MCP server — exposes ON24 REST API as 67 MCP tools (FastMCP, streamable-HTTP)
+data/
+  on24_api_reference.json  # 71 ON24 REST API v2 endpoints (ingested into KB)
+scripts/
+  gen_api_ref.py           # Generates on24_api_reference.json from code
 ```
 
 ## Commands
@@ -100,12 +105,13 @@ The ON24 platform has these built-in analytics sections. Use these URLs when red
 | **Benchmarking** | — | https://wcc.on24.com/webcast/benchmarking |
 
 ## ON24 Data Access
-**Two data sources — always prefer direct DB for reads:**
+**Three data sources — prefer direct DB for reads:**
 
 | Source | Used for | Location |
 |--------|----------|----------|
 | ON24 master DB (on24master) | All analytics reads | `backend/app/db/on24_db.py` + `on24_query_tools.py` |
-| ON24 REST API (apiqa.on24.com) | Write ops only (create event, registrations) | `backend/app/services/on24_client.py` |
+| ON24 REST API (apiqa.on24.com) | Write ops, full API client (71 endpoints) | `backend/app/services/on24_client.py` (1151 lines) |
+| MCP Server (on24-mcp) | External tool access via Model Context Protocol | `on24-mcp/server.py` (67 tools: 47 read + 20 write) |
 
 **Tenant isolation (critical):**
 - `get_client_id()` reads root from `settings.on24_client_id` (config only, never from agents/users)
@@ -160,27 +166,32 @@ Client sends: `{"type": "message", "content": "...", "confirmed": false}`
 Server sends message types: `agent_start`, `agent_routing`, `text`, `chart_data`, `confirmation_required`, `message_complete`, `error`, `reset`
 
 ## Environment Variables
-```
-# .env.local (gitignored — single source of truth for all secrets)
-# Docker compose loads via env_file: .env.local; environment: block overrides DATABASE_URL
+See `.env.example` for the full template with all keys. Copy to `.env.local` and fill in real values.
 
-DATABASE_URL=postgresql+asyncpg://databot:<password>@postgres:5432/databot  # overridden in compose
-ON24_DB_URL=postgresql+asyncpg://ON24_RO:<pass>@10.3.7.233:5458/on24master  # ON24 PROD master (read-only); requires VPN/internal network
-DB_PG_SSL_ROOT_CERT_CONTENT=<ca pem content>
-DB_PG_SSL_CERT_CONTENT=<client cert content>
-DB_PG_SSL_KEY_CONTENT=<client key content>
+Key groups:
+- **MCP**: `USE_MCP`, `USE_MCP_BLOCKLIST` (20 write tools blocked by default), `MCP_SERVER_URL`
+- **ON24 API**: `ON24_BASE_URL`, `ON24_ACCESS_TOKEN_KEY/SECRET`, `ON24_CLIENT_ID`
+- **ON24 DB**: `ON24_DB_URL`, `DB_PG_SSL_*` (3 cert vars)
+- **DataBot DB**: `DATABASE_URL`, `POSTGRES_PASSWORD`
+- **AI**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`
+- **Media/Transcription**: `AZURE_SPEECH_KEY`, `PIXABAY_KEY`, `FREESOUND_KEY`, `RUNWAYML_API_KEY`
+- **App**: `DEBUG`, `CLAUDE_CODE_MAX_OUTPUT_TOKENS`
 
-ON24_CLIENT_ID=10710
-ON24_BASE_URL=https://apiqa.on24.com
-ON24_ACCESS_TOKEN_KEY=<key>
-ON24_ACCESS_TOKEN_SECRET=<secret>
+## MCP Server (`on24-mcp/`)
+- FastMCP streamable-HTTP server on port 8001 inside Docker
+- 67 tools: 47 read + 20 write (file-upload endpoints excluded)
+- Write tools controlled by `USE_MCP_BLOCKLIST` env var (comma-separated tool names)
+- Separate `on24_client.py` (77 async methods) — mirrors `backend/app/services/on24_client.py`
+- Benchmark script: `backend/tests/benchmark_read_apis.py` — 3-way comparison (REST vs MCP vs DB)
 
-ANTHROPIC_API_KEY=<key>
-POSTGRES_PASSWORD=databot_dev
-DEBUG=true
+## ON24 REST API Reference
+- `data/on24_api_reference.json` — 71 endpoints across 6 categories
+- Ingested into knowledge base at startup via `ingest_api_reference()` in `backend/app/db/knowledge_base.py`
+- Article IDs prefixed `api_` to distinguish from Zendesk articles
 
-# MCP server (optional — defaults to direct on24_client.py when USE_MCP=N)
-USE_MCP=N                            # Y to route admin writes through on24-mcp container
-USE_MCP_BLOCKLIST=                   # comma-separated tool names to block even if USE_MCP=Y
-MCP_SERVER_URL=http://on24-mcp:8001  # override only if running MCP server elsewhere
-```
+## Proposed Content Calendar
+- Content agent emits structured `proposed_events` JSON block (fenced code block)
+- Orchestrator parses via `_extract_proposed_events()` regex
+- WebSocket sends `proposed_events` message type to frontend
+- EventCalendar renders with dashed purple borders (#a78bfa), negative IDs, "Proposed" labels
+- Side panel shows funnel_stage and topic instead of KPIs for proposed events
