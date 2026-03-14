@@ -1,197 +1,59 @@
 # DataBot — ON24 Analytics Platform
 
-## What Is This
-Multi-agent application for exploring ON24 client webinar data (events, audiences, engagement) with data visualizations and AI-powered conversational analytics. All 8 development phases complete.
+Multi-agent app for exploring ON24 webinar data (events, audiences, engagement) with AI-powered conversational analytics. 10 development phases complete.
 
 ## Tech Stack
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy (async), Alembic, httpx
 - **Frontend**: React 18, TypeScript, Vite, TanStack Query, Recharts, Plotly (lazy-loaded)
 - **Database**: PostgreSQL 16 (external, JSONB for raw API data)
-- **Agents**: Anthropic Python SDK `messages.create()` with `tools` — NOT Claude Agent SDK package
-- **Deployment**: Docker Compose (3 services with health checks), GitLab CI/CD
-
-## Project Structure
-```
-backend/
-  app/
-    api/          # FastAPI route handlers (events, analytics, sync, chat)
-    models/       # SQLAlchemy ORM (12 models, all have to_dict(), TimestampMixin)
-    schemas/      # Pydantic request/response schemas (PaginatedResponse[T])
-    services/     # Business logic (on24_client, sync_service, rate_limiter)
-    agents/       # AI agents (orchestrator, data, content, admin)
-      tools/      # Tool schemas + handlers (__init__.py, query_tools, content_tools, admin_tools)
-      prompts/    # System prompts per agent (.md files)
-    db/           # Session factory, repositories, knowledge_base
-  tests/          # 42 tests: pytest-asyncio, httpx MockTransport
-  alembic/
-    versions/     # 0001_initial_schema.py — full 12-table migration
-frontend/
-  src/
-    pages/        # Dashboard, Events, EventDetail, Audiences, ContentInsights, Settings
-    components/   # charts/ (Recharts + Plotly), chat/, layout/, common/
-    hooks/        # useChat, useAnalytics, useEvents
-    services/     # api.ts — typed API client
-    types/        # TypeScript interfaces + react-plotly.d.ts declaration
-on24-mcp/         # MCP server — exposes ON24 REST API as 67 MCP tools (FastMCP, streamable-HTTP)
-data/
-  on24_api_reference.json  # 71 ON24 REST API v2 endpoints (ingested into KB)
-scripts/
-  gen_api_ref.py           # Generates on24_api_reference.json from code
-```
+- **Agents**: Anthropic Python SDK `messages.create()` with `tools` — NOT Claude Agent SDK
+- **Deployment**: Docker Compose (4 services: backend, frontend, postgres, on24-mcp)
 
 ## Commands
 ```bash
-# First-time setup — .env.local is the source of truth for secrets (gitignored)
-# docker compose reads it via env_file; config.py loads both .env and .env.local
+# Docker (recommended) — .env.local is source of truth for secrets (gitignored)
+docker compose up --build   # App: http://localhost:3001 | API: http://localhost:8000/docs
+# Postgres host port: 5433 (not 5432). ON24 DB requires VPN (10.3.7.233).
 
-# Docker (recommended)
-docker compose up --build   # Starts all services; runs alembic upgrade head before uvicorn
-# App:      http://localhost:3001
-# API docs: http://localhost:8000/docs
-# WebSocket: ws://localhost:8000/ws/chat
-#
-# NOTE: postgres host port is 5433 (not 5432) — host 5432 is taken by agentic-video-db-1.
-#   Internal container port is still 5432; backend connects via Docker network (unaffected).
-#   Local psql/pgAdmin: use port 5433.
-#
-# NOTE: ON24_DB_URL points to 10.3.7.233 (ON24 internal network).
-#   Queries to on24master will fail if not on VPN or the ON24 corporate network.
-
-# Backend (local dev)
+# Backend dev
 cd backend && pip install -e ".[dev]"
-pytest tests/ -v
+pytest tests/ -v              # 53+ tests (query tools, charts, security, a11y)
 ruff check app/ && ruff format app/
-alembic upgrade head
 
-# Frontend (local dev)
+# Frontend dev
 cd frontend && npm install
-npm run dev          # Dev server (port 5173, proxies /api and /ws to backend)
-npm run build
-npm run typecheck    # npx tsc --noEmit
-npm run lint
+npm run dev                    # Port 5173, proxies /api and /ws to backend
+npx vitest run                 # 23+ component tests
+npm run typecheck && npm run lint
 ```
 
-
 ## Key Conventions
-- **Models**: All use `TimestampMixin` (created_at, updated_at) + optional `SyncedMixin` (synced_at). Each has `to_dict()`. All synced models have `raw_json JSONB`.
-- **Upserts**: `sqlalchemy.dialects.postgresql.insert` with `on_conflict_do_update` — idempotent syncs.
-- **Rate Limiting**: Token bucket per ON24 endpoint category (6 tiers, 10-1000 req/min). Auto-detected from URL path.
-- **Schemas**: Pydantic with `ConfigDict(from_attributes=True)`. Paginated endpoints return `PaginatedResponse[T]`.
-- **Config**: All settings via env vars, Pydantic Settings in `app/config.py`. Never hardcode secrets.
-- **Frontend State**: TanStack Query for server-state. No Redux/Zustand.
-- **Frontend Paths**: `@/` alias resolves to `src/` (vite.config.ts + tsconfig paths).
+- **Models**: `TimestampMixin` + `to_dict()` + `raw_json JSONB` on synced models
+- **Upserts**: `INSERT...ON CONFLICT DO UPDATE` for idempotent syncs
+- **Config**: env vars via Pydantic Settings (`app/config.py`). Never hardcode secrets.
+- **Frontend**: TanStack Query for server-state. `@/` alias → `src/`. No Redux.
+- **Schemas**: Pydantic `ConfigDict(from_attributes=True)`. `PaginatedResponse[T]`.
 
-## ON24 Analytics Platform — Existing Reporting Sections
-The ON24 platform has these built-in analytics sections. Use these URLs when redirecting users to more appropriate tools:
-
-| Section | Sub-section | URL |
-|---------|-------------|-----|
-| Dashboard | — | https://wcc.on24.com/webcast/dashboard |
-| Smart Tips | — | https://wcc.on24.com/webcast/keyinsightssummary |
-| **Products** | Webcast Elite | https://wcc.on24.com/webcast/reportsdashboard |
-| | Engagement Hub | https://wcc.on24.com/webcast/portalsummaryreports |
-| | Target | https://wcc.on24.com/webcast/targetAnalytics |
-| | Go Live | https://wcc.on24.com/webcast/virtualeventsummary |
-| **Leads** | Power Leads | https://wcc.on24.com/webcast/leadsreports |
-| | Segments | https://wcc.on24.com/webcast/segmentationsummary |
-| | Funnel | https://wcc.on24.com/webcast/funnelaudience |
-| | Accounts | https://wcc.on24.com/webcast/accountengagement |
-| **Content** | Documents | https://wcc.on24.com/webcast/documentsanalytics |
-| | Videos | https://wcc.on24.com/webcast/videolibraryanalytics |
-| | Webpages | https://wcc.on24.com/webcast/webpagessummary |
-| **Interactions** | Polls & Surveys | https://wcc.on24.com/webcast/pollsreport |
-| | Buying Signals | https://wcc.on24.com/webcast/buyingsignals |
-| | Presenters | https://wcc.on24.com/webcast/funnelpresenters |
-| **Benchmarking** | — | https://wcc.on24.com/webcast/benchmarking |
-
-## ON24 Data Access
-**Three data sources — prefer direct DB for reads:**
-
-| Source | Used for | Location |
-|--------|----------|----------|
-| ON24 master DB (on24master) | All analytics reads | `backend/app/db/on24_db.py` + `on24_query_tools.py` |
-| ON24 REST API (apiqa.on24.com) | Write ops, full API client (71 endpoints) | `backend/app/services/on24_client.py` (1151 lines) |
-| MCP Server (on24-mcp) | External tool access via Model Context Protocol | `on24-mcp/server.py` (67 tools: 47 read + 20 write) |
-
-**Tenant isolation (critical):**
-- `get_client_id()` reads root from `settings.on24_client_id` (config only, never from agents/users)
-- `get_tenant_client_ids()` returns root + all sub-clients via cycle-safe recursive CTE (cached)
-- All 10 query functions use `WHERE client_id = ANY($N::bigint[])` — never a single-ID filter
-- Root client 10710 has 9 sub-clients: 22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909
-
-**Key on24master tables:**
-- `dw_attendee` — preferred for engagement aggregates (engagement_score, live/archive minutes)
-- `dw_lead` — lead/prospect data with direct client_id
-- `event` — join point for tenant scoping on event_user (which has no client_id)
-- `event_info.epid` — internal config flags only; not useful for analytics
-
-## Agent Architecture
-4 agents, each a Python class with multi-round Anthropic tool_use loop (max 5 rounds):
-
-| Agent | File | Tools | Purpose |
-|-------|------|-------|---------|
-| Orchestrator | `orchestrator.py` | route_to_* | Classifies intent, delegates, synthesizes |
-| Data Agent | `data_agent.py` | list_events, get_event_kpis, get_top_events, get_attendance_trends, get_audience_companies, get_audience_sources, get_polls, get_top_events_by_polls, get_poll_overview, get_resources, generate_chart_data | DB queries + KPI computation + charts |
-| Content Agent | `content_agent.py` | analyze_topic_performance, compare_event_performance, analyze_scheduling_patterns, suggest_topics | Content insights |
-| Admin Agent | `admin_agent.py` | create_event, update_event, add_registrant, remove_registrant, get_event_summary | ON24 write operations |
-
-**Admin confirmation flow**: Admin agent returns `requires_confirmation=True` with summary. Frontend shows confirmation dialog. User resends with `{"confirmed": true}`.
-
-**Audit logging**: Every tool call in every agent is fire-and-forget written to `agent_audit_logs` table via `asyncio.create_task`.
-
-**Orchestrator history safety**: On agent exception after tool_use is appended, the dangling messages are popped before re-raising to prevent corrupt conversation history.
-
-## API Endpoints
-- `POST /api/chat` — HTTP fallback for agent conversations
-- `WS /ws/chat` — WebSocket streaming chat
-- `POST /api/feedback` — Save thumbs-down feedback to `data/improvement-inbox-MM-DD-YYYY.txt`
-- `GET /api/calendar?year=&month=` — Events for a month (KPIs for past events)
-- `GET /api/calendar/event/{id}` — Single event summary with poll/survey/resource counts
-
-## Charts
-- **Bar / Line**: Recharts `BarChart`/`LineChart`; `generate_chart_data` returns `{type, data, title, x_key, y_keys}`
-- **Pie**: Recharts `PieChart/Pie/Cell`; `generate_chart_data` with `chart_type="pie"` returns `{type: "pie", data: [{name, value}]}`
-- Suggestion chips are context-aware: never suggest the currently displayed view type
-
-## Event Calendar
-- Outlook-style modal at `frontend/src/components/calendar/EventCalendar.tsx`
-- Month view (6×7 grid) + Week view (hourly 7am–9pm timeline)
-- Click any event → side panel with full summary (title, abstract, KPIs, poll/survey/resource counts)
-- Past events show performance KPIs; future events show "Performance data available after the event concludes."
-- Opened from: TopNav calendar icon, "Show event calendar" suggestion tile, or chat
-- `event.goodafter` = start time, `event.goodtill` = end time (no starttime/endtime columns on ON24 event table)
-
-## WebSocket Protocol (`/ws/chat`)
-Client sends: `{"type": "message", "content": "...", "confirmed": false}`
-Server sends message types: `agent_start`, `agent_routing`, `text`, `chart_data`, `confirmation_required`, `message_complete`, `error`, `reset`
+## Tenant Isolation (Critical)
+- `get_client_id()` → root from config only (never from agents/users)
+- `get_tenant_client_ids()` → root + sub-clients via recursive CTE (cached)
+- All queries: `WHERE client_id = ANY($N::bigint[])` — never single-ID
+- Root 10710 → 9 sub-clients: 22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909
 
 ## Environment Variables
-See `.env.example` for the full template with all keys. Copy to `.env.local` and fill in real values.
+See `.env.example` for full template. Key groups: MCP, ON24 API, ON24 DB (SSL certs), DataBot DB, AI keys (Anthropic + OpenAI), App config.
 
-Key groups:
-- **MCP**: `USE_MCP`, `USE_MCP_BLOCKLIST` (20 write tools blocked by default), `MCP_SERVER_URL`
-- **ON24 API**: `ON24_BASE_URL`, `ON24_ACCESS_TOKEN_KEY/SECRET`, `ON24_CLIENT_ID`
-- **ON24 DB**: `ON24_DB_URL`, `DB_PG_SSL_*` (3 cert vars)
-- **DataBot DB**: `DATABASE_URL`, `POSTGRES_PASSWORD`
-- **AI**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`
-- **Media/Transcription**: `AZURE_SPEECH_KEY`, `PIXABAY_KEY`, `FREESOUND_KEY`, `RUNWAYML_API_KEY`
-- **App**: `DEBUG`, `CLAUDE_CODE_MAX_OUTPUT_TOKENS`
+## Architecture
+See `.ai/architecture.md` for: data access sources, agent system details, key ON24 tables, WebSocket protocol, ON24 platform URLs.
 
-## MCP Server (`on24-mcp/`)
-- FastMCP streamable-HTTP server on port 8001 inside Docker
-- 67 tools: 47 read + 20 write (file-upload endpoints excluded)
-- Write tools controlled by `USE_MCP_BLOCKLIST` env var (comma-separated tool names)
-- Separate `on24_client.py` (77 async methods) — mirrors `backend/app/services/on24_client.py`
-- Benchmark script: `backend/tests/benchmark_read_apis.py` — 3-way comparison (REST vs MCP vs DB)
+## ON24 Analytics Platform URLs
+Agent redirects users to built-in ON24 reporting at `wcc.on24.com/webcast/`:
+dashboard, keyinsightssummary, reportsdashboard, portalsummaryreports, targetAnalytics, virtualeventsummary, leadsreports, segmentationsummary, funnelaudience, accountengagement, documentsanalytics, videolibraryanalytics, webpagessummary, pollsreport, buyingsignals, funnelpresenters, benchmarking
 
-## ON24 REST API Reference
-- `data/on24_api_reference.json` — 71 endpoints across 6 categories
-- Ingested into knowledge base at startup via `ingest_api_reference()` in `backend/app/db/knowledge_base.py`
-- Article IDs prefixed `api_` to distinguish from Zendesk articles
-
-## Proposed Content Calendar
-- Content agent emits structured `proposed_events` JSON block (fenced code block)
-- Orchestrator parses via `_extract_proposed_events()` regex
-- WebSocket sends `proposed_events` message type to frontend
-- EventCalendar renders with dashed purple borders (#a78bfa), negative IDs, "Proposed" labels
-- Side panel shows funnel_stage and topic instead of KPIs for proposed events
+## Key Implementation Details
+- `event.goodafter` = start time, `event.goodtill` = end time (no starttime/endtime columns)
+- Event title is in `description` column (not event_name)
+- `generate_chart_data` formats data for frontend: bar, line, pie, radar, funnel, gauge, treemap, scatter, heatmap, waterfall
+- Admin confirmation: `requires_confirmation=True` → frontend dialog → `{"confirmed": true}`
+- Knowledge base: Postgres REAL[] + OpenAI text-embedding-3-small + numpy cosine similarity
+- Brand voice: `data/brand_voice.json` auto-generated from AUTOGEN_ content; content agent injects silently

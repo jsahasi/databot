@@ -311,11 +311,12 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 
 ## Backlog / Next Steps
 - [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
-- [ ] Add query tools for dw_lead (lead/prospect analytics)
-- [ ] Add backend tests for on24_query_tools (mock asyncpg pool)
-- [ ] Frontend Vitest component tests + Playwright E2E
+- [x] Add query tools for dw_lead (lead/prospect analytics) — query_leads + query_lead_stats, commit 042b0a3
+- [x] Add backend tests for on24_query_tools (mock asyncpg pool) — 47 tests, commit 496eed2
+- [x] Frontend Vitest component tests (KPICard, ErrorState, LoadingState, AgentIndicator) — 23 tests, commit 496eed2
+- [ ] Frontend Playwright E2E tests
 - [ ] Multi-client: implement per-request context var for tenant ID
-- [ ] Recent Chats: persist chat history in localStorage
+- [x] ~~Recent Chats: persist chat history in localStorage~~ — removed from scope
 - [ ] Marketer + director regression test prompts (300 total in marketer_prompts.json + director_prompts.json)
 
 ## Verified ON24 Schema (on24master)
