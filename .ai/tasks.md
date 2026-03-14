@@ -296,6 +296,19 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] MCP server scaffold under way (background agent building on24-mcp/)
 - [x] API vs DB benchmark report under way (background agent)
 
+## Phase 10: Documentation + Accessibility + Security — COMPLETE (2026-03-14)
+- [x] Test plan doc (test-plan.html): dashboard metrics, pass rate by subsection, failure details, 10 test file sections
+- [x] Scalability doc (scalability.html): 2K–6K concurrent user analysis, bottlenecks, recommended architecture, k6/Locust load test plan
+- [x] Security review doc (security-review.html): 15 findings (0 critical, 3 high, 5 medium), OWASP Top 10 matrix, AI-specific security, remediation plan
+- [x] Accessibility VPAT doc (accessibility-vpat.html): WCAG 2.1 Level A+AA criteria tables, remediation tracking (9 fixed, 4 open)
+- [x] API vs DB benchmark doc (api-vs-db-benchmark.html): placeholder for 3-way comparison results
+- [x] ChatSidebar: separate doc links → Documents dropdown (8 entries, chevron toggle, outside-click close)
+- [x] ChatSidebar: theme param always passed (?theme=light or ?theme=dark) to all doc links
+- [x] ChatPanel: "Poll results overview" → "Poll trends" moved to Trends sub-menu; "Create Content" replaces on home grid
+- [x] Tech spec: added MCP Section 5 (architecture, data access strategy), MCP+REST API boxes in SVG diagram
+- [x] WCAG 2.1 AA fixes: skip link, focus-visible outlines, aria-live regions, aria-expanded, contrast fix (#94a0b8), chat labels, chart roles, DOMPurify on calendar HTML
+- [x] VPAT regenerated: 9 criteria upgraded from Partially Supports to Supports
+
 ## Backlog / Next Steps
 - [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
 - [ ] Add query tools for dw_lead (lead/prospect analytics)

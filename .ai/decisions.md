@@ -193,6 +193,18 @@ Implementation:
 **Decision:** Content agent must call `get_ai_content` FIRST for any content creation request — before `analyze_topic_performance`, `suggest_topics`, or any other tool.
 **Rationale:** The analytics tools (`analyze_topic_performance`, `compare_event_performance`, etc.) query the local DataBot PostgreSQL DB via SQLAlchemy ORM, which depends on the ETL sync being run. If sync hasn't run, these tools return "no data" and the agent refuses to write. `get_ai_content` queries ON24 master DB directly — it always has data. Starting with source material is also better content strategy.
 
+## 2026-03-14: Documentation Suite as HTML Docs
+**Decision:** Create 5 HTML docs (test-plan, scalability, security-review, accessibility-vpat, api-vs-db-benchmark) in `frontend/public/docs/` with matching styling, CSS variable theming, and `?theme=dark|light` URL param support.
+**Rationale:** Living documentation accessible from the app sidebar. Theme param ensures docs match app appearance. All docs use same hero/card/table styling pattern as MRD/PRD/tech-spec.
+
+## 2026-03-14: Sidebar Documents Dropdown
+**Decision:** Replaced individual sidebar doc links with a collapsible "Documents" dropdown containing 8 entries.
+**Rationale:** 8+ links consumed too much sidebar space. Dropdown with outside-click close keeps sidebar clean. DOMPurify sanitizes recent-changes HTML (loaded via fetch).
+
+## 2026-03-14: WCAG 2.1 AA Accessibility Fixes
+**Decision:** Applied 15+ WCAG fixes: skip-to-content link, focus-visible outlines, aria-live regions, aria-expanded on collapsible sections, dark mode contrast (#94a0b8 for text-secondary), chat input labels, chart role="img", DOMPurify on calendar HTML.
+**Rationale:** VPAT audit revealed multiple Partially Supports criteria. Fixes bring 9 criteria to full Supports status. 4 items remain open (calendar keyboard nav, chart axes contrast, calendar responsive 320px, chart data tables).
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.
