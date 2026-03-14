@@ -234,11 +234,11 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }, [connect])
 
-  const sendMessage = useCallback((content: string) => {
-    // Always show the user message immediately
+  const sendMessage = useCallback((content: string, displayText?: string) => {
+    // Always show the user message immediately (displayText shown in chat; content sent to LLM)
     setMessages(prev => [
       ...prev,
-      { id: `user-${Date.now()}`, role: 'user', content, timestamp: new Date() },
+      { id: `user-${Date.now()}`, role: 'user', content: displayText ?? content, timestamp: new Date() },
     ])
 
     if (isProcessingRef.current) {
