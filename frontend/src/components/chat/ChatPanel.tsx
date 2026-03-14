@@ -93,8 +93,19 @@ export default function ChatPanel() {
     'How do I use Connect integrations?',
   ]
 
-  // Read permissions from sessionStorage (set by TopNav on admin selection)
+  // Read permissions + admin info from sessionStorage (set by TopNav on admin selection)
   const storedPerms: string[] = JSON.parse(sessionStorage.getItem('adminPermissions') || '[]')
+  const adminInfo: { email: string; name: string; profile: string } | null = JSON.parse(sessionStorage.getItem('adminInfo') || 'null')
+
+  const PERM_LABELS: Record<string, string> = {
+    'create-event': 'Create events', 'view-analytics': 'View analytics',
+    'view-event-analytics': 'View event analytics', 'view-webcasts': 'View Elite webcasts',
+    'manage-brand-settings': 'Manage branding', 'manage-engagement-hub': 'Manage Engagement Hub',
+    'manage-target-experiences': 'Manage Target', 'manage-virtual-events': 'Manage GoLive',
+    'manage-integrations': 'Manage integrations', 'manage-users': 'Manage users',
+    'manage-meetups': 'Manage Forums', 'elite-order-services': 'Order Elite services',
+    'manage-audience-console': 'Manage Audience Console',
+  }
   const filteredExperiences = filterByPermissions(EXPERIENCE_LINKS, storedPerms)
   const filteredConfigLinks = filterByPermissions(CONFIG_LINKS, storedPerms)
   const hasAnalytics = storedPerms.length === 0 || storedPerms.includes('view-analytics')
@@ -238,6 +249,7 @@ export default function ChatPanel() {
 
             {/* Suggestion tiles — 2-column grid */}
             {!showHowDoI && !showExperiences && !showConfigureEnv && !showTrends && !showExploreContent && !showContentCreate && !showContentExplore ? (
+              <>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
@@ -290,6 +302,24 @@ export default function ChatPanel() {
                   )
                 })}
               </div>
+              {adminInfo && storedPerms.length > 0 && (
+                <div style={{ marginTop: '1.25rem', width: '100%', maxWidth: 680 }}>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.375rem' }}>
+                    Login Permissions — {adminInfo.name} ({adminInfo.profile})
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                    {storedPerms.map(p => (
+                      <span key={p} style={{
+                        fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: 4,
+                        background: 'rgba(99,102,241,0.08)', color: 'var(--color-text-secondary)',
+                      }}>
+                        {PERM_LABELS[p] || p}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
             ) : showTrends ? (
               /* Trends sub-menu */
               <div style={{ width: '100%', maxWidth: 680 }}>

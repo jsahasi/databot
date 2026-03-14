@@ -9,7 +9,7 @@ interface AdminUser {
 }
 
 export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
-  const { isConnected, openCalendar, sendMessage } = useChatContext()
+  const { isConnected, openCalendar, resetChat } = useChatContext()
   const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
   const [dbEnv, setDbEnv] = useState<string>('')
   const [qaAvailable, setQaAvailable] = useState(false)
@@ -99,29 +99,9 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
                   .then(d => {
                     const perms: string[] = d.permissions || []
                     sessionStorage.setItem('adminPermissions', JSON.stringify(perms))
-                    // Map prop_codes to plain English
-                    const permLabels: Record<string, string> = {
-                      'create-event': 'Create events',
-                      'view-analytics': 'View analytics',
-                      'view-event-analytics': 'View event analytics',
-                      'view-webcasts': 'View Elite webcasts',
-                      'manage-brand-settings': 'Manage branding',
-                      'manage-engagement-hub': 'Manage Engagement Hub',
-                      'manage-target-experiences': 'Manage Target experiences',
-                      'manage-virtual-events': 'Manage GoLive virtual events',
-                      'manage-integrations': 'Manage integrations (Connect)',
-                      'manage-users': 'Manage users',
-                      'manage-meetups': 'Manage meetups',
-                      'elite-order-services': 'Order Elite services',
-                      'manage-audience-console': 'Manage Audience Console',
-                    }
-                    const readable = perms
-                      .filter(p => permLabels[p])
-                      .map(p => permLabels[p])
-                      .join(', ')
-                    const msg = `Simulating: ${admin.name} (${admin.profile}). Access: ${readable || 'standard permissions'}.\ndebug: ${perms.join(', ')}`
-                    // Send as a system-style message in chat
-                    sendMessage(msg, `Switched to ${admin.name} (${admin.profile})`)
+                    sessionStorage.setItem('adminInfo', JSON.stringify({ email: admin.email, name: admin.name, profile: admin.profile }))
+                    // Reset chat to home page (tiles will re-render with filtered permissions)
+                    resetChat()
                   })
                   .catch(() => sessionStorage.removeItem('adminPermissions'))
               }
