@@ -4,11 +4,28 @@ import { useChatContext } from '../../context/ChatContext'
 export default function TopNav() {
   const { isConnected, openCalendar } = useChatContext()
   const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
+  const [dbEnv, setDbEnv] = useState<string>('')
+  const [qaAvailable, setQaAvailable] = useState(false)
+  const [switching, setSwitching] = useState(false)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
     localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
+
+  // Poll DB environment status every 30s
+  useEffect(() => {
+    let mounted = true
+    const fetchStatus = () => {
+      fetch('/api/status')
+        .then(r => r.json())
+        .then(d => { if (mounted) { setDbEnv(d.on24_db || ''); setQaAvailable(!!d.qa_available) } })
+        .catch(() => { if (mounted) setDbEnv('') })
+    }
+    fetchStatus()
+    const interval = setInterval(fetchStatus, 30000)
+    return () => { mounted = false; clearInterval(interval) }
+  }, [])
 
   return (
     <header
@@ -86,6 +103,47 @@ export default function TopNav() {
           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
             {isConnected ? 'Connected' : 'Reconnecting'}
           </span>
+          {dbEnv && dbEnv !== 'disconnected' && (
+            <button
+              onClick={() => {
+                if (!qaAvailable || switching) return
+                const target = dbEnv === 'PROD' ? 'QA' : 'PROD'
+                setSwitching(true)
+                fetch(`/api/status/switch-db?target=${target}`, { method: 'POST' })
+                  .then(r => r.json())
+                  .then(d => setDbEnv(d.on24_db || 'disconnected'))
+                  .catch(() => {})
+                  .finally(() => setSwitching(false))
+              }}
+              title={qaAvailable ? `Click to switch to ${dbEnv === 'PROD' ? 'QA' : 'PROD'}` : 'QA database not configured'}
+              style={{
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                padding: '0.1rem 0.4rem',
+                borderRadius: 4,
+                background: dbEnv === 'PROD' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                color: dbEnv === 'PROD' ? '#10b981' : '#f59e0b',
+                letterSpacing: '0.03em',
+                border: 'none',
+                cursor: qaAvailable ? 'pointer' : 'default',
+                opacity: switching ? 0.5 : 1,
+              }}
+            >
+              {switching ? '...' : dbEnv}
+            </button>
+          )}
+          {dbEnv === 'disconnected' && (
+            <span style={{
+              fontSize: '0.65rem',
+              fontWeight: 600,
+              padding: '0.1rem 0.4rem',
+              borderRadius: 4,
+              background: 'rgba(239,68,68,0.15)',
+              color: '#ef4444',
+            }}>
+              DB offline
+            </span>
+          )}
         </div>
         {/* Calendar button */}
         <button

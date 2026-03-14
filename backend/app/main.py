@@ -102,3 +102,26 @@ app.add_api_websocket_route("/ws/chat", websocket_chat)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/api/status")
+async def app_status():
+    """Return app status including which ON24 DB environment is active."""
+    from app.db.on24_db import get_active_env
+    env = get_active_env()
+    return {
+        "on24_db": env or "disconnected",
+        "qa_available": bool(settings.on24_db_url_qa),
+    }
+
+
+@app.post("/api/status/switch-db")
+async def switch_db(target: str = "PROD"):
+    """Switch the ON24 DB connection to PROD or QA."""
+    from app.db.on24_db import switch_environment
+    target = target.upper()
+    if target not in ("PROD", "QA"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="target must be PROD or QA")
+    env = await switch_environment(target)
+    return {"on24_db": env}
