@@ -126,8 +126,8 @@ async def _create_pool(url: str, ssl_ctx: ssl.SSLContext | None) -> asyncpg.Pool
         user=user,
         password=password,
         ssl=ssl_ctx,
-        min_size=2,
-        max_size=10,
+        min_size=1,
+        max_size=3,
         command_timeout=60,
     )
 
