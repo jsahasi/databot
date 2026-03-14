@@ -138,6 +138,7 @@ class ContentAgent:
         user_message: str,
         conversation_history: list[dict] | None = None,
         session_id: str = "",
+        restriction_context: str = "",
     ) -> dict[str, Any]:
         messages = list(conversation_history or [])
         messages.append({"role": "user", "content": user_message})
@@ -157,6 +158,8 @@ class ContentAgent:
         tool_calls_made = []
 
         system_cached = [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
+        if restriction_context:
+            system_cached.append({"type": "text", "text": restriction_context})
 
         for _round in range(self.max_tool_rounds):
             response = await self.client.messages.create(

@@ -12,7 +12,7 @@ from pydantic import BaseModel, field_validator
 
 from app.agents.orchestrator import OrchestratorAgent
 from app.config import settings
-from app.db.on24_db import set_request_client_id, get_client_id
+from app.db.on24_db import set_request_client_id, get_client_id, get_pool, get_tenant_client_ids
 from app.services.response_cache import get_cached_response, cache_response
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,81 @@ router = APIRouter()
 
 # Store active sessions (in production, use Redis or similar)
 _sessions: dict[str, OrchestratorAgent] = {}
+
+# Permission → product name mapping for restriction context
+_PERM_PRODUCT_MAP = {
+    "view-webcasts": "Elite (Webcasts)",
+    "manage-engagement-hub": "Engagement Hub",
+    "manage-target-experiences": "Target (Landing Pages)",
+    "manage-virtual-events": "GoLive (Virtual Events)",
+    "manage-brand-settings": "Branding settings",
+    "manage-integrations": "Connect / Integrations",
+    "manage-users": "User management",
+    "view-analytics": "Analytics and event data",
+    "manage-meetups": "Forums (interactive webinars)",
+}
+
+# Cache client admin contacts (refreshed per session, not per message)
+_admin_contacts_cache: dict[str, str] = {}
+
+
+async def _get_admin_contacts() -> str:
+    """Look up up to 2 Client Admin names for the current client hierarchy."""
+    cache_key = str(get_client_id())
+    if cache_key in _admin_contacts_cache:
+        return _admin_contacts_cache[cache_key]
+
+    try:
+        pool = await get_pool()
+        client_ids = await get_tenant_client_ids()
+        sql = """
+            SELECT DISTINCT a.firstname, a.lastname
+            FROM on24master.admin a
+            JOIN on24master.admin_x_client axc ON a.admin_id = axc.admin_id
+            JOIN on24master.admin_x_profile axp ON axp.admin_id = a.admin_id
+            WHERE axc.client_id = ANY($1::bigint[])
+              AND a.is_active = 'Y'
+              AND axp.admin_profile_name = 'Client Admin'
+              AND axp.is_active = 'Y'
+            ORDER BY a.lastname, a.firstname
+            LIMIT 2
+        """
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(sql, client_ids, timeout=5.0)
+        names = [f"{r['firstname']} {r['lastname']}".strip() for r in rows if r['firstname']]
+        result = " or ".join(names) if names else ""
+        _admin_contacts_cache[cache_key] = result
+        return result
+    except Exception:
+        return ""
+
+
+async def _build_restriction_context(permissions: list[str]) -> str:
+    """Build a system prompt addendum listing restricted products."""
+    if not permissions:
+        return ""
+
+    restricted = []
+    for perm, product in _PERM_PRODUCT_MAP.items():
+        if perm not in permissions:
+            restricted.append(product)
+
+    if not restricted:
+        return ""
+
+    admin_names = await _get_admin_contacts()
+    contact = f"reach out to {admin_names} or your ON24 CSM" if admin_names else "reach out to your account administrator or ON24 CSM"
+
+    return (
+        "\n\n## Product Access Restrictions (MANDATORY)\n"
+        f"This user does NOT have access to: {', '.join(restricted)}.\n"
+        "- Do NOT mention, link to, or suggest these products in your response.\n"
+        "- Do NOT show deep links to restricted products.\n"
+        "- If the user asks about a restricted product, respond: "
+        f"\"That feature requires additional access. To enable it, {contact}.\"\n"
+        "- You may mention restricted products ONLY in the context of an upsell opportunity, "
+        f"framed as: \"To unlock [product], {contact}.\"\n"
+    )
 
 
 async def generate_suggestions(
@@ -214,6 +289,13 @@ async def websocket_chat(websocket: WebSocket):
                     session_id = "default"
 
                 agent = _get_or_create_agent(session_id)
+
+                # Build permission restriction context for agents
+                user_permissions: list[str] = data.get("permissions", [])
+                restriction_context = ""
+                if user_permissions:
+                    restriction_context = await _build_restriction_context(user_permissions)
+                agent.restriction_context = restriction_context
 
                 # Check response cache (skip for confirmed actions and short/ambiguous messages)
                 cached_result = None

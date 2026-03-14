@@ -56,6 +56,7 @@ class OrchestratorAgent:
         self.content_agent = ContentAgent()
         self.admin_agent = AdminAgent()
         self.conversation_history: list[dict] = []
+        self.restriction_context: str = ""  # Set by chat.py per message
 
     # Tool for routing to sub-agents
     ROUTING_TOOLS = [
@@ -172,11 +173,15 @@ class OrchestratorAgent:
         """
         self.conversation_history.append({"role": "user", "content": user_message})
 
+        system_blocks = [{"type": "text", "text": _build_orchestrator_prompt(), "cache_control": {"type": "ephemeral"}}]
+        if self.restriction_context:
+            system_blocks.append({"type": "text", "text": self.restriction_context})
+
         try:
             response = await self.client.messages.create(
                 model=self.model,
                 max_tokens=2048,
-                system=[{"type": "text", "text": _build_orchestrator_prompt(), "cache_control": {"type": "ephemeral"}}],
+                system=system_blocks,
                 tools=self.ROUTING_TOOLS,
                 messages=self.conversation_history,
             )
@@ -222,7 +227,7 @@ class OrchestratorAgent:
                             followup = await self.client.messages.create(
                                 model=self.model,
                                 max_tokens=2048,
-                                system=[{"type": "text", "text": _build_orchestrator_prompt(), "cache_control": {"type": "ephemeral"}}],
+                                system=system_blocks,
                                 tools=self.ROUTING_TOOLS,
                                 messages=self.conversation_history,
                             )
@@ -248,7 +253,7 @@ class OrchestratorAgent:
                     elif tool_name == "route_to_data_agent":
                         logger.info(f"Routing to Data Agent: {query}")
                         try:
-                            result = await self.data_agent.run(query, conversation_history=self._text_history())
+                            result = await self.data_agent.run(query, conversation_history=self._text_history(), restriction_context=self.restriction_context)
                         except Exception:
                             # Roll back the dangling tool_use assistant message + user message
                             self.conversation_history.pop()  # assistant tool_use
@@ -293,6 +298,7 @@ class OrchestratorAgent:
                             result = await self.content_agent.run(
                                 query,
                                 conversation_history=self._text_history(),
+                                restriction_context=self.restriction_context,
                             )
                         except Exception:
                             self.conversation_history.pop()
@@ -334,6 +340,7 @@ class OrchestratorAgent:
                             data_result = await self.data_agent.run(
                                 data_query,
                                 conversation_history=self._text_history(),
+                                restriction_context=self.restriction_context,
                             )
                         except Exception:
                             self.conversation_history.pop()  # assistant tool_use
@@ -350,6 +357,7 @@ class OrchestratorAgent:
                             result = await self.content_agent.run(
                                 enriched_query,
                                 conversation_history=self._text_history(),
+                                restriction_context=self.restriction_context,
                             )
                         except Exception:
                             self.conversation_history.pop()  # assistant tool_use
@@ -397,6 +405,7 @@ class OrchestratorAgent:
                                 message=query,
                                 session_id="orchestrator",
                                 confirmed=confirmed,
+                                restriction_context=self.restriction_context,
                             )
                         except Exception:
                             self.conversation_history.pop()

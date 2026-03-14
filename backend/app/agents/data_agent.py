@@ -78,7 +78,7 @@ class DataAgent:
         except Exception:
             logger.exception("Failed to write agent audit log")
 
-    async def run(self, user_message: str, conversation_history: list[dict] | None = None, session_id: str = "") -> dict[str, Any]:
+    async def run(self, user_message: str, conversation_history: list[dict] | None = None, session_id: str = "", restriction_context: str = "") -> dict[str, Any]:
         """Process a user message and return a response with optional chart data.
 
         Returns:
@@ -100,6 +100,8 @@ class DataAgent:
 
         system_prompt = _build_system_prompt()
         system_cached = [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
+        if restriction_context:
+            system_cached.append({"type": "text", "text": restriction_context})
 
         for _round in range(self.max_tool_rounds):
             response = await self.client.messages.create(

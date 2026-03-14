@@ -37,6 +37,7 @@ class AdminAgent:
         message: str,
         session_id: str,
         confirmed: bool = False,
+        restriction_context: str = "",
     ) -> dict[str, Any]:
         """Process an admin request, gating destructive tools behind confirmation.
 
@@ -53,6 +54,8 @@ class AdminAgent:
         tool_calls_made: list[dict] = []
 
         system_cached = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+        if restriction_context:
+            system_cached.append({"type": "text", "text": restriction_context})
 
         for _round in range(self.max_tool_rounds):
             response = await self.client.messages.create(

@@ -50,6 +50,7 @@ export function useChat(options: UseChatOptions = {}) {
           content: pendingMessageRef.current,
           session_id: sessionId,
           client_id: clientIdRef.current,
+          permissions: JSON.parse(sessionStorage.getItem('adminPermissions') || '[]'),
         }))
         pendingMessageRef.current = null
       }
@@ -193,7 +194,7 @@ export function useChat(options: UseChatOptions = {}) {
             ])
             setIsProcessing(true)
             isProcessingRef.current = true
-            ws.send(JSON.stringify({ type: 'message', content: next, session_id: sessionId, client_id: selectedClientId }))
+            ws.send(JSON.stringify({ type: 'message', content: next, session_id: sessionId, client_id: selectedClientId, permissions: JSON.parse(sessionStorage.getItem('adminPermissions') || '[]') }))
           }
           break
 
