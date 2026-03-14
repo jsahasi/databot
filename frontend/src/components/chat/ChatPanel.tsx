@@ -162,7 +162,7 @@ export default function ChatPanel() {
                       key={i}
                       aria-label={`Suggest: ${s}`}
                       onClick={() => {
-                        if (s === 'Recent events') { openCalendar() }
+                        if (s === 'Recent events' || s === 'View proposed calendar') { openCalendar() }
                         else if (s === 'How do I ...? (ON24 help)') { setShowHowDoI(true) }
                         else if (s === 'Experiences') { setShowExperiences(true) }
                         else if (s === 'Configure environment') { setShowConfigureEnv(true) }
@@ -477,7 +477,7 @@ export default function ChatPanel() {
                         onClick={() => {
                           if (s === 'Home') { resetChat() }
                           else if (s === 'How do I...?') { setShowHowDoI(true) }
-                          else if (s === 'Recent events') { openCalendar() }
+                          else if (s === 'Recent events' || s === 'View proposed calendar') { openCalendar() }
                           else { sendMessage(s); setInput('') }
                         }}
                         style={{
