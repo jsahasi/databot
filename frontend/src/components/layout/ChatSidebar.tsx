@@ -14,7 +14,7 @@ export default function ChatSidebar() {
   const location = useLocation()
   const [recentChanges, setRecentChanges] = useState<string>('')
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
-  const themeParam = isDark ? '?theme=dark' : '?theme=light'
+  const themeParam = isDark ? '?theme=dark' : ''
   const docLinks = DOC_BASES.map(d => ({ label: d.label, href: d.path + themeParam }))
 
   useEffect(() => {

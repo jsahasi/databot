@@ -6,28 +6,36 @@
 <title>ON24 Nexus — Product Requirements Document</title>
 <style>
   :root {
+    --bg: #f8f9fc; --card: #ffffff; --border: #e2e6ef;
+    --text: #1a1d2e; --text2: #5a6070;
+    --primary: #4f46e5; --accent: #4f46e5;
+    --green: #059669; --amber: #d97706; --red: #dc2626;
+    --heading: #111827; --hero-bg: linear-gradient(135deg, #eef0f8 0%, #e8eaf6 100%);
+  }
+  html.dark-mode {
     --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
     --text: #c9cfe0; --text2: #7c8499;
     --primary: #a5b4fc; --accent: #6366f1;
     --green: #34d399; --amber: #fbbf24; --red: #f87171;
+    --heading: #ffffff; --hero-bg: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.7; padding: 0 0 4rem; }
-  .hero { background: linear-gradient(135deg, #1a1d27 0%, #1e2035 100%); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; position: relative; }
+  .hero { background: var(--hero-bg); border-bottom: 1px solid var(--border); padding: 3rem 3.5rem 2.5rem; position: relative; }
   .badge { display: inline-block; background: #059669; color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
-  h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  h1 { font-size: 2rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
   .subtitle { color: var(--text2); font-size: 0.9rem; }
   .meta { margin-top: 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text2); }
   .meta strong { color: var(--text); }
   .content { max-width: 860px; margin: 0 auto; padding: 2.5rem 3.5rem; }
   h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin: 2.5rem 0 0.875rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
-  h3 { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; margin: 1.5rem 0 0.5rem; }
+  h3 { font-size: 0.95rem; font-weight: 600; color: var(--heading); margin: 1.5rem 0 0.5rem; }
   h4 { font-size: 0.85rem; font-weight: 600; color: var(--primary); margin: 1.25rem 0 0.375rem; }
   p { color: var(--text); margin-bottom: 0.75rem; }
   ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
   li { color: var(--text); margin-bottom: 0.35rem; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
-  .card-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+  .card-title { font-size: 0.85rem; font-weight: 700; color: var(--heading); margin-bottom: 0.5rem; }
   .story { background: var(--card); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 0.875rem 1.25rem; margin-bottom: 0.75rem; font-size: 0.85rem; }
   .story em { color: var(--text2); font-style: normal; font-size: 0.8rem; display: block; margin-top: 0.375rem; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.85rem; }
@@ -44,27 +52,13 @@
   .dot-amber { background: #f59e0b; }
   .dot-green { background: #10b981; }
   .dot-pink { background: #ec4899; }
-  html.light-mode {
-    --bg: #f8f9fc;
-    --card: #ffffff;
-    --border: #e2e6ef;
-    --text: #1a1d2e;
-    --text2: #5a6070;
-    --primary: #4f46e5;
-    --accent: #4f46e5;
-    --green: #059669;
-    --amber: #d97706;
-    --red: #dc2626;
-  }
-  html.light-mode body { background: var(--bg); color: var(--text); }
-  html.light-mode .hero { background: linear-gradient(135deg, #eef0f8 0%, #e8eaf6 100%); }
-  html.light-mode .arch-diagram { background: #f0f2f8; }
-  html.light-mode pre { background: #f0f2f8; }
+  html.dark-mode .arch-diagram { background: #1a1d27; }
+  html.dark-mode pre { background: #0d1021; }
 </style>
 <script>
 (function(){
   var theme = new URLSearchParams(window.location.search).get('theme');
-  if (theme === 'light') document.documentElement.classList.add('light-mode');
+  if (theme === 'dark') document.documentElement.classList.add('dark-mode');
 })();
 </script>
 </head>
@@ -83,10 +77,10 @@
   <script>
   (function(){
     var toggle = document.getElementById('theme-toggle');
-    var isLight = document.documentElement.classList.contains('light-mode');
+    var isDark = document.documentElement.classList.contains('dark-mode');
     var base = window.location.pathname;
-    toggle.href = base + (isLight ? '?theme=dark' : '?theme=light');
-    toggle.textContent = isLight ? 'Dark mode' : 'Light mode';
+    toggle.href = base + (isDark ? '?theme=light' : '?theme=dark');
+    toggle.textContent = isDark ? 'Light mode' : 'Dark mode';
   })();
   </script>
 </div>

@@ -125,7 +125,7 @@ function aiTypeLabel(t: string) {
 // Section tab order for Key Takeaways (keys match backend _parse_kt_sections output)
 const KT_TAB_ORDER = ['summary', 'takeaways', 'quote', 'other'] as const
 const KT_TAB_LABELS: Record<string, string> = {
-  summary: 'Summary', takeaways: 'Takeaways', quote: 'Quote', other: 'Other',
+  summary: 'Summary', takeaways: 'Takeaways', quote: 'Quote', other: 'Other (type below)',
 }
 
 function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
