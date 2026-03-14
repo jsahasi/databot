@@ -38,6 +38,20 @@ services:
       retries: 3
       start_period: 30s
 
+  on24-mcp:
+    build: ./on24-mcp
+    platform: linux/amd64
+    env_file:
+      - .env.local
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/mcp')\" 2>/dev/null || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
   frontend:
     build: ./frontend
     platform: linux/amd64
