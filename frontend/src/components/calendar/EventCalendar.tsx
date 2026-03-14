@@ -960,7 +960,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
   if (!isOpen) return null
 
   return (
-    <div style={{
+    <div className="calendar-modal-overlay" style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       background: 'rgba(0,0,0,0.5)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1056,7 +1056,25 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
             </>
           )}
 
-          <button onClick={onClose} aria-label="Close calendar" style={{
+          <button onClick={() => {
+            const style = document.createElement('style')
+            style.id = 'calendar-print-style'
+            style.textContent = `@media print {
+              body > *:not(.calendar-modal-overlay) { display: none !important; }
+              .calendar-modal-overlay { position: static !important; background: none !important; }
+              .calendar-modal-overlay > div { position: static !important; width: 100% !important; height: auto !important; max-height: none !important; box-shadow: none !important; border: none !important; }
+              .calendar-print-hide { display: none !important; }
+            }`
+            document.head.appendChild(style)
+            window.print()
+            document.getElementById('calendar-print-style')?.remove()
+          }} aria-label="Print calendar" style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--color-text-secondary)', fontSize: '1rem', lineHeight: 1, padding: '0.2rem',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          </button>
+          <button onClick={onClose} aria-label="Close calendar" className="calendar-print-hide" style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--color-text-secondary)', fontSize: '1.25rem', lineHeight: 1,
           }}>×</button>
