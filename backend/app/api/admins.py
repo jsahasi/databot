@@ -17,9 +17,12 @@ async def list_admins():
     pool = await get_pool()
 
     sql = """
-        SELECT DISTINCT a.admin_id, a.email, a.firstname, a.lastname
+        SELECT DISTINCT a.admin_id, a.email, a.firstname, a.lastname,
+               axp.admin_profile_name AS profile
         FROM on24master.admin a
         JOIN on24master.admin_x_client axc ON a.admin_id = axc.admin_id
+        LEFT JOIN on24master.admin_x_profile axp
+          ON axp.admin_id = a.admin_id AND axp.is_active = 'Y'
         WHERE axc.client_id = ANY($1::bigint[])
           AND a.is_active = 'Y'
         ORDER BY a.lastname, a.firstname
@@ -33,6 +36,7 @@ async def list_admins():
                 "admin_id": r["admin_id"],
                 "email": r["email"],
                 "name": f"{r['firstname'] or ''} {r['lastname'] or ''}".strip(),
+                "profile": r["profile"] or "User",
             }
             for r in rows
         ]

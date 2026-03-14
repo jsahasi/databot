@@ -5,6 +5,7 @@ interface AdminUser {
   admin_id: number
   email: string
   name: string
+  profile: string
 }
 
 export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
@@ -101,7 +102,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           >
             <option value="">— None —</option>
             {admins.map(a => (
-              <option key={a.admin_id} value={a.email}>{a.email}</option>
+              <option key={a.admin_id} value={a.email}>{a.email} ({a.profile})</option>
             ))}
           </select>
         </div>
