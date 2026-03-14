@@ -16,18 +16,28 @@ FUTURE multi-client support (when needed):
 """
 
 import asyncio
+import contextvars
 import ssl
 import tempfile
 import os
-from functools import lru_cache
 
 import asyncpg
 
 from app.config import settings
 
 _pool: asyncpg.Pool | None = None
-_tenant_ids_cache: list[int] | None = None
+_tenant_ids_cache: dict[int, list[int]] = {}
 _tenant_ids_lock = asyncio.Lock()
+
+# Per-request client override (set in WebSocket handler, never from agents/tools)
+_request_client_id: contextvars.ContextVar[int | None] = contextvars.ContextVar(
+    "_request_client_id", default=None
+)
+
+
+def set_request_client_id(client_id: int | None) -> None:
+    """Set the root client_id for the current request context."""
+    _request_client_id.set(client_id)
 
 
 def _build_ssl_context() -> ssl.SSLContext | None:
@@ -97,48 +107,40 @@ async def close_pool() -> None:
     if _pool:
         await _pool.close()
         _pool = None
-    _tenant_ids_cache = None
+    _tenant_ids_cache = {}
 
 
 def get_client_id() -> int:
-    """Return the root tenant client_id from config.
+    """Return the root tenant client_id for this request.
 
-    NEVER accept this value from agents, users, or any external input.
-
-    FUTURE: replace with a per-request context var lookup when supporting
-    multiple root clients.
+    Checks the per-request contextvar first (set by WebSocket handler when the
+    user selects a different account in the breadcrumb).  Falls back to the
+    global config value.  The contextvar is NEVER set from agent/tool code.
     """
+    override = _request_client_id.get()
+    if override is not None:
+        return override
     return int(settings.on24_client_id)
 
 
 async def get_tenant_client_ids() -> list[int]:
     """Return the root client_id plus all sub-clients in the hierarchy.
 
-    Result is cached for the lifetime of the process (hierarchy rarely changes).
-    Uses a cycle-safe query to handle self-referential rows in client_hierarchy.
-
-    Example for root=10710:
-        [10710, 22355, 28516, 42835, 44220, 45077, 46851, 48673, 51429, 52909]
-
-    SECURITY: The root is always sourced from get_client_id() — never from
-    external input.
-
-    FUTURE multi-client: accept an optional root_client_id parameter (sourced
-    from the per-request tenant context, not from agents/users).
+    Result is cached per root (hierarchy rarely changes).
+    The root is sourced from get_client_id(), which reads the per-request
+    contextvar (set by WebSocket handler) or falls back to config.
     """
-    global _tenant_ids_cache
-    if _tenant_ids_cache is not None:
-        return _tenant_ids_cache
+    root = get_client_id()
+
+    if root in _tenant_ids_cache:
+        return _tenant_ids_cache[root]
 
     async with _tenant_ids_lock:
-        # Double-checked locking
-        if _tenant_ids_cache is not None:
-            return _tenant_ids_cache
+        if root in _tenant_ids_cache:
+            return _tenant_ids_cache[root]
 
-        root = get_client_id()
         pool = await get_pool()
 
-        # Cycle-safe recursive CTE: DISTINCT prevents re-visiting nodes
         rows = await pool.fetch(
             """
             WITH RECURSIVE hierarchy(cid) AS (
@@ -151,15 +153,15 @@ async def get_tenant_client_ids() -> list[int]:
                 SELECT DISTINCT ch.sub_client_id
                 FROM on24master.client_hierarchy ch
                 INNER JOIN hierarchy h ON ch.client_id = h.cid
-                WHERE ch.sub_client_id != ch.client_id  -- skip self-refs in recursion
+                WHERE ch.sub_client_id != ch.client_id
             )
             SELECT DISTINCT cid FROM hierarchy
-            WHERE cid != $1   -- sub-clients only; we add root separately below
+            WHERE cid != $1
             """,
             root,
         )
 
         sub_ids = [r["cid"] for r in rows]
-        # Root always included, sub-clients appended
-        _tenant_ids_cache = [root] + sorted(sub_ids)
-        return _tenant_ids_cache
+        result = [root] + sorted(sub_ids)
+        _tenant_ids_cache[root] = result
+        return result

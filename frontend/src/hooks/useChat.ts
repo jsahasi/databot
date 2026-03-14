@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useClientContext } from '../context/ClientContext'
 
 export interface ChatMessage {
   id: string
@@ -20,6 +21,9 @@ interface UseChatOptions {
 
 export function useChat(options: UseChatOptions = {}) {
   const { sessionId = 'default' } = options
+  const { selectedClientId } = useClientContext()
+  const clientIdRef = useRef(selectedClientId)
+  useEffect(() => { clientIdRef.current = selectedClientId }, [selectedClientId])
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -43,6 +47,7 @@ export function useChat(options: UseChatOptions = {}) {
           type: 'message',
           content: pendingMessageRef.current,
           session_id: sessionId,
+          client_id: clientIdRef.current,
         }))
         pendingMessageRef.current = null
       }
@@ -160,7 +165,7 @@ export function useChat(options: UseChatOptions = {}) {
             ])
             setIsProcessing(true)
             isProcessingRef.current = true
-            ws.send(JSON.stringify({ type: 'message', content: next, session_id: sessionId }))
+            ws.send(JSON.stringify({ type: 'message', content: next, session_id: sessionId, client_id: selectedClientId }))
           }
           break
 
@@ -235,7 +240,7 @@ export function useChat(options: UseChatOptions = {}) {
     ])
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'message', content, session_id: sessionId }))
+      wsRef.current.send(JSON.stringify({ type: 'message', content, session_id: sessionId, client_id: selectedClientId }))
     } else {
       pendingMessageRef.current = content
       connect()

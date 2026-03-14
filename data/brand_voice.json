@@ -1,0 +1,249 @@
+{
+  "generated_at": "2026-03-13T19:26:48.157858+00:00",
+  "covered_types": [
+    "BLOG",
+    "EBOOK",
+    "FAQ",
+    "KEYTAKEAWAYS",
+    "FOLLOWUPEMAI",
+    "SOCIALMEDIAP"
+  ],
+  "overall": {},
+  "by_type": {
+    "BLOG": {
+      "tone": "Authoritative and data-driven with urgent pragmatism. The voice treats marketing challenges as solvable problems requiring strategic frameworks and precise execution.",
+      "sentence_style": "Mix of punchy declarative statements (often 5-15 words) followed by longer explanatory sentences (20-40 words). Uses colons and dashes to break complex ideas into digestible components. Rhythmic alternation between command and explanation.",
+      "opening_style": "Starts with a pressure point or market reality (budget constraints, pipeline challenges, competitive landscape), then pivots to a solution-oriented framework or mindset shift.",
+      "vocabulary_preferences": [
+        "engineer/engineered",
+        "engagement/interactions",
+        "intent signals",
+        "conversion/convert",
+        "velocity over volume",
+        "first-party data",
+        "personalization at scale",
+        "orchestration",
+        "buyer's journey",
+        "pipeline",
+        "operationalize",
+        "touchpoint",
+        "segment/segmentation",
+        "reusable patterns",
+        "guardrails",
+        "outcomes"
+      ],
+      "avoid": [
+        "vague aspirational language without metrics",
+        "passive voice constructions",
+        "fluffy introductions unmoored to business reality",
+        "generic B2B jargon without specific application",
+        "long paragraphs without structural breaks"
+      ],
+      "cta_patterns": "Ends with actionable frameworks, design principles, or operational directives phrased as imperatives ('Treat X as Y', 'Design every experience to...', 'Define a brand voice profile...'). Often uses numbered lists or hierarchical structures to guide next steps.",
+      "example_phrases": [
+        "The math is simple:",
+        "The mandate is clear:",
+        "Treat engagement as the product",
+        "Design every digital experience to...",
+        "Optimize for velocity over volume",
+        "Turn participation into prioritized pipeline",
+        "Engineer interactions that drive",
+        "Scale with AI",
+        "Remove decision debt"
+      ]
+    },
+    "EBOOK": {
+      "tone": "Authoritative yet practical, balancing strategic insight with actionable guidance. Confident in tone but grounded in business outcomes rather than hype.",
+      "sentence_style": "Mixed lengths with frequent use of short, punchy sentences to emphasize key points. Complex sentences are broken into digestible chunks separated by colons and em-dashes. Rhythmic alternation between declarative statements and supporting detail.",
+      "opening_style": "Problem-first framing that identifies a gap or misconception in current practice, then pivots to solution. Often opens with 'Most teams...' or 'In today's...' followed by a reframing of success metrics.",
+      "vocabulary_preferences": [
+        "intent signals",
+        "conversion",
+        "pipeline",
+        "operationalize",
+        "friction",
+        "engagement-first",
+        "outcomes-driven",
+        "qualified actions",
+        "personalize at scale",
+        "actionable insights",
+        "two-way",
+        "lean resources",
+        "commercial credibility",
+        "attribute",
+        "orchestrate"
+      ],
+      "avoid": [
+        "jargon without context",
+        "passive voice when active is possible",
+        "abstract corporate speak without metrics",
+        "industry buzzwords that obscure meaning",
+        "vague benefit statements unsupported by data"
+      ],
+      "cta_patterns": "Implied rather than explicit; content typically trails off mid-thought or ends by positioning the reader to take the next strategic step. When present, CTAs emphasize integration with existing systems or acceleration of timelines rather than generic 'learn more' formats.",
+      "example_phrases": [
+        "design each touchpoint to surface and capture those signals",
+        "high-performing teams remove that friction",
+        "when next steps are visible and relevant, actions per visitor rise",
+        "the math is clear",
+        "operationalize, personalize, and scale"
+      ]
+    },
+    "FAQ": {
+      "tone": "Professional and informative with an approachable, solution-oriented demeanor. Positions ON24 as a knowledgeable partner addressing practical business challenges.",
+      "sentence_style": "Concise and direct with minimal elaboration. Questions are posed as clear problem statements. Answers use straightforward declarative sentences organized in logical, scannable sections.",
+      "opening_style": "Questions begin with action-oriented interrogatives (How, What, Why, Are) that directly address attendee concerns. No preamble or context-setting\u2014immediate problem identification.",
+      "vocabulary_preferences": [
+        "conversion",
+        "pipeline",
+        "engagement",
+        "strategy",
+        "framework",
+        "scale",
+        "planning",
+        "multiplier effect",
+        "benchmark",
+        "trends",
+        "smarter",
+        "optimization",
+        "attendee",
+        "lead generation"
+      ],
+      "avoid": [
+        "Casual colloquialisms or slang beyond 'Webinerd'",
+        "Rhetorical flourishes or creative metaphors",
+        "Vague aspirational language",
+        "First-person pronouns in instructional content",
+        "Lengthy narrative introductions"
+      ],
+      "cta_patterns": "Content is structured to educate and inform rather than explicitly drive action. Ends with actionable insights but no aggressive closing statements. Positions attendance/engagement as natural next step.",
+      "example_phrases": [
+        "The Multiplier Effect: New Ways to Convert Webinar Leads to Pipeline",
+        "From Volume to Conversion",
+        "A Smarter Pre-Webinar Planning Framework",
+        "Planning for Scale and Consistency",
+        "Digital Engagement Benchmarks for 2026"
+      ]
+    },
+    "KEYTAKEAWAYS": {
+      "tone": "Energetic and action-oriented with a practical, results-driven edge. Conversational yet authoritative, using accessible language to make complex strategies feel achievable.",
+      "sentence_style": "Mix of short, punchy sentences (especially in headers) and longer explanatory sentences. Uses colons and dashes to create momentum and break ideas into digestible chunks. Avoids dense paragraphs.",
+      "opening_style": "Typically opens with a bold directive or shift in mindset (e.g., 'Shift from X to Y'), often preceded by a strong action verb or contrast statement.",
+      "vocabulary_preferences": [
+        "Shift/Convert",
+        "Engagement",
+        "Personalization",
+        "AI-Powered",
+        "Multiplier effect",
+        "Intent signals",
+        "Operationalize",
+        "Atomize",
+        "First-party data",
+        "Double/Lift/Boost",
+        "Conversion engines",
+        "Segment-savvy",
+        "Content flywheel",
+        "No-shows",
+        "Conversation-ready"
+      ],
+      "avoid": [
+        "Passive voice or vague language",
+        "Overly technical jargon without context",
+        "Generic marketing clich\u00e9s",
+        "Long introductory preamble before actionable insights",
+        "Ambiguous metrics or unquantified claims"
+      ],
+      "cta_patterns": "Ends with quantified outcomes or empowerment statements (e.g., 'enabling SDRs with...', 'drive more meetings', 'without doubling registrants'). Often frames actions as enabling faster/better/smarter operations.",
+      "example_phrases": [
+        "Shift from volume to conversion",
+        "Segment-savvy personalization",
+        "AI-Powered globalization",
+        "Engagement-first conversions",
+        "Turn each webinar into a content engine",
+        "Conversation-ready insights",
+        "Webinars-as-content engines",
+        "Backward-planned snippets"
+      ]
+    },
+    "FOLLOWUPEMAI": {
+      "tone": "Professional yet approachable, with enthusiasm for product features and customer success. Balances educational content delivery with friendly gratitude for attendance.",
+      "sentence_style": "Mix of short, punchy sentences and longer compound sentences. Bullet-point heavy for key insights. Generally 10-20 words per sentence with varied rhythm to maintain readability.",
+      "opening_style": "Consistent warm greeting with gratitude for attendance ('Thank you for attending our recent webinar'), followed immediately by value proposition or key insights.",
+      "vocabulary_preferences": [
+        "optimize/optimization",
+        "personalization/personalize",
+        "engagement",
+        "insights/takeaways",
+        "scale/scalable",
+        "drive/driving",
+        "conversion",
+        "on-demand",
+        "leverage",
+        "implementation",
+        "global reach",
+        "AI-driven/AI-powered",
+        "multi-touch",
+        "segment/segmentation"
+      ],
+      "avoid": [
+        "Casual slang or contractions in formal sections",
+        "Overly salesy language without data backing",
+        "Vague calls-to-action without context",
+        "Lengthy paragraphs without formatting breaks",
+        "Negative framing (rarely use 'missed out' as primary message)"
+      ],
+      "cta_patterns": "Soft CTAs embedded in context ('watch the full webinar here' or 'revisit the insights') with link provided. Often preceded by permission-based language ('if you have questions, feel free to reach out'). Closing signature includes name, title, and contact information.",
+      "example_phrases": [
+        "Thank you for attending our recent webinar",
+        "Here are the main insights/key takeaways",
+        "Don't miss out on the chance to revisit",
+        "Personalize at scale",
+        "Drive higher relevance and engagement",
+        "Watch the full webinar on-demand here",
+        "If you have any questions, please feel free to reach out"
+      ]
+    },
+    "SOCIALMEDIAP": {
+      "tone": "Enthusiastic and aspirational with urgency. Energetic and motivational while maintaining professional credibility through expert positioning.",
+      "sentence_style": "Mix of short, punchy sentences with longer descriptive ones. Heavy use of fragments and bullet-point style language. Rhythm accelerates toward CTAs with exclamatory punctuation.",
+      "opening_style": "Starts with bold headline using 'Unlock' or imperative verb, immediately followed by emoji. Leads with benefit-driven value proposition rather than topic description.",
+      "vocabulary_preferences": [
+        "Unlock",
+        "Transform",
+        "Discover",
+        "Revolutionize",
+        "Elevate",
+        "Master",
+        "game-changing",
+        "cutting-edge",
+        "seamless",
+        "drive results",
+        "AI",
+        "personalization",
+        "engagement",
+        "pipeline",
+        "global audience",
+        "expert",
+        "insights",
+        "strategies"
+      ],
+      "avoid": [
+        "passive voice",
+        "qualifying language",
+        "lengthy paragraph blocks",
+        "generic marketing jargon without specifics",
+        "lowercase emoji usage in middle of sentences"
+      ],
+      "cta_patterns": "Direct link placement with strong action verbs ('Watch now', 'Join us'), reinforced by closing statement combining urgency and transformation language. Ends with motivational exclamation and hashtag cluster.",
+      "example_phrases": [
+        "Unlock the Power/Secrets of",
+        "Don't miss out on",
+        "Transform your strategy today",
+        "Game-changing insights",
+        "Drive impactful results",
+        "Join us now and",
+        "Discover how to shift from"
+      ]
+    }
+  }
+}

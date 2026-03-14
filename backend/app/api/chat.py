@@ -11,6 +11,8 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, field_validator
 
 from app.agents.orchestrator import OrchestratorAgent
+from app.config import settings
+from app.db.on24_db import set_request_client_id
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +167,28 @@ async def websocket_chat(websocket: WebSocket):
                 content = data.get("content", "").strip()
                 session_id = data.get("session_id", "default")
                 confirmed = bool(data.get("confirmed", False))
+
+                # Set per-request client_id from the frontend account switcher.
+                # Validated to be within this deployment's hierarchy.
+                raw_client_id = data.get("client_id")
+                if raw_client_id is not None:
+                    try:
+                        cid = int(raw_client_id)
+                        root = int(settings.on24_client_id)
+                        # Only allow if it's the root or a known sub-client.
+                        # We use the cached hierarchy (cheap after first call).
+                        from app.db.on24_db import get_tenant_client_ids, set_request_client_id as _set
+                        # Temporarily set to root to get full list
+                        set_request_client_id(root)
+                        allowed = set(await get_tenant_client_ids())
+                        if cid in allowed:
+                            set_request_client_id(cid)
+                        else:
+                            set_request_client_id(root)
+                    except Exception:
+                        set_request_client_id(None)
+                else:
+                    set_request_client_id(None)
 
                 if not content:
                     await websocket.send_json({"type": "error", "message": "Empty message"})

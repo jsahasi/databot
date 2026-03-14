@@ -7,11 +7,17 @@ class Settings(BaseSettings):
 
     # ON24 master database (direct read-only access)
     on24_db_url: str = ""
+    on24_db_url_qa: str = ""
 
     # PostgreSQL SSL (Google Cloud SQL)
     db_pg_ssl_root_cert_content: str = ""
     db_pg_ssl_cert_content: str = ""
     db_pg_ssl_key_content: str = ""
+
+    # ON24 QA database SSL (separate certs if different)
+    db_pg_ssl_cert_content_qa: str = ""
+    db_pg_ssl_key_content_qa: str = ""
+    postgres_password_qa: str = ""
 
     # ON24 API
     on24_base_url: str = "https://apiqa.on24.com"

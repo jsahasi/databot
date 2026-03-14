@@ -1,7 +1,9 @@
 import { Outlet } from 'react-router-dom'
 import { ChatProvider, useChatContext } from '../../context/ChatContext'
+import { ClientProvider } from '../../context/ClientContext'
 import TopNav from './TopNav'
 import ChatSidebar from './ChatSidebar'
+import AccountBreadcrumb from './AccountBreadcrumb'
 import EventCalendar from '../calendar/EventCalendar'
 
 function LayoutInner() {
@@ -9,6 +11,7 @@ function LayoutInner() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <TopNav />
+      <AccountBreadcrumb />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <ChatSidebar />
         <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -25,8 +28,10 @@ function LayoutInner() {
 
 export default function DashboardLayout() {
   return (
-    <ChatProvider>
-      <LayoutInner />
-    </ChatProvider>
+    <ClientProvider>
+      <ChatProvider>
+        <LayoutInner />
+      </ChatProvider>
+    </ClientProvider>
   )
 }
