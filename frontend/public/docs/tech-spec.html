@@ -120,7 +120,7 @@
     <!-- Agent boxes row -->
     <rect x="30" y="200" width="115" height="40" rx="6" class="diag-box-accent" stroke-width="1.5"/>
     <text x="87" y="216" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--primary);font-family:inherit">Data Agent</text>
-    <text x="87" y="231" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">11 analytics tools</text>
+    <text x="87" y="231" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">12 analytics tools</text>
 
     <rect x="160" y="200" width="115" height="40" rx="6" class="diag-box-green" stroke-width="1.5"/>
     <text x="217" y="216" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--green);font-family:inherit">Concierge</text>
@@ -194,6 +194,7 @@
       <tr><td><code>on24master.question</code></td><td>medium</td><td>Poll questions; type_cd: singleoption/multioption/singletext</td></tr>
       <tr><td><code>on24master.video_library</code></td><td>medium</td><td>AI-ACE generated content (source LIKE 'AUTOGEN_%')</td></tr>
       <tr><td><code>on24master.content_hit_track_details</code></td><td>large</td><td>Resource download tracking (action='TotalHits')</td></tr>
+      <tr><td><code>on24master.tags_created</code></td><td>small</td><td>Event tags; two types: 'campaign' and 'funnel'; used by <code>get_events_by_tag</code></td></tr>
       <tr><td><code>on24master.client_hierarchy</code></td><td>small</td><td>Sub-client tree; recursive CTE for tenant scoping</td></tr>
     </tbody>
   </table>
@@ -238,6 +239,7 @@
       <tr><td><code>get_poll_overview</code></td><td>Cross-event poll summary (last N months)</td></tr>
       <tr><td><code>get_questions</code></td><td>Q&amp;A questions and answers for one event</td></tr>
       <tr><td><code>get_resources</code></td><td>Resource download activity for one event</td></tr>
+      <tr><td><code>get_events_by_tag</code></td><td>Queries <code>tags_created</code> table; lists all tags, filters by campaign/funnel type, aggregates KPIs per tag. Campaign tags: Webinars, EMEA, APAC, Demo, Customer Marketing, AI - NA. Funnel tags: #stageAwareness, #stageConsideration.</td></tr>
       <tr><td><code>generate_chart_data</code></td><td>Formats data for Recharts; types: bar, line, pie</td></tr>
     </tbody>
   </table>
@@ -271,10 +273,19 @@
     <li><strong>Embeddings:</strong> OpenAI <code>text-embedding-3-small</code> (1536 dimensions), stored as <code>REAL[]</code> in <code>knowledge_base_articles</code> table</li>
     <li><strong>Search:</strong> numpy cosine similarity over all chunks; top-5 results deduped by article title</li>
     <li><strong>Ingestion:</strong> runs as async background task on app startup; batches 100 texts per OpenAI call</li>
+    <li><strong>API reference:</strong> 71 ON24 REST API v2 endpoints ingested from <code>data/on24_api_reference.json</code> at startup (<code>ingest_api_reference()</code>); article IDs prefixed <code>api_</code>. Orchestrator routes API/endpoint/integration questions to <code>search_knowledge_base</code> instead of deflecting.</li>
     <li><strong>No-hallucination rule:</strong> concierge answers only from retrieved article content; never extrapolates</li>
   </ul>
 
-  <h2>7. Calendar API</h2>
+  <h2>7. File Upload API</h2>
+  <table>
+    <thead><tr><th>Endpoint</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /api/upload</code></td><td>Accepts PDF and image files (max 10MB). PDFs are text-extracted via PyMuPDF for LLM context injection. Files stored in <code>data/uploads/</code> with automatic daily cleanup (files older than 24 hours removed). Frontend paperclip button wired to file picker with attachment indicator.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8. Calendar API</h2>
   <table>
     <thead><tr><th>Endpoint</th><th>Description</th></tr></thead>
     <tbody>
@@ -286,12 +297,12 @@
   <h4>Key Takeaways Parsing</h4>
   <p>ON24 key takeaways HTML is parsed server-side by <code>_parse_kt_sections()</code> in <code>calendar.py</code>. Section headings are identified by <code>font-size: 18px</code> spans with text length &lt; 80 chars (length guard prevents quote content from being misdetected as a heading). Sections map to: <code>summary</code>, <code>takeaways</code>, <code>quote</code>, <code>other</code>.</p>
 
-  <h2>8. Frontend Architecture</h2>
+  <h2>9. Frontend Architecture</h2>
   <h4>Key Components</h4>
   <table>
     <thead><tr><th>Component</th><th>Path</th><th>Responsibility</th></tr></thead>
     <tbody>
-      <tr><td>ChatPanel</td><td>components/chat/ChatPanel.tsx</td><td>Main chat UI, home tiles, input bar, chip rendering</td></tr>
+      <tr><td>ChatPanel</td><td>components/chat/ChatPanel.tsx</td><td>Main chat UI, home tiles, input bar, chip rendering, trends sub-menu, file upload (paperclip)</td></tr>
       <tr><td>ChatMessage</td><td>components/chat/ChatMessage.tsx</td><td>Message rendering: markdown, tables, charts, event cards, poll cards</td></tr>
       <tr><td>EventCalendar</td><td>components/calendar/EventCalendar.tsx</td><td>Month/Week/Day calendar modal with event detail side panel</td></tr>
       <tr><td>ChatSidebar</td><td>components/layout/ChatSidebar.tsx</td><td>Left nav: New Chat, docs links, recent changes, recent chats</td></tr>
@@ -307,7 +318,7 @@
     <li>Theme: <code>data-theme="dark"</code> on <code>&lt;html&gt;</code>; CSS variables in <code>global.css</code></li>
   </ul>
 
-  <h2>9. Deployment</h2>
+  <h2>10. Deployment</h2>
   <pre><code>docker compose up --build  # builds and starts all 3 containers
 
 # Services:
@@ -329,7 +340,7 @@ ANTHROPIC_API_KEY
 OPENAI_API_KEY        # For KB embedding ingestion
 POSTGRES_PASSWORD</code></pre>
 
-  <h2>10. Security</h2>
+  <h2>11. Security</h2>
   <ul>
     <li>Tenant isolation: all queries parameterized with server-side client_id array; never from user input</li>
     <li>Input validation: message length capped at 4,000 chars; session IDs sanitized (alphanumeric + hyphen)</li>

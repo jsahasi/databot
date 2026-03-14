@@ -115,9 +115,30 @@
   <div class="story">Show me poll results for the last event
     <em>→ Renders interactive poll cards with bar charts showing response distributions</em>
   </div>
+  <div class="story">Show performance by campaign tags
+    <em>→ Aggregates KPIs per campaign tag (Webinars, EMEA, APAC, Demo, etc.) with attendance and engagement</em>
+  </div>
+  <div class="story">Show funnel breakdown
+    <em>→ Bar chart of events grouped by funnel stage (#stageAwareness, #stageConsideration)</em>
+  </div>
+
+  <h3>2.1.1 Trends Sub-Menu</h3>
+  <p>A dedicated "Trends" chip on the home screen opens a sub-menu with 7 pre-built analytics views:</p>
+  <ul>
+    <li>Attendance over time</li>
+    <li>Registrations over time</li>
+    <li>Engagement scores over time</li>
+    <li>Show funnel (bar chart by funnel stage)</li>
+    <li>Show campaigns (pie chart by campaign)</li>
+    <li>Performance by tags</li>
+    <li>Top events by engagement</li>
+  </ul>
+
+  <h3>2.1.2 File Uploads</h3>
+  <p>Users can attach PDF or image files (up to 10MB) via a paperclip button in the chat input. PDFs are text-extracted via PyMuPDF and injected as LLM context. Files are stored in <code>data/uploads/</code> with automatic daily cleanup (files older than 24 hours are removed).</p>
 
   <h3>2.2 Concierge (Platform How-To)</h3>
-  <p>Users ask how to use ON24 and receive immediate, self-contained answers from a curated knowledge base of 637 help articles — no links to external documentation required for common questions.</p>
+  <p>Users ask how to use ON24 and receive immediate, self-contained answers from a curated knowledge base of 637 help articles and 71 ON24 REST API v2 endpoint descriptions — no links to external documentation required for common questions. API/endpoint/integration questions are routed to the knowledge base rather than deflected as out-of-scope.</p>
   <div class="story">How do I configure a registration page?
     <em>→ Delivers a complete step-by-step answer covering themes, fields, compliance, and next steps</em>
   </div>
@@ -141,7 +162,7 @@
     <li>Top-performing topics by engagement score</li>
     <li>Optimal scheduling patterns by day/time</li>
     <li>Topic gap analysis against past event history</li>
-    <li>Propose a future webinar schedule with titles and data-driven justification for each</li>
+    <li>Propose a future webinar schedule with titles, data-driven justification, and 3-5 campaign themes per calendar</li>
   </ul>
   <p><strong>Content creation (brand-voice tuned):</strong></p>
   <ul>
@@ -199,7 +220,7 @@
     <!-- Data Agent -->
     <rect x="385" y="15" width="150" height="40" rx="7" class="diag-box-accent" stroke-width="1.5"/>
     <text x="460" y="31" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--primary);font-family:inherit">Data Agent</text>
-    <text x="460" y="46" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">11 analytics tools · charts</text>
+    <text x="460" y="46" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">12 analytics tools · charts</text>
     <!-- Concierge -->
     <rect x="385" y="60" width="150" height="40" rx="7" class="diag-box-green" stroke-width="1.5"/>
     <text x="460" y="76" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--green);font-family:inherit">Concierge</text>
@@ -224,7 +245,7 @@
   </svg>
 
   <div class="card">
-    <div class="agent-row"><div class="agent-dot dot-indigo"></div><div><strong>Data Agent</strong> — Handles all analytics queries. Has 11 tools covering events, KPIs, attendance trends, audience companies, poll results, Q&amp;A, resources, and chart generation.</div></div>
+    <div class="agent-row"><div class="agent-dot dot-indigo"></div><div><strong>Data Agent</strong> — Handles all analytics queries. Has 12 tools covering events, KPIs, attendance trends, audience companies, poll results, Q&amp;A, resources, tag/campaign queries, and chart generation.</div></div>
     <div class="agent-row"><div class="agent-dot dot-amber"></div><div><strong>Concierge</strong> — Answers platform how-to questions using a Postgres-backed knowledge base (OpenAI embeddings, cosine similarity). Delivers complete answers without external links.</div></div>
     <div class="agent-row"><div class="agent-dot dot-green"></div><div><strong>Content Agent</strong> — Provides content strategy recommendations via topic analysis, scheduling patterns, and performance comparison tools.</div></div>
     <div class="agent-row"><div class="agent-dot dot-pink"></div><div><strong>Admin Agent</strong> — Executes ON24 write operations (create event, manage registrations) with mandatory user confirmation.</div></div>
@@ -240,6 +261,7 @@
       <tr><td>Top events by engagement</td><td>Data</td><td>Sends top events query</td></tr>
       <tr><td>Poll results overview</td><td>Data</td><td>Sends poll overview query</td></tr>
       <tr><td>How do I...?</td><td>Concierge</td><td>Opens 8-option how-to sub-menu</td></tr>
+      <tr><td>Trends</td><td>Data</td><td>Opens 7-option trends sub-menu (attendance, registrations, engagement, funnel, campaigns, tags, top events)</td></tr>
       <tr><td>Recent events</td><td>—</td><td>Opens event calendar modal</td></tr>
       <tr><td>Experiences</td><td>—</td><td>Deep links to ON24 experience types</td></tr>
       <tr><td>Configure environment</td><td>—</td><td>Deep links to ON24 admin tools</td></tr>
@@ -278,6 +300,9 @@
       <tr><td>Admin confirmation</td><td>No ON24 write operation executes without an explicit user confirmation step</td></tr>
       <tr><td>Calendar KPIs</td><td>Past events show correct aggregated registrant/attendee counts; future events show "data available after event"</td></tr>
       <tr><td>Poll cards</td><td>Multiple-choice polls render as horizontal bar charts with %; free-text polls show sample answer tags</td></tr>
+      <tr><td>Tag/campaign queries</td><td>Events filterable by campaign and funnel tags; KPIs aggregated per tag; both tag types listed</td></tr>
+      <tr><td>File uploads</td><td>PDF and image files accepted via paperclip; PDF text extracted for LLM context; max 10MB; auto-cleanup after 24h</td></tr>
+      <tr><td>Proposed calendar themes</td><td>Content calendar proposals include 3-5 campaign themes; each proposed event assigned a theme; print icon available</td></tr>
     </tbody>
   </table>
 
