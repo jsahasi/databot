@@ -55,6 +55,8 @@
   .diag-box-blue { fill: rgba(59,130,246,0.1); stroke: #3b82f6; }
   .diag-box-green { fill: rgba(5,150,105,0.1); stroke: var(--green); }
   .diag-box-amber { fill: rgba(217,119,6,0.1); stroke: var(--amber); }
+  .diag-box-red { fill: rgba(220,38,38,0.1); stroke: var(--red); }
+  .diag-box-blue { fill: rgba(59,130,246,0.1); stroke: #3b82f6; }
   svg.diagram { width: 100%; max-width: 860px; display: block; margin: 1rem auto 1.5rem; overflow: visible; }
 </style>
 <script>
@@ -90,12 +92,13 @@
 
   <h2>1. System Architecture</h2>
 
-  <svg class="diagram" viewBox="0 0 840 270" role="img" aria-label="System architecture diagram">
+  <svg class="diagram" viewBox="0 0 840 320" role="img" aria-label="System architecture diagram">
     <defs>
       <marker id="sa" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--border)"/></marker>
       <marker id="sa2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--primary)"/></marker>
       <marker id="sag" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--green)"/></marker>
       <marker id="sab" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:#3b82f6"/></marker>
+      <marker id="sar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" style="fill:var(--red)"/></marker>
     </defs>
 
     <!-- Row 1: Browser -->
@@ -114,7 +117,7 @@
     <text x="390" y="101" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--primary);font-family:inherit">FastAPI + Uvicorn — Python 3.12</text>
     <text x="390" y="117" text-anchor="middle" font-size="9" style="fill:var(--text2);font-family:inherit">Orchestrator → Data / Concierge / Content / Admin · Anthropic SDK</text>
 
-    <!-- Fan-out arrows: FastAPI → Agents (from bottom edge of FastAPI box) -->
+    <!-- Fan-out arrows: FastAPI → Agents -->
     <line x1="285" y1="124" x2="82"  y2="166" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
     <line x1="340" y1="124" x2="217" y2="166" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
     <line x1="400" y1="124" x2="352" y2="166" stroke-width="1" style="stroke:var(--primary)" marker-end="url(#sa2)"/>
@@ -137,7 +140,27 @@
     <text x="487" y="184" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--text);font-family:inherit">Admin Agent</text>
     <text x="487" y="198" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">ON24 write ops</text>
 
-    <!-- Dashed arrows: FastAPI → DBs (from right edge of FastAPI box) -->
+    <!-- Row 4: MCP Server (below Admin Agent) -->
+    <rect x="155" y="228" width="200" height="38" rx="6" class="diag-box-red" stroke-width="1.5"/>
+    <text x="255" y="244" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--red);font-family:inherit">MCP Server — FastMCP</text>
+    <text x="255" y="258" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">67 tools · streamable-HTTP · port 8001</text>
+
+    <!-- Arrow: FastAPI → MCP (dashed, from bottom of FastAPI) -->
+    <line x1="300" y1="124" x2="255" y2="226" stroke-width="1.5" style="stroke:var(--red)" stroke-dasharray="5,3" marker-end="url(#sar)"/>
+    <text x="240" y="220" font-size="8" style="fill:var(--text2);font-family:inherit">MCP tools</text>
+
+    <!-- ON24 REST API box -->
+    <rect x="380" y="228" width="170" height="38" rx="6" class="diag-box-red" stroke-width="1.5"/>
+    <text x="465" y="244" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--red);font-family:inherit">ON24 REST API</text>
+    <text x="465" y="258" text-anchor="middle" font-size="8" style="fill:var(--text2);font-family:inherit">71 endpoints · apiqa.on24.com</text>
+
+    <!-- Arrow: MCP → ON24 REST API -->
+    <line x1="355" y1="247" x2="378" y2="247" stroke-width="1.5" style="stroke:var(--red)" marker-end="url(#sar)"/>
+
+    <!-- Arrow: Admin Agent → ON24 REST API (direct writes) -->
+    <line x1="487" y1="206" x2="465" y2="226" stroke-width="1" style="stroke:var(--red)" stroke-dasharray="4,3" marker-end="url(#sar)"/>
+
+    <!-- Dashed arrows: FastAPI → DBs -->
     <line x1="600" y1="100" x2="620" y2="180" stroke-width="1.5" style="stroke:var(--green)" stroke-dasharray="5,3" marker-end="url(#sag)"/>
     <text x="623" y="142" font-size="8" style="fill:var(--text2);font-family:inherit">read-only</text>
     <line x1="600" y1="110" x2="620" y2="232" stroke-width="1.5" style="stroke:#3b82f6" stroke-dasharray="5,3" marker-end="url(#sab)"/>
@@ -169,7 +192,8 @@
       <tr><td>Server state</td><td>TanStack Query</td><td>v5</td><td>No Redux/Zustand</td></tr>
       <tr><td>Charts</td><td>Nivo + ECharts + Plotly + Recharts</td><td>—</td><td>SmartChart selects best library per type; all lazy-loaded. Custom funnel component.</td></tr>
       <tr><td>App database</td><td>PostgreSQL 16</td><td>—</td><td>Host port 5433 (5432 taken by another service)</td></tr>
-      <tr><td>Container</td><td>Docker Compose</td><td>—</td><td>3 services: postgres, backend, frontend</td></tr>
+      <tr><td>MCP server</td><td>FastMCP (streamable-HTTP)</td><td>latest</td><td>67 tools (47 read + 20 write); ON24 REST API as MCP resources</td></tr>
+      <tr><td>Container</td><td>Docker Compose</td><td>—</td><td>4 services: postgres, backend, on24-mcp, frontend</td></tr>
     </tbody>
   </table>
 
@@ -247,7 +271,31 @@
     <li><strong>Prompt injection guard:</strong> reject messages containing "ignore previous instructions", "act as", "jailbreak", etc.</li>
   </ul>
 
-  <h2>5. WebSocket Protocol</h2>
+  <h2>5. MCP Server (Model Context Protocol)</h2>
+  <p>The <code>on24-mcp/</code> directory contains a standalone MCP server that exposes the full ON24 REST API (71 endpoints) as 67 MCP tools via FastMCP's streamable-HTTP transport. It runs as a separate Docker container on port 8001.</p>
+
+  <h3>Architecture</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>Transport</td><td>Streamable HTTP (not SSE or stdio); endpoint: <code>http://on24-mcp:8001/mcp</code></td></tr>
+      <tr><td>Tools</td><td>67 total: 47 read operations + 20 write operations</td></tr>
+      <tr><td>API client</td><td>Separate <code>on24_client.py</code> (77 async methods) — mirrors the backend client</td></tr>
+      <tr><td>Write blocklist</td><td><code>USE_MCP_BLOCKLIST</code> env var — comma-separated list of 20 write tool names blocked by default</td></tr>
+      <tr><td>Toggle</td><td><code>USE_MCP=Y/N</code> env var controls whether backend routes through MCP or direct API</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Data Access Strategy</h3>
+  <p>Three data sources are available. Preferred order for read operations:</p>
+  <ol>
+    <li><strong>Direct DB</strong> (fastest, most flexible) — used for all analytics queries via <code>on24_query_tools.py</code></li>
+    <li><strong>MCP Server</strong> (structured tool interface) — used when external AI agents need ON24 data access</li>
+    <li><strong>REST API</strong> (original source) — fallback for operations not available via DB; required for all writes</li>
+  </ol>
+  <div class="note">A 3-way benchmark script (<code>backend/tests/benchmark_read_apis.py</code>) compares latency and throughput across all three methods for 7 operation categories.</div>
+
+  <h2>6. WebSocket Protocol</h2>
   <pre><code>// Client → Server
 { "type": "message", "content": "...", "confirmed": false }
 { "type": "reset", "session_id": "..." }
@@ -315,15 +363,17 @@
   </ul>
 
   <h2>10. Deployment</h2>
-  <pre><code>docker compose up --build  # builds and starts all 3 containers
+  <pre><code>docker compose up --build  # builds and starts all 4 containers
 
 # Services:
 #   postgres   → host port 5433 (internal 5432)
 #   backend    → host port 8000
+#   on24-mcp   → host port 8001 (MCP streamable-HTTP)
 #   frontend   → host port 3001 (nginx serving Vite build)
 
 # App: http://localhost:3001
-# API docs: http://localhost:8000/docs</code></pre>
+# API docs: http://localhost:8000/docs
+# MCP endpoint: http://localhost:8001/mcp</code></pre>
 
   <h4>Environment Variables (required)</h4>
   <pre><code>DATABASE_URL          # App PostgreSQL (overridden in compose to internal network)
@@ -334,7 +384,10 @@ DB_PG_SSL_KEY_CONTENT         # Client key PEM
 ON24_CLIENT_ID        # Root client (10710)
 ANTHROPIC_API_KEY
 OPENAI_API_KEY        # For KB embedding ingestion
-POSTGRES_PASSWORD</code></pre>
+POSTGRES_PASSWORD
+USE_MCP               # Y/N — route through MCP server or direct API
+USE_MCP_BLOCKLIST     # Comma-separated write tool names to block
+MCP_SERVER_URL        # MCP endpoint (default: http://on24-mcp:8001/mcp)</code></pre>
 
   <h2>11. Security</h2>
   <ul>
