@@ -172,7 +172,7 @@
       <tr><td>HTML parsing</td><td>BeautifulSoup4</td><td>4.12+</td><td>Key takeaways section extraction</td></tr>
       <tr><td>Frontend framework</td><td>React 18 + TypeScript</td><td>—</td><td>Vite build, nginx production serve</td></tr>
       <tr><td>Server state</td><td>TanStack Query</td><td>v5</td><td>No Redux/Zustand</td></tr>
-      <tr><td>Charts</td><td>Recharts + Plotly</td><td>—</td><td>Plotly lazy-loaded (~3MB)</td></tr>
+      <tr><td>Charts</td><td>Nivo + ECharts + Plotly + Recharts</td><td>—</td><td>SmartChart selects best library per type; all lazy-loaded. Custom funnel component.</td></tr>
       <tr><td>App database</td><td>PostgreSQL 16</td><td>—</td><td>Host port 5433 (5432 taken by another service)</td></tr>
       <tr><td>Container</td><td>Docker Compose</td><td>—</td><td>3 services: postgres, backend, frontend</td></tr>
     </tbody>
@@ -240,7 +240,8 @@
       <tr><td><code>get_questions</code></td><td>Q&amp;A questions and answers for one event</td></tr>
       <tr><td><code>get_resources</code></td><td>Resource download activity for one event</td></tr>
       <tr><td><code>get_events_by_tag</code></td><td>Queries <code>tags_created</code> table; lists all tags, filters by campaign/funnel type, aggregates KPIs per tag. Campaign tags: Webinars, EMEA, APAC, Demo, Customer Marketing, AI - NA. Funnel tags: #stageAwareness, #stageConsideration.</td></tr>
-      <tr><td><code>generate_chart_data</code></td><td>Formats data for Recharts; types: bar, line, pie</td></tr>
+      <tr><td><code>get_ai_content</code></td><td>Fetch AI-ACE generated articles from video_library (BLOG, EBOOK, FAQ, etc.)</td></tr>
+      <tr><td><code>generate_chart_data</code></td><td>Formats data for SmartChart; 10 types: bar, line, pie, radar, funnel, gauge, treemap, scatter, heatmap, waterfall. Supports <code>group_mode</code> (stacked/grouped) for bar charts.</td></tr>
     </tbody>
   </table>
 
