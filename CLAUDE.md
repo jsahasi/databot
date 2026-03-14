@@ -178,4 +178,9 @@ ON24_ACCESS_TOKEN_SECRET=<secret>
 ANTHROPIC_API_KEY=<key>
 POSTGRES_PASSWORD=databot_dev
 DEBUG=true
+
+# MCP server (optional — defaults to direct on24_client.py when USE_MCP=N)
+USE_MCP=N                            # Y to route admin writes through on24-mcp container
+USE_MCP_BLOCKLIST=                   # comma-separated tool names to block even if USE_MCP=Y
+MCP_SERVER_URL=http://on24-mcp:8001  # override only if running MCP server elsewhere
 ```

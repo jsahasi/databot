@@ -42,6 +42,19 @@ class Settings(BaseSettings):
         "http://localhost:3001",
     ]
 
+    # MCP server integration
+    use_mcp: str = "N"           # "Y" to route admin write ops through on24-mcp server
+    use_mcp_blocklist: str = ""  # comma-separated tool names to block even if use_mcp=Y
+    mcp_server_url: str = "http://on24-mcp:8001"  # Docker service name
+
+    @property
+    def mcp_enabled(self) -> bool:
+        return self.use_mcp.upper() == "Y"
+
+    @property
+    def mcp_blocklist(self) -> set[str]:
+        return {t.strip() for t in self.use_mcp_blocklist.split(",") if t.strip()}
+
     # Sync
     sync_interval_hours: int = 4
     active_event_sync_minutes: int = 15

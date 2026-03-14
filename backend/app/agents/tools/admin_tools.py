@@ -25,22 +25,25 @@ async def create_event(
     description: str | None = None,
 ) -> dict[str, Any]:
     """Create a new ON24 event and return its ID."""
+    from app.config import settings
+    if settings.mcp_enabled and "create_event" not in settings.mcp_blocklist:
+        from app.services.mcp_client import call_mcp_tool
+        return await call_mcp_tool("create_event", {
+            "title": title, "event_type": event_type,
+            "start_time": start_time, "end_time": end_time,
+            "description": description or "",
+        })
     client = _get_on24_client()
     try:
         response = await client.create_event(
-            title=title,
-            event_type=event_type,
-            start_time=start_time,
-            end_time=end_time,
-            description=description,
+            title=title, event_type=event_type,
+            start_time=start_time, end_time=end_time, description=description,
         )
         logger.info(f"Created ON24 event: {response}")
         on24_event_id = response.get("eventId") or response.get("on24EventId") or response.get("id")
         return {
-            "success": True,
-            "on24_event_id": on24_event_id,
-            "message": f"Event '{title}' created successfully.",
-            "raw_response": response,
+            "success": True, "on24_event_id": on24_event_id,
+            "message": f"Event '{title}' created successfully.", "raw_response": response,
         }
     except Exception as e:
         logger.error(f"create_event failed: {e}")
@@ -57,6 +60,14 @@ async def update_event(
     end_time: str | None = None,
 ) -> dict[str, Any]:
     """Update fields on an existing ON24 event."""
+    from app.config import settings
+    if settings.mcp_enabled and "update_event" not in settings.mcp_blocklist:
+        from app.services.mcp_client import call_mcp_tool
+        return await call_mcp_tool("update_event", {
+            "on24_event_id": on24_event_id,
+            "title": title or "", "description": description or "",
+            "start_time": start_time or "", "end_time": end_time or "",
+        })
     client = _get_on24_client()
     try:
         response = await client.update_event(
@@ -89,6 +100,14 @@ async def add_registrant(
     job_title: str | None = None,
 ) -> dict[str, Any]:
     """Register a person for an ON24 event."""
+    from app.config import settings
+    if settings.mcp_enabled and "add_registrant" not in settings.mcp_blocklist:
+        from app.services.mcp_client import call_mcp_tool
+        return await call_mcp_tool("add_registrant", {
+            "on24_event_id": on24_event_id, "email": email,
+            "first_name": first_name, "last_name": last_name,
+            "company": company or "", "job_title": job_title or "",
+        })
     client = _get_on24_client()
     try:
         response = await client.register_attendee(
@@ -119,6 +138,12 @@ async def remove_registrant(
     email: str,
 ) -> dict[str, Any]:
     """Remove a registrant from an ON24 event."""
+    from app.config import settings
+    if settings.mcp_enabled and "remove_registrant" not in settings.mcp_blocklist:
+        from app.services.mcp_client import call_mcp_tool
+        return await call_mcp_tool("remove_registrant", {
+            "on24_event_id": on24_event_id, "email": email,
+        })
     client = _get_on24_client()
     try:
         response = await client.remove_registration(event_id=on24_event_id, email=email)

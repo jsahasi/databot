@@ -74,4 +74,6 @@ if "remove_registrant" not in BLOCKLIST:
 
 if __name__ == "__main__":
     logger.info(f"Starting ON24 MCP server. Blocklist: {BLOCKLIST or 'none'}")
-    mcp.run(transport="streamable-http", host="0.0.0.0", port=8001, path="/mcp")
+    mcp.settings.host = "0.0.0.0"
+    mcp.settings.port = 8001
+    mcp.run(transport="streamable-http")
