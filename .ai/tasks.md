@@ -310,7 +310,7 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] VPAT regenerated: 9 criteria upgraded from Partially Supports to Supports
 
 ## Backlog / Next Steps
-- [ ] Tag-based event search and filtering (need to explore on24master tag tables once VPN stable)
+- [x] Tag-based event search and filtering — query_events_by_tag implemented (tags_created table: campaign + funnel types)
 - [x] Add query tools for dw_lead (lead/prospect analytics) — query_leads + query_lead_stats, commit 042b0a3
 - [x] Add backend tests for on24_query_tools (mock asyncpg pool) — 47 tests, commit 496eed2
 - [x] Frontend Vitest component tests (KPICard, ErrorState, LoadingState, AgentIndicator) — 23 tests, commit 496eed2

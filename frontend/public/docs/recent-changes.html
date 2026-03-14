@@ -21,38 +21,38 @@
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
+  <div class="title"><span class="dot indigo"></span>Lead analytics tools (dw_lead)</div>
+  <div class="desc">Two new data agent tools: get_leads (filterable by company/job title) and get_lead_stats (total leads, monthly trends, top companies, acquisition sources). Queries 105M-row dw_lead table with direct client_id scoping.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 14, 2026</div>
+  <div class="title"><span class="dot blue"></span>Comprehensive test suite (76+ backend, 23 frontend)</div>
+  <div class="desc">53 backend tests for all query tools (mocked asyncpg pool), plus security, a11y, charts, and API tests. 23 Vitest component tests for KPICard, ErrorState, LoadingState, AgentIndicator. 300 persona regression prompts ready (200 marketer + 100 director).</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 14, 2026</div>
   <div class="title"><span class="dot green"></span>WCAG 2.1 AA accessibility compliance</div>
   <div class="desc">Skip-to-content link, focus-visible outlines, aria-live regions, improved contrast ratios, chart ARIA roles, and chat input labels. VPAT document tracks 9 fixed criteria with 4 remaining open items.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot blue"></span>Documentation suite (8 living docs)</div>
-  <div class="desc">Test plan, scalability analysis, security review, accessibility VPAT, and API benchmark docs join MRD/PRD/tech-spec. All support dark/light theme via URL parameter. Sidebar Documents dropdown for quick access.</div>
+  <div class="title"><span class="dot pink"></span>Security review and OWASP hardening</div>
+  <div class="desc">15 findings documented across OWASP Top 10. Controls in place: security headers, prompt injection filtering, SSL cert cleanup, tenant isolation validation, DOMPurify sanitization.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot pink"></span>Security review and hardening</div>
-  <div class="desc">15 findings documented across OWASP Top 10. Controls already in place: security headers, prompt injection filtering, SSL cert cleanup, tenant isolation validation, DOMPurify sanitization.</div>
+  <div class="title"><span class="dot amber"></span>Documentation suite (8 living docs)</div>
+  <div class="desc">Test plan, scalability, security review, accessibility VPAT, and API benchmark docs. All support dark/light theme. Sidebar Documents dropdown. Architecture extracted to .ai/architecture.md.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot indigo"></span>MCP server in tech spec + architecture diagram</div>
-  <div class="desc">Section 5 covers MCP architecture (67 tools, streamable-HTTP, port 8001). SVG diagram updated with MCP Server and ON24 REST API boxes. Data access strategy: direct DB first, MCP fallback, REST for writes.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot amber"></span>Scalability analysis for 2K-6K concurrent users</div>
-  <div class="desc">Capacity analysis covering WebSocket connections, AI API throughput, database pooling, and memory projections. Recommended architecture with CDN, load balancer, 3 backend containers, Redis, and PgBouncer. k6/Locust load test scenarios.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot green"></span>Content creation and poll trends</div>
-  <div class="desc">"Create Content" tile on home page opens content creation sub-menu. "Poll trends" moved to Trends sub-menu for better discoverability alongside attendance and engagement trends.</div>
+  <div class="title"><span class="dot indigo"></span>MCP server + scalability analysis</div>
+  <div class="desc">MCP architecture in tech spec (67 tools, streamable-HTTP, port 8001). Scalability analysis for 2K-6K concurrent users with recommended CDN/load-balancer/Redis/PgBouncer architecture.</div>
 </div>
 
 </body>

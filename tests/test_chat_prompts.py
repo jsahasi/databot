@@ -519,15 +519,6 @@ def _print_summary(results: list[dict]) -> int:
     return 0 if failed == 0 else 1
 
 
-def pytest_addoption(parser: pytest.Parser) -> None:
-    parser.addoption(
-        "--report-only",
-        action="store_true",
-        default=False,
-        help="Print a summary of the last saved results and exit without running tests.",
-    )
-
-
 def pytest_collection_modifyitems(
     session: pytest.Session,
     config: pytest.Config,

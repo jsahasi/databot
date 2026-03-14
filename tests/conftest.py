@@ -11,6 +11,14 @@ BACKEND_URL = "http://localhost:8000"
 HEALTH_ENDPOINT = f"{BACKEND_URL}/health"
 
 
+def pytest_addoption(parser):
+    """Register custom CLI options for prompt regression tests."""
+    parser.addoption("--report-only", action="store_true", default=False,
+                     help="Print summary of last run, no tests")
+    parser.addoption("--max-prompts", type=int, default=0,
+                     help="Limit number of prompts to run (0 = all)")
+
+
 def pytest_configure(config):
     """Register custom markers."""
     config.addinivalue_line(
