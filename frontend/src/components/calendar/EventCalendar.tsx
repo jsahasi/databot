@@ -1073,10 +1073,9 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
             const style = document.createElement('style')
             style.id = 'calendar-print-style'
             style.textContent = `@media print {
-              body > * { display: none !important; visibility: hidden !important; }
-              body > .calendar-modal-overlay,
-              body > .calendar-modal-overlay * { display: block !important; visibility: visible !important; }
-              .calendar-modal-overlay { position: static !important; background: white !important; inset: auto !important; z-index: auto !important; display: block !important; }
+              body * { visibility: hidden !important; }
+              .calendar-modal-overlay, .calendar-modal-overlay * { visibility: visible !important; }
+              .calendar-modal-overlay { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; height: auto !important; background: white !important; z-index: 99999 !important; overflow: visible !important; }
               .calendar-modal-overlay > div { position: static !important; width: 100% !important; height: auto !important; max-height: none !important; max-width: none !important; box-shadow: none !important; border: none !important; overflow: visible !important; border-radius: 0 !important; }
               .calendar-print-hide { display: none !important; }
               * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
