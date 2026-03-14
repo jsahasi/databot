@@ -310,6 +310,12 @@ async def websocket_chat(websocket: WebSocket):
                             if "no poll results for" in text.lower():
                                 poll_chip = "Show polls for the most recent event that had polls"
                                 suggestions = [poll_chip] + [s for s in suggestions if s != poll_chip][:4]
+                            # Guarantee funnel-specific chips when funnel tags are missing
+                            if "no funnel tags found" in text.lower():
+                                suggestions = [
+                                    "How do I add funnel tags?",
+                                    "Analyze funnel stages anyway",
+                                ]
                             # Inject "View proposed calendar" chip for content calendar responses
                             if agent == "content_agent" and any(
                                 kw in text.lower() for kw in ("tofu", "mofu", "bofu", "funnel stage", "content calendar", "webinar plan", "proposed event")
