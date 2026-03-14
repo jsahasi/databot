@@ -205,6 +205,10 @@ Implementation:
 **Decision:** Applied 15+ WCAG fixes: skip-to-content link, focus-visible outlines, aria-live regions, aria-expanded on collapsible sections, dark mode contrast (#94a0b8 for text-secondary), chat input labels, chart role="img", DOMPurify on calendar HTML.
 **Rationale:** VPAT audit revealed multiple Partially Supports criteria. Fixes bring 9 criteria to full Supports status. 4 items remain open (calendar keyboard nav, chart axes contrast, calendar responsive 320px, chart data tables).
 
+## 2026-03-14: Gunicorn Multi-Worker Backend (5 workers × 3 DB conns)
+**Decision:** Switched from single uvicorn to gunicorn with 5 UvicornWorker processes, each with a 3-connection asyncpg pool (15 total ON24 DB connections).
+**Rationale:** Single worker supported ~5-10 concurrent users. 5 workers scales to ~25-50. WebSocket connections are inherently sticky to one worker (TCP), so in-memory conversation history works without shared state or Redis. DB pool reduced from 10 to 3 per worker to stay under connection limits (5×3=15 vs 1×10=10). UVICORN_WORKERS env var allows tuning without rebuilding.
+
 ## 2026-03-14: Lead Query Tools (dw_lead)
 **Decision:** Added `query_leads` and `query_lead_stats` to on24_query_tools.py, registered as data agent tools `get_leads` and `get_lead_stats`.
 **Rationale:** dw_lead (105M rows) has direct client_id — no event join needed. Enables lead analytics: contact search by company/job title, aggregate stats with monthly trends, top companies, acquisition sources.
