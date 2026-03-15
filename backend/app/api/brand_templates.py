@@ -29,6 +29,7 @@ DEFAULT_TEMPLATE: dict = {
     "fontColor": "#1a1d2e",
     "fontFamily": "Inter",
     "logoUrl": "",
+    "bannerImageUrl": "",
     "isDefault": True,
     "createdAt": "2026-01-01T00:00:00Z",
 }
@@ -42,6 +43,7 @@ class BrandTemplateCreate(BaseModel):
     fontColor: str = "#1a1d2e"
     fontFamily: str = "Inter"
     logoUrl: str = ""
+    bannerImageUrl: str = ""
     isDefault: bool = False
 
 
@@ -53,6 +55,7 @@ class BrandTemplateUpdate(BaseModel):
     fontColor: str | None = None
     fontFamily: str | None = None
     logoUrl: str | None = None
+    bannerImageUrl: str | None = None
     isDefault: bool | None = None
 
 
@@ -111,6 +114,7 @@ def create_template(body: BrandTemplateCreate):
         "fontColor": body.fontColor,
         "fontFamily": body.fontFamily,
         "logoUrl": body.logoUrl,
+        "bannerImageUrl": body.bannerImageUrl,
         "isDefault": body.isDefault,
         "createdAt": datetime.now(timezone.utc).isoformat(),
     }

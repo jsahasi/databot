@@ -169,6 +169,42 @@ async def _build_creation_context(article_type: str) -> str:
     return "\n".join(lines)
 
 
+def _inject_banner(html: str, banner_url: str) -> str:
+    """Inject a banner image at the top of HTML content, with 16:9 crop via CSS."""
+    if not banner_url:
+        return html
+    banner_html = (
+        '<div style="width:100%;max-height:300px;overflow:hidden;border-radius:12px;margin-bottom:1.5rem;">'
+        f'<img src="{banner_url}" alt="Banner" style="width:100%;height:300px;object-fit:cover;object-position:center;" />'
+        '</div>'
+    )
+    return banner_html + html
+
+
+def _load_default_banner_url() -> str:
+    """Load the banner image URL from the default brand template."""
+    try:
+        import json as _json
+        templates_file = Path("/app/data/brand_templates.json")
+        if templates_file.exists():
+            templates = _json.loads(templates_file.read_text())
+            # Find the default template
+            for t in templates:
+                if t.get("isDefault") and t.get("bannerImageUrl"):
+                    return t["bannerImageUrl"]
+            # Fallback to first template with a banner
+            for t in templates:
+                if t.get("bannerImageUrl"):
+                    return t["bannerImageUrl"]
+    except Exception as e:
+        logger.debug(f"Banner URL load skipped: {e}")
+    return ""
+
+
+# Content types that should receive a banner image
+_BANNER_CONTENT_TYPES = {"BLOG", "EBOOK"}
+
+
 class ContentAgent:
     """Agent that analyzes event content, recommends strategy, and creates brand-voice content."""
 
@@ -291,6 +327,11 @@ class ContentAgent:
                 full_text = "\n".join(text_parts)
                 cleaned_text, extracted_html = _extract_html(full_text)
                 content_html = _sanitize_html(extracted_html) if extracted_html else None
+                # Inject banner image for blog/ebook content
+                if content_html and article_type in _BANNER_CONTENT_TYPES:
+                    banner_url = _load_default_banner_url()
+                    if banner_url:
+                        content_html = _inject_banner(content_html, banner_url)
                 return {
                     "text": cleaned_text,
                     "chart_data": None,

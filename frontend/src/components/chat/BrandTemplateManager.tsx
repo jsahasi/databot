@@ -9,6 +9,7 @@ interface BrandTemplate {
   fontColor: string
   fontFamily: string
   logoUrl: string
+  bannerImageUrl: string
   isDefault: boolean
   createdAt: string
 }
@@ -26,6 +27,7 @@ const EMPTY_FORM = {
   fontColor: '#1a1d2e',
   fontFamily: 'Inter',
   logoUrl: '',
+  bannerImageUrl: '',
   isDefault: false,
 }
 
@@ -76,6 +78,7 @@ export default function BrandTemplateManager({ open, onClose }: Props) {
       fontColor: t.fontColor,
       fontFamily: t.fontFamily,
       logoUrl: t.logoUrl,
+      bannerImageUrl: t.bannerImageUrl || '',
       isDefault: t.isDefault,
     })
   }
@@ -256,6 +259,21 @@ export default function BrandTemplateManager({ open, onClose }: Props) {
                     value={form.logoUrl}
                     onChange={e => setForm({ ...form, logoUrl: e.target.value })}
                     placeholder="https://..."
+                    style={{
+                      flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.78rem',
+                      border: '1px solid var(--color-border)', borderRadius: 6,
+                      background: 'var(--color-card)', color: 'var(--color-text)', fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+                {/* Banner Image URL */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--color-text-secondary)', width: 90 }}>Banner URL</label>
+                  <input
+                    type="text"
+                    value={form.bannerImageUrl}
+                    onChange={e => setForm({ ...form, bannerImageUrl: e.target.value })}
+                    placeholder="https://... (blog/ebook banner image)"
                     style={{
                       flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.78rem',
                       border: '1px solid var(--color-border)', borderRadius: 6,

@@ -363,6 +363,7 @@ interface BrandTemplate {
   fontColor: string
   fontFamily: string
   logoUrl: string
+  bannerImageUrl: string
   isDefault: boolean
 }
 
@@ -375,6 +376,7 @@ const FALLBACK_TEMPLATE: BrandTemplate = {
   fontColor: '#1a1d2e',
   fontFamily: 'Inter',
   logoUrl: '',
+  bannerImageUrl: '',
   isDefault: true,
 }
 
