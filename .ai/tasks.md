@@ -337,6 +337,19 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Updated recent-changes.html with latest capabilities
 - [x] Created doc-manifest.json for existing project docs
 
+## HTML Content Modal + Email Service — COMPLETE (2026-03-15)
+- [x] Content agent: _extract_html() from fenced ```html blocks + density fallback
+- [x] Content agent: _sanitize_html() strips script/iframe/form/on*/javascript: URLs
+- [x] Orchestrator: propagates content_html through content agent routing paths
+- [x] chat.py: content_html WS message type + server-side HTML/JS input rejection
+- [x] Frontend: ContentHtmlPreview chip + sandboxed iframe modal (copy/print/share icons)
+- [x] Frontend: DOMPurify sanitization, img support, responsive image CSS
+- [x] Frontend: client-side input validation (strip HTML tags, reject script injection)
+- [x] Modal a11y: role="dialog", aria-modal, aria-labelledby, Escape to close
+- [x] Email service: SendGrid (preferred) or Gmail SMTP fallback
+- [x] Daily improvement digest: 11:59 PM email with improvement-inbox-*.txt attached
+- [x] Fix: event card Decimal serialization, get_ai_content media_name column error
+
 ## Backlog / Next Steps
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
