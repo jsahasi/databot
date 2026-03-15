@@ -309,9 +309,10 @@ async def websocket_chat(websocket: WebSocket):
                     continue
 
                 # Bound message length to prevent prompt-stuffing and resource exhaustion (A03).
-                _MAX_MESSAGE_LEN = 4000
-                if len(content) > _MAX_MESSAGE_LEN:
-                    await websocket.send_json({"type": "error", "message": "Message too long (max 4000 characters)."})
+                # Higher limit for messages with file attachments (PDF text can be large)
+                _MAX_MSG_LEN = 16000 if "[Attached" in content else 4000
+                if len(content) > _MAX_MSG_LEN:
+                    await websocket.send_json({"type": "error", "message": f"Message too long (max {_MAX_MSG_LEN} characters)."})
                     continue
 
                 # Sanitise session_id: accept only alphanumeric/hyphen/underscore to prevent
@@ -505,8 +506,9 @@ class ChatRequest(BaseModel):
     @field_validator("message")
     @classmethod
     def _message_length(cls, v: str) -> str:
-        if len(v) > 4000:
-            raise ValueError("Message too long (max 4000 characters).")
+        limit = 16000 if "[Attached" in v else 4000
+        if len(v) > limit:
+            raise ValueError(f"Message too long (max {limit} characters).")
         return v
 
 
