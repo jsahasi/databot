@@ -98,6 +98,10 @@ class DataAgent:
         content_articles = None
         tool_calls_made = []
 
+        def _num(v):
+            """Convert Decimal/numeric to float for JSON serialization."""
+            return float(v) if v is not None else None
+
         system_prompt = _build_system_prompt()
         system_cached = [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
         if restriction_context:
@@ -171,10 +175,10 @@ class DataAgent:
                                         "start_time": result.get("goodafter") or result.get("start_time"),
                                         "end_time": result.get("goodtill") or result.get("end_time"),
                                         "event_type": result.get("event_type") or "",
-                                        "registrant_count": kpi_data.get("total_registrants"),
-                                        "attendee_count": kpi_data.get("total_attendees"),
-                                        "conversion_rate": kpi_data.get("conversion_rate"),
-                                        "engagement_score_avg": kpi_data.get("avg_engagement"),
+                                        "registrant_count": _num(kpi_data.get("total_registrants")),
+                                        "attendee_count": _num(kpi_data.get("total_attendees")),
+                                        "conversion_rate": _num(kpi_data.get("conversion_rate")),
+                                        "engagement_score_avg": _num(kpi_data.get("avg_engagement")),
                                     }
 
                                 if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
@@ -189,10 +193,10 @@ class DataAgent:
                                                 "start_time": detail.get("goodafter") or detail.get("start_time"),
                                                 "end_time": detail.get("goodtill") or detail.get("end_time"),
                                                 "event_type": detail.get("event_type") or "",
-                                                "registrant_count": result.get("total_registrants"),
-                                                "attendee_count": result.get("total_attendees"),
-                                                "conversion_rate": result.get("conversion_rate"),
-                                                "engagement_score_avg": result.get("avg_engagement"),
+                                                "registrant_count": _num(result.get("total_registrants")),
+                                                "attendee_count": _num(result.get("total_attendees")),
+                                                "conversion_rate": _num(result.get("conversion_rate")),
+                                                "engagement_score_avg": _num(result.get("avg_engagement")),
                                             }
                                     except Exception:
                                         pass  # event card is best-effort

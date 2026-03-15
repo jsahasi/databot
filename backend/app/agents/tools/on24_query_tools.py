@@ -1122,7 +1122,6 @@ async def query_ai_content(
     sql = f"""
         SELECT
             replace(vl.source, 'AUTOGEN_', '')        AS content_type,
-            vl.media_name                              AS title,
             vl.media_content                           AS content,
             vl.source_event_id                         AS event_id,
             e.description                              AS event_title,
@@ -1140,7 +1139,7 @@ async def query_ai_content(
     return [
         {
             "content_type": row["content_type"] or "",
-            "title": row["title"] or "",
+            "title": row["event_title"] or "",
             "content": (row["content"] or "")[:50000],  # allow full transcripts (~20K words)
             "event_id": row["event_id"],
             "event_title": row["event_title"] or "",
