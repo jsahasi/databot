@@ -5,7 +5,9 @@ Used for:
 - Daily improvement-inbox digest (11:59 PM)
 """
 
+import asyncio
 import logging
+import re
 import smtplib
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -15,6 +17,28 @@ from pathlib import Path
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Strict email validation — no CRLF, no angle brackets, ASCII-safe
+_EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
+
+# Allowed base directory for attachments (prevents path traversal)
+_ALLOWED_ATTACHMENT_DIR = Path("/app/data")
+
+
+def _validate_email(addr: str) -> bool:
+    """Validate email address: strict format, no CRLF injection."""
+    if not addr or "\r" in addr or "\n" in addr or "\x00" in addr:
+        return False
+    return bool(_EMAIL_RE.match(addr.strip()))
+
+
+def _validate_attachment_path(path: Path) -> bool:
+    """Ensure attachment is within the allowed directory."""
+    try:
+        resolved = path.resolve()
+        return str(resolved).startswith(str(_ALLOWED_ATTACHMENT_DIR.resolve()))
+    except (OSError, ValueError):
+        return False
 
 
 async def send_email(
@@ -28,14 +52,26 @@ async def send_email(
 
     Returns True if sent successfully, False otherwise.
     """
-    recipients = [to] if isinstance(to, str) else to
-    if not recipients:
+    recipients = [to] if isinstance(to, str) else list(to)
+    # Validate all recipient addresses
+    valid = [r.strip() for r in recipients if _validate_email(r)]
+    if not valid:
+        if recipients:
+            logger.warning(f"All recipient addresses invalid: {recipients}")
         return False
 
+    # Filter attachments to allowed directory
+    safe_attachments = None
+    if attachments:
+        safe_attachments = [p for p in attachments if p.exists() and _validate_attachment_path(p)]
+        rejected = [p for p in attachments if p not in (safe_attachments or [])]
+        if rejected:
+            logger.warning(f"Rejected attachment paths outside allowed dir: {rejected}")
+
     if settings.sendgrid_api_key:
-        return await _send_via_sendgrid(recipients, subject, html_body, attachments, from_name)
+        return await _send_via_sendgrid(valid, subject, html_body, safe_attachments, from_name)
     elif settings.gmail_user and settings.gmail_app_password:
-        return _send_via_gmail(recipients, subject, html_body, attachments, from_name)
+        return await asyncio.to_thread(_send_via_gmail, valid, subject, html_body, safe_attachments, from_name)
     else:
         logger.warning("No email service configured (set SENDGRID_API_KEY or GMAIL_USER + GMAIL_APP_PASSWORD)")
         return False
@@ -99,7 +135,7 @@ def _send_via_gmail(
     attachments: list[Path] | None,
     from_name: str,
 ) -> bool:
-    """Send via Gmail SMTP (synchronous — called from async context via thread)."""
+    """Send via Gmail SMTP (runs in thread pool to avoid blocking event loop)."""
     try:
         msg = MIMEMultipart()
         msg["From"] = f"{from_name} <{settings.gmail_user}>"

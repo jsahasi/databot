@@ -547,6 +547,8 @@ class ChatRequest(BaseModel):
     @field_validator("message")
     @classmethod
     def _message_length(cls, v: str) -> str:
+        # Strip null bytes and control characters (matches WS handler)
+        v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v)
         limit = 16000 if "[Attached" in v else 4000
         if len(v) > limit:
             raise ValueError(f"Message too long (max {limit} characters).")

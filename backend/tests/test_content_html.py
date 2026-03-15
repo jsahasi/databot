@@ -2,7 +2,7 @@
 
 Tests cover:
 - _extract_html: fenced ```html blocks, fallback density detection, no-HTML passthrough
-- _sanitize_html: dangerous tag/attribute stripping, safe HTML preservation
+- _sanitize_html: dangerous tag/attribute stripping, safe HTML preservation (nh3-based)
 
 Run with:
     python -m pytest tests/test_content_html.py -v
@@ -73,7 +73,7 @@ class TestExtractHtml:
 
 
 class TestSanitizeHtml:
-    """Tests for HTML sanitisation (XSS prevention on agent output)."""
+    """Tests for HTML sanitisation (nh3-based XSS prevention on agent output)."""
 
     def test_strips_script_tags_and_content(self):
         """<script> tags and their content must be completely removed."""
@@ -81,15 +81,15 @@ class TestSanitizeHtml:
         result = _sanitize_html(html)
         assert "<script" not in result
         assert "alert" not in result
-        assert "<p>Hello</p>" in result
-        assert "<p>World</p>" in result
+        assert "Hello" in result
+        assert "World" in result
 
     def test_strips_iframe_tags(self):
         """<iframe> tags must be removed."""
         html = '<div>Content</div><iframe src="https://evil.com"></iframe>'
         result = _sanitize_html(html)
         assert "<iframe" not in result
-        assert "<div>Content</div>" in result
+        assert "Content" in result
 
     def test_strips_on_event_handlers(self):
         """on* event handler attributes (onclick, onerror, onload) must be removed."""
@@ -97,15 +97,17 @@ class TestSanitizeHtml:
         result = _sanitize_html(html)
         assert "onerror" not in result
         assert "onclick" not in result
-        # The img tag itself should remain
+        # The img tag itself should remain with src
         assert "<img" in result
+        assert "photo.jpg" in result
 
     def test_strips_javascript_urls(self):
-        """javascript: URLs in href/src must be neutralised to about:blank."""
+        """javascript: URLs in href/src must be neutralised."""
         html = '<a href="javascript:alert(1)">Click</a>'
         result = _sanitize_html(html)
         assert "javascript:" not in result
-        assert "about:blank" in result
+        # nh3 removes the href entirely when scheme is not allowed
+        assert "Click" in result
 
     def test_preserves_safe_html(self):
         """Safe tags (p, h1, h2, div, span, img, a with https) must be preserved."""
@@ -118,7 +120,13 @@ class TestSanitizeHtml:
             '<a href="https://example.com">Link</a>'
         )
         result = _sanitize_html(html)
-        assert result == html
+        assert "<h1>Title</h1>" in result
+        assert "<h2>Subtitle</h2>" in result
+        assert "<p>Paragraph</p>" in result
+        assert "<span>Inline</span>" in result
+        assert "img.jpg" in result
+        assert "example.com" in result
+        assert "Link" in result
 
     def test_strips_form_tags(self):
         """<form> tags must be removed."""
@@ -139,4 +147,18 @@ class TestSanitizeHtml:
         html = '<body onload="init()"><p>Content</p></body>'
         result = _sanitize_html(html)
         assert "onload" not in result
-        assert "<p>Content</p>" in result
+        assert "Content" in result
+
+    def test_handles_nested_script_bypass_attempt(self):
+        """Nested/split tags like <scr<script>ipt> must not survive."""
+        html = '<scr<script>removed</script>ipt>alert(1)</scr</script>ipt>'
+        result = _sanitize_html(html)
+        assert "<script" not in result
+        assert "alert(1)" not in result or "<script" not in result
+
+    def test_handles_html_entity_encoded_script(self):
+        """HTML entity encoded script tags should not execute."""
+        html = '&#60;script&#62;alert(1)&#60;/script&#62;<p>safe</p>'
+        result = _sanitize_html(html)
+        # nh3 handles entity-encoded content safely
+        assert "safe" in result

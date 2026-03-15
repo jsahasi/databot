@@ -28,6 +28,7 @@ dependencies = [
     "gunicorn>=22.0.0",
     "redis[hiredis]>=5.0.0",
     "slowapi>=0.1.9",
+    "nh3>=0.2.0",
 ]
 
 [project.optional-dependencies]

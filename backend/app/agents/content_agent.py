@@ -40,14 +40,28 @@ _BLOCK_TAGS = re.compile(
     r"<(?:h[1-6]|p|div|article|section|ul|ol)\b", re.I
 )
 
-# Tags/attributes to strip during sanitisation
-_DANGEROUS_TAGS = re.compile(
-    r"<\s*/?\s*(?:script|iframe|object|embed|form|input|link|meta)\b[^>]*>.*?</\s*(?:script|iframe|object|embed|form|input|link|meta)\s*>|"
-    r"<\s*/?\s*(?:script|iframe|object|embed|form|input|link|meta)\b[^>]*/?\s*>",
-    re.I | re.DOTALL,
-)
-_EVENT_HANDLERS = re.compile(r"\s+on\w+\s*=\s*[\"'][^\"']*[\"']", re.I)
-_JS_URLS = re.compile(r"((?:href|src|action)\s*=\s*[\"'])\s*javascript\s*:[^\"']*([\"'])", re.I)
+# nh3 (Rust-based HTML sanitizer) — replaces fragile regex approach
+try:
+    import nh3 as _nh3
+except ImportError:
+    _nh3 = None  # type: ignore[assignment]
+
+# Allowlisted tags and attributes for content HTML
+_ALLOWED_TAGS = {
+    "h1", "h2", "h3", "h4", "h5", "h6", "p", "br", "hr",
+    "div", "span", "article", "section", "blockquote",
+    "ul", "ol", "li", "dl", "dt", "dd",
+    "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
+    "a", "strong", "em", "b", "i", "u", "s", "code", "pre", "mark", "small", "sub", "sup",
+    "img", "figure", "figcaption",
+}
+_ALLOWED_ATTRS = {
+    "*": {"class", "style", "id"},
+    "a": {"href", "title", "target"},
+    "img": {"src", "alt", "width", "height", "loading"},
+    "td": {"colspan", "rowspan"},
+    "th": {"colspan", "rowspan", "scope"},
+}
 
 
 def _extract_html(text: str) -> tuple[str, str | None]:
@@ -72,13 +86,24 @@ def _extract_html(text: str) -> tuple[str, str | None]:
 
 
 def _sanitize_html(html: str) -> str:
-    """Strip dangerous tags, event handlers, and javascript: URLs from HTML."""
-    # Remove dangerous tags and their content
-    result = _DANGEROUS_TAGS.sub("", html)
-    # Remove on* event handler attributes
-    result = _EVENT_HANDLERS.sub("", result)
-    # Neutralise javascript: URLs in href/src/action
-    result = _JS_URLS.sub(r"\1about:blank\2", result)
+    """Sanitize HTML using nh3 (Rust-based allowlist sanitizer).
+
+    Only permits safe structural/content tags. Strips all scripts, event
+    handlers, javascript: URLs, iframes, forms, and other dangerous elements.
+    """
+    if _nh3 is not None:
+        return _nh3.clean(
+            html,
+            tags=_ALLOWED_TAGS,
+            attributes=_ALLOWED_ATTRS,
+            url_schemes={"http", "https", "mailto", "data"},
+            link_rel="noopener noreferrer",
+        )
+    # Fallback: aggressive strip if nh3 not installed (development only)
+    logger.warning("nh3 not installed — using aggressive regex fallback for HTML sanitization")
+    result = re.sub(r"<\s*script\b[^>]*>.*?</\s*script\s*>", "", html, flags=re.I | re.DOTALL)
+    result = re.sub(r"<\s*(?:iframe|object|embed|form|input|link|meta)\b[^>]*/?>", "", result, flags=re.I)
+    result = re.sub(r"\s+on\w+\s*=\s*[\"'][^\"']*[\"']", "", result, flags=re.I)
     return result
 
 

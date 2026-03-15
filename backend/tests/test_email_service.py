@@ -126,7 +126,8 @@ class TestSendEmailAttachments:
         attachment_file = tmp_path / "report.csv"
         attachment_file.write_text("col1,col2\n1,2\n")
 
-        with patch("app.services.email_service.settings") as mock_settings:
+        with patch("app.services.email_service._validate_attachment_path", return_value=True), \
+             patch("app.services.email_service.settings") as mock_settings:
             mock_settings.sendgrid_api_key = None
             mock_settings.gmail_user = "bot@gmail.com"
             mock_settings.gmail_app_password = "app_pass"
