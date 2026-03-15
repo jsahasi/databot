@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import DOMPurify from 'dompurify'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -354,6 +354,199 @@ function EventCardsGrid({ cards }: { cards: any[] }) {
   )
 }
 
+function ContentHtmlPreview({ html }: { html: string }) {
+  const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  const sanitized = DOMPurify.sanitize(html, {
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input'],
+    FORBID_ATTR: ['onerror', 'onclick', 'onload', 'onmouseover'],
+  })
+
+  const baseStyles = `<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;max-width:720px;margin:auto;padding:2rem;color:#1a1d2e;}</style>`
+  const srcdoc = baseStyles + sanitized
+
+  const handleClose = useCallback(() => setOpen(false), [])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, handleClose])
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(html)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /* ignore */ }
+  }
+
+  const handlePrint = () => {
+    iframeRef.current?.contentWindow?.print()
+  }
+
+  const handleShare = async () => {
+    const plain = sanitized.replace(/<[^>]*>/g, '').slice(0, 500)
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Content Preview', text: plain }) } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(plain)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <>
+      {/* Chip / button */}
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          marginTop: '0.75rem',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.6rem 1rem',
+          borderRadius: 10,
+          border: '1px solid var(--color-border)',
+          borderLeft: '3px solid #ec4899',
+          background: 'var(--color-card)',
+          cursor: 'pointer',
+          fontSize: '0.8rem',
+          fontWeight: 600,
+          color: 'var(--color-text)',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          transition: 'background 0.12s',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(236,72,153,0.07)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-card)' }}
+      >
+        {/* Document icon */}
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+        View Generated Content
+      </button>
+
+      {/* Modal */}
+      {open && (
+        <div
+          onClick={handleClose}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 800,
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              background: 'var(--color-card)',
+              borderRadius: 12,
+              border: '1px solid var(--color-border)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid var(--color-border)',
+              flexShrink: 0,
+            }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-heading, var(--color-text))' }}>
+                Content Preview
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {/* Copy */}
+                <button
+                  onClick={handleCopy}
+                  title={copied ? 'Copied!' : 'Copy HTML'}
+                  aria-label="Copy HTML to clipboard"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--color-text-secondary)', padding: 4, display: 'flex', borderRadius: 4 }}
+                >
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                </button>
+                {/* Print */}
+                <button
+                  onClick={handlePrint}
+                  title="Print"
+                  aria-label="Print content"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4, display: 'flex', borderRadius: 4 }}
+                >
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" />
+                  </svg>
+                </button>
+                {/* Share */}
+                <button
+                  onClick={handleShare}
+                  title="Share"
+                  aria-label="Share content"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4, display: 'flex', borderRadius: 4 }}
+                >
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </button>
+                {/* Close */}
+                <button
+                  onClick={handleClose}
+                  title="Close"
+                  aria-label="Close preview"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4, display: 'flex', borderRadius: 4, marginLeft: '0.25rem' }}
+                >
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            {/* Body — iframe */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <iframe
+                ref={iframeRef}
+                srcDoc={srcdoc}
+                sandbox=""
+                title="Content preview"
+                style={{ width: '100%', height: '100%', border: 'none', minHeight: 400 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 export default function ChatMessage({ message, userQuestion = '' }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const [hovered, setHovered] = useState(false)
@@ -519,6 +712,9 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
 
       {/* AI Content Articles */}
       {message.contentArticles && <ContentArticlesInline articles={message.contentArticles} />}
+
+      {/* Generated HTML content preview */}
+      {message.contentHtml && <ContentHtmlPreview html={message.contentHtml} />}
 
       {/* Thumbs-up confirmation */}
       {!isUser && feedbackState === 'thumbs_up' && (

@@ -35,6 +35,53 @@ _TYPE_KEYWORDS: list[tuple[re.Pattern, str]] = [
 ]
 
 
+# Block-level HTML tags used for density detection
+_BLOCK_TAGS = re.compile(
+    r"<(?:h[1-6]|p|div|article|section|ul|ol)\b", re.I
+)
+
+# Tags/attributes to strip during sanitisation
+_DANGEROUS_TAGS = re.compile(
+    r"<\s*/?\s*(?:script|iframe|object|embed|form|input|link|meta)\b[^>]*>.*?</\s*(?:script|iframe|object|embed|form|input|link|meta)\s*>|"
+    r"<\s*/?\s*(?:script|iframe|object|embed|form|input|link|meta)\b[^>]*/?\s*>",
+    re.I | re.DOTALL,
+)
+_EVENT_HANDLERS = re.compile(r"\s+on\w+\s*=\s*[\"'][^\"']*[\"']", re.I)
+_JS_URLS = re.compile(r"((?:href|src|action)\s*=\s*[\"'])\s*javascript\s*:[^\"']*([\"'])", re.I)
+
+
+def _extract_html(text: str) -> tuple[str, str | None]:
+    """Extract HTML from fenced ```html blocks or detect high HTML density.
+
+    Returns (cleaned_text, extracted_html). cleaned_text has the fenced block
+    removed. If no HTML found, returns (original_text, None).
+    """
+    # Try fenced ```html block first
+    pattern = r"```html\s*\n(.*?)```"
+    m = re.search(pattern, text, re.DOTALL)
+    if m:
+        html = m.group(1).strip()
+        cleaned = text[:m.start()] + text[m.end():]
+        return cleaned.strip(), html
+
+    # Fallback: detect high density of block-level HTML tags (3+)
+    if len(_BLOCK_TAGS.findall(text)) >= 3:
+        return text, text
+
+    return text, None
+
+
+def _sanitize_html(html: str) -> str:
+    """Strip dangerous tags, event handlers, and javascript: URLs from HTML."""
+    # Remove dangerous tags and their content
+    result = _DANGEROUS_TAGS.sub("", html)
+    # Remove on* event handler attributes
+    result = _EVENT_HANDLERS.sub("", result)
+    # Neutralise javascript: URLs in href/src/action
+    result = _JS_URLS.sub(r"\1about:blank\2", result)
+    return result
+
+
 def _detect_content_type(user_message: str) -> str | None:
     """Return the AUTOGEN_ type if the message is a content-creation request, else None."""
     if not _CREATION_PATTERNS.search(user_message):
@@ -216,14 +263,19 @@ class ContentAgent:
                 messages.append({"role": "user", "content": tool_results})
             else:
                 text_parts = [block.text for block in response.content if hasattr(block, "text")]
+                full_text = "\n".join(text_parts)
+                cleaned_text, extracted_html = _extract_html(full_text)
+                content_html = _sanitize_html(extracted_html) if extracted_html else None
                 return {
-                    "text": "\n".join(text_parts),
+                    "text": cleaned_text,
                     "chart_data": None,
                     "tool_calls": tool_calls_made,
+                    "content_html": content_html,
                 }
 
         return {
             "text": "I've gathered the data but hit the analysis limit. Here's what I found so far.",
             "chart_data": None,
             "tool_calls": tool_calls_made,
+            "content_html": None,
         }

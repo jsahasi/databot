@@ -305,6 +305,17 @@ async def websocket_chat(websocket: WebSocket):
                     await websocket.send_json({"type": "error", "message": "Empty message"})
                     continue
 
+                # Reject messages containing script tags or javascript: protocol
+                if re.search(r'<script[\s>]|javascript\s*:', content, re.I):
+                    await websocket.send_json({"type": "error", "message": "HTML and JavaScript are not allowed in messages."})
+                    continue
+
+                # Strip any HTML tags from user input (preserves text content between tags)
+                content = re.sub(r'</?[a-z][^>]*>', '', content, flags=re.I).strip()
+                if not content:
+                    await websocket.send_json({"type": "error", "message": "Please enter a text message."})
+                    continue
+
                 # SEC-02: Rate limit WebSocket messages per IP
                 if not _check_ws_rate(client_ip):
                     await websocket.send_json({"type": "error", "message": f"Rate limit exceeded ({settings.rate_limit_per_minute} messages/min). Please slow down."})
@@ -414,6 +425,13 @@ async def websocket_chat(websocket: WebSocket):
                         await websocket.send_json({
                             "type": "content_articles",
                             "data": result["content_articles"],
+                        })
+
+                    # Send rendered HTML content for preview modal
+                    if result.get("content_html"):
+                        await websocket.send_json({
+                            "type": "content_html",
+                            "data": result["content_html"],
                         })
 
                     # Send proposed calendar events if available
@@ -532,7 +550,14 @@ class ChatRequest(BaseModel):
         limit = 16000 if "[Attached" in v else 4000
         if len(v) > limit:
             raise ValueError(f"Message too long (max {limit} characters).")
-        return v
+        # Reject script tags and javascript: protocol
+        if re.search(r'<script[\s>]|javascript\s*:', v, re.I):
+            raise ValueError("HTML and JavaScript are not allowed in messages.")
+        # Strip HTML tags from input (only if there are tags to strip)
+        stripped = re.sub(r'</?[a-z][^>]*>', '', v, flags=re.I).strip()
+        if v.strip() and not stripped:
+            raise ValueError("Please enter a text message.")
+        return stripped if stripped else v
 
 
 class ChatResponse(BaseModel):

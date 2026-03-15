@@ -178,7 +178,16 @@ export default function ChatPanel() {
   const handleSend = () => {
     const trimmed = input.trim()
     if (!trimmed && !attachment) return
-    let content = trimmed
+    // Reject script injection attempts
+    const scriptPattern = /<script[\s>]/i
+    const jsPattern = /javascript\s*:/i
+    if (scriptPattern.test(trimmed) || jsPattern.test(trimmed)) {
+      setInput('')
+      return
+    }
+    // Strip any HTML tags from user input
+    const sanitized = trimmed.replace(/<\/?[a-z][^>]*>/gi, '')
+    let content = sanitized
     let displayText: string | undefined
     let imageUrl: string | undefined
     if (attachment) {

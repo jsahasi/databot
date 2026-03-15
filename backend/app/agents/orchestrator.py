@@ -330,6 +330,7 @@ class OrchestratorAgent:
                             "text": text,
                             "agent_used": "content_agent",
                             "chart_data": None,
+                            "content_html": result.get("content_html"),
                             "requires_confirmation": False,
                             "confirmation_summary": None,
                         }
@@ -399,6 +400,7 @@ class OrchestratorAgent:
                             "text": text,
                             "agent_used": "content_agent",
                             "chart_data": None,
+                            "content_html": result.get("content_html"),
                             "requires_confirmation": False,
                             "confirmation_summary": None,
                             "proposed_events": proposed_events,

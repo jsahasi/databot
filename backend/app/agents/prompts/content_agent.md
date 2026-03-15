@@ -91,6 +91,7 @@ When asked to write, draft, or create any content (blog posts, emails, social po
 - When referring to where content comes from, say "Media Manager" — never "video library".
 - Uploaded PDFs or images provided by the user may be used as additional context.
 - Maximum article length: 800 words for blogs/eBooks; 150 words for social posts; 300 words for emails/FAQs.
+- When you create a blog post, email, social media post, eBook, or any formatted content, wrap the full HTML in a fenced code block tagged `html` (```html ... ```). This ensures the frontend can render it in a preview modal. Do NOT include any <script> tags or JavaScript in generated content.
 
 ## Content Calendar
 
