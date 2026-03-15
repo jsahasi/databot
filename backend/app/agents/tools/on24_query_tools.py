@@ -1078,13 +1078,23 @@ async def query_lead_stats(months: int = 3) -> dict:
 
 
 _AI_CONTENT_TYPES = {
-    "BLOG":          "AUTOGEN_BLOG",
-    "EBOOK":         "AUTOGEN_EBOOK",
-    "FAQ":           "AUTOGEN_FAQ",
-    "KEYTAKEAWAYS":  "AUTOGEN_KEYTAKEAWAYS",
-    "FOLLOWUPEMAIL": "AUTOGEN_FOLLOWUPEMAI",
-    "SOCIALMEDIA":   "AUTOGEN_SOCIALMEDIAP",
-    "TRANSCRIPT":    "AUTOGEN_TRANSCRIPT",
+    "BLOG":              "AUTOGEN_BLOG",
+    "EBOOK":             "AUTOGEN_EBOOK",
+    "FAQ":               "AUTOGEN_FAQ",
+    "KEYTAKEAWAYS":      "AUTOGEN_KEYTAKEAWAYS",
+    "KEY_TAKEAWAYS":     "AUTOGEN_KEYTAKEAWAYS",
+    "KEY TAKEAWAYS":     "AUTOGEN_KEYTAKEAWAYS",
+    "FOLLOWUPEMAIL":     "AUTOGEN_FOLLOWUPEMAI",
+    "FOLLOWUPEMAI":      "AUTOGEN_FOLLOWUPEMAI",
+    "FOLLOW_UP_EMAIL":   "AUTOGEN_FOLLOWUPEMAI",
+    "FOLLOW UP EMAIL":   "AUTOGEN_FOLLOWUPEMAI",
+    "SOCIALMEDIA":       "AUTOGEN_SOCIALMEDIAP",
+    "SOCIALMEDIAP":      "AUTOGEN_SOCIALMEDIAP",
+    "SOCIAL_MEDIA":      "AUTOGEN_SOCIALMEDIAP",
+    "SOCIAL MEDIA":      "AUTOGEN_SOCIALMEDIAP",
+    "SOCIAL MEDIA POST": "AUTOGEN_SOCIALMEDIAP",
+    "SOCIAL MEDIA POSTS":"AUTOGEN_SOCIALMEDIAP",
+    "TRANSCRIPT":        "AUTOGEN_TRANSCRIPT",
 }
 
 
@@ -1105,9 +1115,9 @@ async def query_ai_content(
 
     # Build source filter
     if content_type:
-        ct_upper = content_type.upper()
-        # Allow both short form ("BLOG") and full form ("AUTOGEN_BLOG")
-        source_filter = _AI_CONTENT_TYPES.get(ct_upper) or (
+        ct_upper = content_type.strip().upper()
+        # Normalize: try exact match, then without hyphens/underscores
+        source_filter = _AI_CONTENT_TYPES.get(ct_upper) or _AI_CONTENT_TYPES.get(ct_upper.replace("-", " ").replace("_", " ")) or (
             f"AUTOGEN_{ct_upper}" if not ct_upper.startswith("AUTOGEN_") else ct_upper
         )
         source_clause = "AND vl.source = $2"
