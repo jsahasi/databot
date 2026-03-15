@@ -209,6 +209,15 @@ Implementation:
 **Decision:** Implemented API key auth (HTTP middleware + WebSocket upgrade), per-IP rate limiting (slowapi + custom WS limiter), and tightened CORS (restricted methods/headers).
 **Rationale:** All 3 HIGH findings from the security review. API_KEY env var — empty disables auth (dev mode). Rate limit: 20 WS msg/min, 100 REST/min per IP. CORS: only localhost:3000/3001 origins, explicit methods/headers.
 
+## 2026-03-15: Content Sharing & Approval Workflow
+**Decision:** Implemented a complete content review/approval system with HMAC-SHA256 signed links, 7-day expiry, per-recipient tokens, comment threads, 5-star ratings, and thumbs up/down approval. "Approved" badge when all recipients approve.
+**Rationale:** Content agent generates blog posts, social media, emails — stakeholders need to review and approve before publishing. Link-based access means recipients don't need app accounts. Tokens are tied to specific email addresses (can't be shared). Server-side HTML sanitization via nh3.
+**Tech:** 3 new DB tables (content_shares, share_recipients, share_comments), 4 API endpoints, standalone React review page (/share/:shareId), SendGrid/Gmail email delivery.
+
+## 2026-03-15: nh3 for HTML Sanitization (replaces regex)
+**Decision:** Replaced regex-based `_sanitize_html` with nh3 (Rust-based allowlist HTML sanitizer).
+**Rationale:** Security audit found regex approach bypassable via nested tags, HTML entities, split tags. nh3 uses a proper HTML parser with an allowlist model — only explicitly permitted tags/attributes survive. Handles all edge cases that regex cannot.
+
 ## 2026-03-15: html-docs Skill — Standalone Documentation Generator
 **Decision:** Created a reusable Claude Code skill (`html-docs`) that generates professional, responsive, themed HTML documentation with auto-discovery. Self-contained — no awareness of the parent application.
 **Rationale:** Docs rot because updating them is manual. This skill auto-discovers project state (pytest results, security patterns, infrastructure config) and generates polished HTML docs. Supports document registration (external docs wired into nav), nav exclusion (docs excluded from dropdown), custom theming, dark mode, and scheduled regeneration via cron or shell script.

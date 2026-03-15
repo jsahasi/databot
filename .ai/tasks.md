@@ -350,6 +350,16 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Daily improvement digest: 11:59 PM email with improvement-inbox-*.txt attached
 - [x] Fix: event card Decimal serialization, get_ai_content media_name column error
 
+## Content Sharing & Approval Workflow — COMPLETE (2026-03-15)
+- [x] Backend: 3 new tables (content_shares, share_recipients, share_comments), migration 0003
+- [x] Backend: 4 API endpoints (POST /shares, GET /shares/{id}, POST respond, POST comments)
+- [x] Backend: HMAC-SHA256 token generation (salt+share_id+email+admin_id+created_at), 7-day expiry
+- [x] Backend: Email to recipients via SendGrid/Gmail with styled review link
+- [x] Frontend: Share icon → email input form in modal → POST /api/shares
+- [x] Frontend: Standalone /share/:shareId review page (outside DashboardLayout)
+- [x] Frontend: 5-star rating, thumbs up/down approval, comment thread, recipients status
+- [x] Frontend: "Approved" badge when all recipients approve
+
 ## Security Remediation (Mar 15 audit) — COMPLETE (2026-03-15)
 - [x] SEC: Replace regex HTML sanitizer with nh3 (Rust-based allowlist)
 - [x] SEC: Email address validation — strict regex, CRLF rejection
