@@ -178,6 +178,45 @@ class TestInputValidation:
         sid = "a" * 128
         assert _apply_session_id_sanitisation(sid) == sid
 
+    # --- HTML / XSS input validation (A03) ---
+
+    async def test_script_tag_rejected_by_validator(self, client):
+        """POST /api/chat with <script>alert(1)</script> must return 422."""
+        response = await client.post(
+            "/api/chat", json={"message": "<script>alert(1)</script>"}
+        )
+        assert response.status_code == 422
+
+    async def test_javascript_protocol_rejected(self, client):
+        """POST /api/chat with 'javascript:alert(1)' must return 422."""
+        response = await client.post(
+            "/api/chat", json={"message": "javascript:alert(1)"}
+        )
+        assert response.status_code == 422
+
+    async def test_html_tags_stripped_by_validator(self, client):
+        """POST /api/chat with '<b>hello</b> world' should NOT 422 — tags stripped, text remains."""
+        mock_result = {
+            "text": "hello world",
+            "agent_used": None,
+            "chart_data": None,
+        }
+        with patch(
+            "app.api.chat.OrchestratorAgent.process_message",
+            new=AsyncMock(return_value=mock_result),
+        ):
+            response = await client.post(
+                "/api/chat", json={"message": "<b>hello</b> world"}
+            )
+        assert response.status_code != 422
+
+    async def test_pure_html_tags_rejected(self, client):
+        """POST /api/chat with '<div><span></span></div>' should 422 — nothing left after strip."""
+        response = await client.post(
+            "/api/chat", json={"message": "<div><span></span></div>"}
+        )
+        assert response.status_code == 422
+
 
 # ===========================================================================
 # 2. Access control / client_id (OWASP A01)
