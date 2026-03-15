@@ -329,10 +329,14 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] 7 pre-existing test failures fixed (auth headers, security tests)
 
 ## Backlog / Next Steps
-- [ ] Documents dropdown nav on each HTML doc (navigate between docs without returning to app)
+- [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
+- [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
 - [ ] Reload admin dropdown when client_id changes via breadcrumb
-- [ ] Agent permission awareness — suppress deep links to products the user lacks access to in agent responses
-- [ ] Tag-based event search — query_events_by_tag implemented but not yet surfaced as home tile
+- [ ] Populate api-vs-db-benchmark.html with actual benchmark data and REST API usage docs
+- [ ] Technical contact lookup on home page via /v2/client/{clientId}/technicalrep
+- [ ] Fix concierge no-response for "what helper endpoints in REST?"
+- [ ] Add manage-forums-lite to UI permission filtering
+- [ ] Enhance test coverage — response_cache, knowledge_base, brand_voice
 
 ## Verified ON24 Schema (on24master)
 

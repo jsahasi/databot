@@ -222,13 +222,12 @@ class OrchestratorAgent:
                             }],
                         })
 
-                        # Let the orchestrator generate a grounded response
+                        # Let the orchestrator generate a grounded text response (no tools — prevents recursion)
                         try:
                             followup = await self.client.messages.create(
                                 model=self.model,
                                 max_tokens=2048,
                                 system=system_blocks,
-                                tools=self.ROUTING_TOOLS,
                                 messages=self.conversation_history,
                             )
                         except Exception:
