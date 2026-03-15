@@ -53,6 +53,14 @@ class Settings(BaseSettings):
         "http://localhost:3001",
     ]
 
+    # Email (for content sharing + daily improvement digest)
+    sendgrid_api_key: str = ""          # SENDGRID_API_KEY
+    gmail_user: str = ""                # GMAIL_USER
+    gmail_app_password: str = ""        # GMAIL_APP_PASSWORD
+    send_improvement_email_to: str = "" # SEND_IMPROVEMENT_EMAIL_TO — daily 11:59PM digest
+    share_secret: str = ""              # SHARE_SECRET — auto-generated if empty
+    share_base_url: str = "http://localhost:3001"  # SHARE_BASE_URL for link generation
+
     # MCP server integration
     use_mcp: str = "N"           # "Y" to route admin write ops through on24-mcp server
     use_mcp_blocklist: str = ""  # comma-separated tool names to block even if use_mcp=Y

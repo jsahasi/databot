@@ -34,10 +34,77 @@ async def lifespan(app: FastAPI):
     # Startup: clean up expired uploads (>24h)
     from app.api.upload import cleanup_old_uploads
     cleanup_old_uploads()
+    # Startup: schedule daily improvement email if configured
+    if settings.send_improvement_email_to:
+        email_task = asyncio.create_task(_daily_improvement_email_loop())
+        _background_tasks.add(email_task)
+        email_task.add_done_callback(_background_tasks.discard)
     yield
     # Shutdown
     await close_pool()
     await close_redis()
+
+
+async def _daily_improvement_email_loop():
+    """Send daily improvement-inbox email at 11:59 PM server time."""
+    from datetime import datetime, time, timedelta
+    from pathlib import Path
+    from app.services.email_service import send_email
+
+    logger.info(f"Daily improvement email scheduled → {settings.send_improvement_email_to}")
+    data_dir = Path("/app/data")
+
+    while True:
+        try:
+            now = datetime.now()
+            # Calculate seconds until next 11:59 PM
+            target = datetime.combine(now.date(), time(23, 59))
+            if now >= target:
+                target += timedelta(days=1)
+            wait_seconds = (target - now).total_seconds()
+            logger.info(f"Improvement email: next send in {wait_seconds:.0f}s at {target}")
+            await asyncio.sleep(wait_seconds)
+
+            # Find today's improvement file(s)
+            today_str = datetime.now().strftime("%m-%d-%Y")
+            files = sorted(data_dir.glob("improvement-inbox-*.txt"))
+            if not files:
+                logger.info("No improvement files to send")
+                continue
+
+            # Send the most recent file (today's or latest available)
+            today_file = data_dir / f"improvement-inbox-{today_str}.txt"
+            files_to_send = [today_file] if today_file.exists() else [files[-1]]
+
+            file_names = ", ".join(f.name for f in files_to_send)
+            html_body = f"""
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
+                <h2 style="color:#4f46e5;">Daily Improvement Digest</h2>
+                <p>Attached: <strong>{file_names}</strong></p>
+                <p>These are user-flagged bot responses that need review.
+                Each entry contains the user's question, the bot's response,
+                the user's complaint, and a structured investigation prompt.</p>
+                <p style="color:#6b7280;font-size:0.85rem;">
+                    Sent automatically by ON24 Nexus at {datetime.now().strftime('%Y-%m-%d %I:%M %p')}
+                </p>
+            </div>
+            """
+
+            success = await send_email(
+                to=settings.send_improvement_email_to,
+                subject=f"ON24 Nexus — Improvement Digest ({today_str})",
+                html_body=html_body,
+                attachments=files_to_send,
+            )
+            if success:
+                logger.info(f"Improvement email sent to {settings.send_improvement_email_to}")
+            else:
+                logger.warning("Improvement email send failed (no email service configured?)")
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            logger.exception("Error in daily improvement email loop")
+            await asyncio.sleep(3600)  # retry in 1 hour on error
 
 
 async def _refresh_brand_voice():
