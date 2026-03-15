@@ -76,16 +76,6 @@
     <span><strong>Status</strong> Production</span>
     <span><strong>Last Updated</strong> March 2026</span>
   </div>
-  <a id="theme-toggle" href="#" style="position:absolute;top:1.25rem;right:2rem;font-size:0.75rem;color:var(--text2);text-decoration:none;padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:var(--card);">Toggle theme</a>
-  <script>
-  (function(){
-    var toggle = document.getElementById('theme-toggle');
-    var isDark = document.documentElement.classList.contains('dark-mode');
-    var base = window.location.pathname;
-    toggle.href = base + (isDark ? '?theme=light' : '?theme=dark');
-    toggle.textContent = isDark ? 'Light mode' : 'Dark mode';
-  })();
-  </script>
 </div>
 
 <div class="content">

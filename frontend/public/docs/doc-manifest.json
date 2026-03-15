@@ -7,7 +7,7 @@
     { "label": "Scalability", "path": "scalability.html", "type": "managed" },
     { "label": "Security Review", "path": "security-review.html", "type": "managed" },
     { "label": "Accessibility VPAT", "path": "accessibility-vpat.html", "type": "managed" },
-    { "label": "API vs DB Benchmark", "path": "api-vs-db-benchmark.html", "type": "managed" },
+    { "label": "API vs DB Benchmark", "path": "api-vs-db-benchmark.html", "type": "registered" },
     { "label": "Recent Changes", "path": "recent-changes.html", "type": "managed", "nav": false }
   ]
 }
