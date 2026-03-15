@@ -587,13 +587,13 @@ class TestQueryAiContent:
     @pytest.mark.asyncio
     async def test_truncates_long_content(self, patch_db):
         from app.agents.tools.on24_query_tools import query_ai_content
-        long_content = "x" * 10000
+        long_content = "x" * 60000
         patch_db.fetch.return_value = make_records([
             {"content_type": "BLOG", "title": "Long", "content": long_content,
              "event_id": 1, "event_title": "E", "created_at": datetime(2026, 1, 1)},
         ])
         result = await query_ai_content()
-        assert len(result[0]["content"]) == 8000
+        assert len(result[0]["content"]) == 50000
 
     @pytest.mark.asyncio
     async def test_limit_clamped_to_10(self, patch_db):

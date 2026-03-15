@@ -1,11 +1,13 @@
 """Chat endpoint: WebSocket-based agent conversation."""
 
 import asyncio
+import base64
 import json
 import logging
 import re
 import time
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 import anthropic
@@ -328,6 +330,27 @@ async def websocket_chat(websocket: WebSocket):
                 if user_permissions:
                     restriction_context = await _build_restriction_context(user_permissions)
                 agent.restriction_context = restriction_context
+
+                # Load attached image as base64 for vision (if present)
+                image_block = None
+                raw_image_url = data.get("image_url")
+                if raw_image_url and isinstance(raw_image_url, str):
+                    try:
+                        from app.api.upload import UPLOAD_DIR
+                        fname = Path(raw_image_url).name
+                        # Sanitise filename — alphanumeric + dots + hyphens only
+                        if re.match(r'^[\w\-.]+$', fname):
+                            fpath = UPLOAD_DIR / fname
+                            if fpath.exists() and fpath.stat().st_size < 5_000_000:
+                                b64 = base64.standard_b64encode(fpath.read_bytes()).decode()
+                                ext = fpath.suffix.lower().lstrip('.')
+                                media_map = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp'}
+                                media_type = media_map.get(ext, 'image/png')
+                                image_block = {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}}
+                                logger.info(f"Loaded image for vision: {fname} ({fpath.stat().st_size} bytes)")
+                    except Exception as e:
+                        logger.warning(f"Image load failed: {e}")
+                agent.image_block = image_block
 
                 # Check response cache (skip for confirmed actions and short/ambiguous messages)
                 cached_result = None

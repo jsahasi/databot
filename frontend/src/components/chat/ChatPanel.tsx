@@ -85,7 +85,7 @@ export default function ChatPanel() {
   const [showExploreContent, setShowExploreContent] = useState(false)
   const [showContentCreate, setShowContentCreate] = useState(false)
   const [showContentExplore, setShowContentExplore] = useState(false)
-  const [attachment, setAttachment] = useState<{ name: string; extractedText?: string | null } | null>(null)
+  const [attachment, setAttachment] = useState<{ name: string; extractedText?: string | null; url?: string; contentType?: string } | null>(null)
   const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -167,7 +167,7 @@ export default function ChatPanel() {
         return
       }
       const data = await res.json()
-      setAttachment({ name: data.original_name, extractedText: data.extracted_text })
+      setAttachment({ name: data.original_name, extractedText: data.extracted_text, url: data.url, contentType: data.content_type })
     } catch {
       alert('Upload failed — check your connection')
     } finally {
@@ -180,16 +180,20 @@ export default function ChatPanel() {
     if (!trimmed && !attachment) return
     let content = trimmed
     let displayText: string | undefined
+    let imageUrl: string | undefined
     if (attachment) {
       displayText = trimmed ? `${trimmed} [attached: ${attachment.name}]` : `[attached: ${attachment.name}]`
       if (attachment.extractedText) {
         content = `${trimmed}\n\n[Attached PDF: ${attachment.name}]\nContent:\n${attachment.extractedText}`
+      } else if (attachment.contentType?.startsWith('image/')) {
+        content = `${trimmed}\n\n[Attached image: ${attachment.name}]`
+        imageUrl = attachment.url
       } else {
         content = `${trimmed}\n\n[Attached file: ${attachment.name}]`
       }
       setAttachment(null)
     }
-    sendMessage(content, displayText)
+    sendMessage(content, displayText, imageUrl)
     setInput('')
     inputRef.current?.focus()
   }

@@ -249,7 +249,7 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }, [connect])
 
-  const sendMessage = useCallback((content: string, displayText?: string) => {
+  const sendMessage = useCallback((content: string, displayText?: string, imageUrl?: string) => {
     // Always show the user message immediately (displayText shown in chat; content sent to LLM)
     setMessages(prev => [
       ...prev,
@@ -269,7 +269,7 @@ export function useChat(options: UseChatOptions = {}) {
     ])
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'message', content, session_id: sessionId, client_id: selectedClientId }))
+      wsRef.current.send(JSON.stringify({ type: 'message', content, session_id: sessionId, client_id: selectedClientId, permissions: JSON.parse(sessionStorage.getItem('adminPermissions') || '[]'), image_url: imageUrl || undefined }))
     } else {
       pendingMessageRef.current = content
       connect()

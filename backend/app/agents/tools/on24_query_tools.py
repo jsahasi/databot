@@ -1141,7 +1141,7 @@ async def query_ai_content(
         {
             "content_type": row["content_type"] or "",
             "title": row["title"] or "",
-            "content": (row["content"] or "")[:8000],  # cap to avoid token explosion
+            "content": (row["content"] or "")[:50000],  # allow full transcripts (~20K words)
             "event_id": row["event_id"],
             "event_title": row["event_title"] or "",
             "created_at": row["created_at"].isoformat() if row["created_at"] else None,

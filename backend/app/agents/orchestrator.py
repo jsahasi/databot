@@ -57,6 +57,7 @@ class OrchestratorAgent:
         self.admin_agent = AdminAgent()
         self.conversation_history: list[dict] = []
         self.restriction_context: str = ""  # Set by chat.py per message
+        self.image_block: dict | None = None  # Set by chat.py for vision
 
     # Tool for routing to sub-agents
     ROUTING_TOOLS = [
@@ -171,7 +172,13 @@ class OrchestratorAgent:
                 "confirmation_summary": str | None,
             }
         """
-        self.conversation_history.append({"role": "user", "content": user_message})
+        # Build user message — include image as vision block if attached
+        if self.image_block:
+            user_content = [{"type": "text", "text": user_message}, self.image_block]
+            self.image_block = None  # Consume — only send once
+        else:
+            user_content = user_message
+        self.conversation_history.append({"role": "user", "content": user_content})
 
         system_blocks = [{"type": "text", "text": _build_orchestrator_prompt(), "cache_control": {"type": "ephemeral"}}]
         if self.restriction_context:

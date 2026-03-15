@@ -426,6 +426,55 @@ TOOL_HANDLERS = {
 
 CONTENT_AGENT_TOOLS = [
     {
+        "name": "list_events",
+        "description": (
+            "List and search events for the current client. Use when the user references a specific event, "
+            "'last webinar', 'most recent event', or an event with certain criteria (e.g. 'over 300 attendees'). "
+            "Returns event_id, description (title), goodafter (date), type, status."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "search": {"type": "string", "description": "Search term matched against event name"},
+                "limit": {"type": "integer", "description": "Max results (default 20)"},
+                "past_only": {"type": "boolean", "description": "If true, only past events"},
+            },
+        },
+    },
+    {
+        "name": "get_event_kpis",
+        "description": (
+            "Compute KPIs for a single event: registrants, attendees, engagement, conversion. "
+            "Use to find events matching criteria like 'over 300 attendees' or to get context for content creation."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"event_id": {"type": "integer", "description": "ON24 event ID"}},
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_polls",
+        "description": "Get poll questions and responses for an event. Use to mine audience insights for content.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"event_id": {"type": "integer", "description": "ON24 event ID"}},
+            "required": ["event_id"],
+        },
+    },
+    {
+        "name": "get_questions",
+        "description": "Get Q&A questions asked by attendees. Use to identify audience concerns and topics for content.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_id": {"type": "integer", "description": "ON24 event ID"},
+                "limit": {"type": "integer", "description": "Max questions (default 50)"},
+            },
+            "required": ["event_id"],
+        },
+    },
+    {
         "name": "get_ai_content",
         "description": (
             "Fetch AI-ACE generated articles from the video library — blog posts, key takeaways, "
@@ -526,6 +575,10 @@ CONTENT_TOOL_HANDLERS = {
     "get_ai_content": query_ai_content,
     "get_attendance_trends": query_attendance_trends,
     "get_top_events": query_top_events,
+    "list_events": query_events,
+    "get_event_kpis": compute_event_kpis,
+    "get_polls": query_polls,
+    "get_questions": query_questions,
     "analyze_topic_performance": analyze_topic_performance,
     "compare_event_performance": compare_event_performance,
     "analyze_scheduling_patterns": analyze_scheduling_patterns,
