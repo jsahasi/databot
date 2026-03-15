@@ -7,6 +7,7 @@ from app.models.survey import SurveyResponse
 from app.models.engagement import CTAClick, EngagementProfile, ResourceViewed, ViewingSession
 from app.models.sync_log import SyncLog
 from app.models.agent_audit_log import AgentAuditLog
+from app.models.content_share import ContentShare, ShareComment, ShareRecipient
 
 __all__ = [
     "Base",
@@ -21,4 +22,7 @@ __all__ = [
     "EngagementProfile",
     "SyncLog",
     "AgentAuditLog",
+    "ContentShare",
+    "ShareRecipient",
+    "ShareComment",
 ]

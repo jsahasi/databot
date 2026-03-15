@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import admins, analytics, calendar, chat, events, feedback, hierarchy, sync, upload
+from app.api import admins, analytics, calendar, chat, events, feedback, hierarchy, shares, sync, upload
 
 api_router = APIRouter()
 api_router.include_router(events.router, prefix="/events", tags=["events"])
@@ -12,3 +12,4 @@ api_router.include_router(calendar.router, tags=["calendar"])
 api_router.include_router(hierarchy.router, tags=["hierarchy"])
 api_router.include_router(upload.router, tags=["upload"])
 api_router.include_router(admins.router, tags=["admins"])
+api_router.include_router(shares.router, prefix="/shares", tags=["shares"])
