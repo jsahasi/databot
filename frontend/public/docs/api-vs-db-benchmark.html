@@ -264,7 +264,7 @@
     <li>Timing is measured via <code>time.perf_counter()</code> wrapped around the entire async coroutine (including connection acquisition from the pool).</li>
     <li>A real <code>event_id</code> is resolved from the 5 most recent past events before per-event benchmarks run.</li>
     <li>REST API calls use the existing <code>ON24Client</code> which applies token-bucket rate limiting per endpoint category.</li>
-    <li>DB queries use the shared <code>asyncpg</code> pool (<code>min_size=2, max_size=10</code>) against <code>on24master</code> on <code>10.3.7.233:5458</code> — requires VPN / ON24 internal network.</li>
+    <li>DB queries use the shared <code>asyncpg</code> pool (<code>min_size=1, max_size=3</code> per worker, 5 workers = 15 total connections) against <code>on24master</code> on <code>10.3.7.233:5458</code> — requires VPN / ON24 internal network.</li>
     <li>Exceptions are caught per operation; unavailable endpoints are recorded as errors rather than crashing the benchmark.</li>
   </ul>
 
@@ -336,7 +336,66 @@ python backend/tests/benchmark_api_vs_db.py</pre>
     </tbody>
   </table>
 
-  <h2>7. Architecture Note</h2>
+  <h2>7. REST API Endpoints Actively Used</h2>
+  <p>While direct DB handles all analytics reads, these REST API endpoints are actively used in ON24 Nexus:</p>
+
+  <div class="card">
+    <table>
+      <tr><th>Endpoint</th><th>Method</th><th>Used By</th><th>Reason for REST (not DB)</th></tr>
+      <tr>
+        <td><code>/v2/client/{id}/event</code></td>
+        <td>POST</td>
+        <td>Admin Agent</td>
+        <td>Event creation triggers ON24 provisioning workflow (console setup, email templates, default profile)</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/event/{eid}</code></td>
+        <td>PUT</td>
+        <td>Admin Agent</td>
+        <td>Event updates require ON24 validation (date constraints, state machine transitions)</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/event/{eid}/registrant</code></td>
+        <td>POST</td>
+        <td>Admin Agent</td>
+        <td>Registration triggers confirmation email workflow + webhook notifications to integrations</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/event/{eid}/registrant/{uid}</code></td>
+        <td>DELETE</td>
+        <td>Admin Agent</td>
+        <td>Unregistration must cascade through ON24's notification and integration layer</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/technicalrep</code></td>
+        <td>GET</td>
+        <td>Frontend (planned)</td>
+        <td>Technical contact info not in on24master DB; only available via REST</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/salesrep</code></td>
+        <td>GET</td>
+        <td>Not used</td>
+        <td>Available for future account management features</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/accountmanager</code></td>
+        <td>GET</td>
+        <td>Not used</td>
+        <td>Available for future account management features</td>
+      </tr>
+      <tr>
+        <td><code>/v2/client/{id}/eventmanager</code></td>
+        <td>GET</td>
+        <td>Not used</td>
+        <td>Available for future event management features</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>The remaining 63 REST API endpoints (of 71 total) are implemented in <code>backend/app/services/on24_client.py</code> and exposed via the MCP server (<code>on24-mcp/server.py</code>, 67 tools) but are not actively called by agents because direct DB queries are faster for read operations.</p>
+
+  <h2>8. Architecture Note</h2>
   <p>The dual-access design is intentional and load-bearing:</p>
   <ul>
     <li>The <strong>ON24 master DB</strong> (<code>ON24_RO</code>) is a read-only replica — writes are blocked at the database level, preventing accidental data modification by agents.</li>

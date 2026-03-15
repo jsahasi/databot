@@ -331,8 +331,8 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 ## Backlog / Next Steps
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
-- [ ] Reload admin dropdown when client_id changes via breadcrumb
-- [ ] Populate api-vs-db-benchmark.html with actual benchmark data and REST API usage docs
+- [x] Reload admin dropdown when client_id changes via breadcrumb — watches selectedClientId, commit edaf511
+- [x] Populate api-vs-db-benchmark.html — added Section 7 listing all actively used REST endpoints with reasons
 - [ ] Technical contact lookup on home page via /v2/client/{clientId}/technicalrep
 - [x] Fix concierge no-response for "what helper endpoints in REST?" — removed tools from KB followup call, commit d8a4d58
 - [x] manage-forums-lite — no UI link to filter (Forums not in EXPERIENCE_LINKS/CONFIG_LINKS); permission tag shows correctly
