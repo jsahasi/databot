@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useChatContext } from '../../context/ChatContext'
 import ChatMessage from './ChatMessage'
 import AgentIndicator from './AgentIndicator'
+import BrandTemplateManager from './BrandTemplateManager'
 
 type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'content' | 'neutral'
 
@@ -40,6 +41,7 @@ const CONFIG_LINKS = [
   { label: 'Connect / Integrations',url: 'https://wcc.on24.com/webcast/integrations' },
   { label: 'Branding',              url: 'https://wcc.on24.com/webcast/accountdashboard?tab=branding&clientId=10710' },
   { label: 'Manage Users',          url: 'https://wcc.on24.com/webcast/manageusers' },
+  { label: 'Brand Templates',       url: '__brand_templates__' },
 ]
 
 // Permission → UI element mapping for filtering
@@ -85,6 +87,7 @@ export default function ChatPanel() {
   const [showExploreContent, setShowExploreContent] = useState(false)
   const [showContentCreate, setShowContentCreate] = useState(false)
   const [showContentExplore, setShowContentExplore] = useState(false)
+  const [showBrandTemplates, setShowBrandTemplates] = useState(false)
   const [attachment, setAttachment] = useState<{ name: string; extractedText?: string | null; url?: string; contentType?: string } | null>(null)
   const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -217,6 +220,7 @@ export default function ChatPanel() {
   const hasMessages = messages.length > 0
 
   return (
+    <>
     <div style={{
       display: 'flex',
       flexDirection: 'column',
@@ -457,6 +461,31 @@ export default function ChatPanel() {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
                   {filteredConfigLinks.map(({ label, url }) => (
+                    url === '__brand_templates__' ? (
+                      <button
+                        key={label}
+                        onClick={() => setShowBrandTemplates(true)}
+                        style={{
+                          padding: '0.875rem 1rem',
+                          background: AGENT_COLORS.config.bg,
+                          border: `1px solid ${AGENT_COLORS.config.border}`,
+                          borderLeft: `3px solid ${AGENT_COLORS.config.border}`,
+                          borderRadius: 8,
+                          color: 'var(--color-chip-text)',
+                          fontSize: '0.825rem',
+                          fontWeight: 500,
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          lineHeight: 1.4,
+                          transition: 'background 0.12s',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.config.hoverBg }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.config.bg }}
+                      >
+                        {label}
+                      </button>
+                    ) : (
                     <a
                       key={label}
                       href={url}
@@ -484,6 +513,7 @@ export default function ChatPanel() {
                     >
                       {label} ↗
                     </a>
+                    )
                   ))}
                 </div>
               </div>
@@ -796,5 +826,7 @@ export default function ChatPanel() {
         </div>
       </div>
     </div>
+    <BrandTemplateManager open={showBrandTemplates} onClose={() => setShowBrandTemplates(false)} />
+    </>
   )
 }

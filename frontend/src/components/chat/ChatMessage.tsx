@@ -354,13 +354,62 @@ function EventCardsGrid({ cards }: { cards: any[] }) {
   )
 }
 
+interface BrandTemplate {
+  id: string
+  name: string
+  primaryColor: string
+  backgroundColor: string
+  accentColor: string
+  fontColor: string
+  fontFamily: string
+  logoUrl: string
+  isDefault: boolean
+}
+
+const FALLBACK_TEMPLATE: BrandTemplate = {
+  id: 'default',
+  name: 'ON24 Nexus',
+  primaryColor: '#4f46e5',
+  backgroundColor: '#ffffff',
+  accentColor: '#6366f1',
+  fontColor: '#1a1d2e',
+  fontFamily: 'Inter',
+  logoUrl: '',
+  isDefault: true,
+}
+
 function ContentHtmlPreview({ html }: { html: string }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showShareForm, setShowShareForm] = useState(false)
   const [shareEmails, setShareEmails] = useState('')
   const [shareStatus, setShareStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [templates, setTemplates] = useState<BrandTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<BrandTemplate>(FALLBACK_TEMPLATE)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Fetch brand templates when modal opens
+  useEffect(() => {
+    if (!open) return
+    const load = async () => {
+      try {
+        const [listRes, defaultRes] = await Promise.all([
+          fetch('/api/brand-templates'),
+          fetch('/api/brand-templates/default'),
+        ])
+        const listData = await listRes.json()
+        const defaultData = await defaultRes.json()
+        const tpls = listData.templates || []
+        setTemplates(tpls)
+        if (defaultData && defaultData.id) {
+          setSelectedTemplate(defaultData)
+        } else if (tpls.length > 0) {
+          setSelectedTemplate(tpls[0])
+        }
+      } catch { /* use fallback */ }
+    }
+    load()
+  }, [open])
 
   const sanitized = DOMPurify.sanitize(html, {
     FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input'],
@@ -370,7 +419,8 @@ function ContentHtmlPreview({ html }: { html: string }) {
     ADD_ATTR: ['src', 'alt', 'width', 'height'],
   })
 
-  const baseStyles = `<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;max-width:720px;margin:auto;padding:2rem;color:#1a1d2e;}img{max-width:100%;height:auto;border-radius:8px;margin:1rem 0;}</style>`
+  const fontImport = `@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(selectedTemplate.fontFamily)}&display=swap');`
+  const baseStyles = `<style>${fontImport}body{font-family:'${selectedTemplate.fontFamily}',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;max-width:720px;margin:auto;padding:2rem;color:${selectedTemplate.fontColor};background:${selectedTemplate.backgroundColor};}a{color:${selectedTemplate.primaryColor};}h1,h2,h3{color:${selectedTemplate.primaryColor};}img{max-width:100%;height:auto;border-radius:8px;margin:1rem 0;}</style>`
   const srcdoc = baseStyles + sanitized
 
   const handleClose = useCallback(() => setOpen(false), [])
@@ -509,6 +559,27 @@ function ContentHtmlPreview({ html }: { html: string }) {
                 Content Preview
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {/* Template selector */}
+                {templates.length > 0 && (
+                  <select
+                    value={selectedTemplate.id}
+                    onChange={e => {
+                      const t = templates.find(tpl => tpl.id === e.target.value)
+                      if (t) setSelectedTemplate(t)
+                    }}
+                    title="Brand template"
+                    style={{
+                      fontSize: '0.72rem', padding: '0.2rem 0.4rem',
+                      border: '1px solid var(--color-border)', borderRadius: 5,
+                      background: 'var(--color-bg)', color: 'var(--color-text)',
+                      cursor: 'pointer', fontFamily: 'inherit', maxWidth: 160,
+                    }}
+                  >
+                    {templates.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}{t.isDefault ? ' *' : ''}</option>
+                    ))}
+                  </select>
+                )}
                 {/* Copy */}
                 <button
                   onClick={handleCopy}
