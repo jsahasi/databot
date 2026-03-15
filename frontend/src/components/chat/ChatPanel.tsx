@@ -270,7 +270,7 @@ export default function ChatPanel() {
               marginBottom: '2rem',
               textAlign: 'center',
             }}>
-              Hi, Jayesh! What would you like to explore?
+              Hi{adminInfo?.name ? `, ${adminInfo.name.split(' ')[0]}` : ''}! What would you like to explore?
             </h2>
 
             {/* Suggestion tiles — 2-column grid */}

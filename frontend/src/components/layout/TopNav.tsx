@@ -88,7 +88,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
       {admins.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
           <label htmlFor="admin-select" style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-            Simulated Admin:
+            Login as:
           </label>
           <select
             id="admin-select"
