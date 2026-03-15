@@ -81,7 +81,7 @@
   <h2>Executive Summary</h2>
   <div class="dashboard">
     <div class="dash-card"><div class="number" style="color:var(--red)">0</div><div class="label">Critical</div></div>
-    <div class="dash-card"><div class="number" style="color:#f97316">3</div><div class="label">High</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--green)">0</div><div class="label">High (3 fixed)</div></div>
     <div class="dash-card"><div class="number" style="color:var(--amber)">5</div><div class="label">Medium</div></div>
     <div class="dash-card"><div class="number" style="color:var(--green)">4</div><div class="label">Low</div></div>
     <div class="dash-card"><div class="number" style="color:var(--primary)">3</div><div class="label">Info</div></div>
@@ -112,26 +112,26 @@
   <h3>High Severity</h3>
 
   <div class="finding high">
-    <p><span class="severity high">HIGH</span> — <strong>SEC-01: No Authentication on WebSocket or REST API</strong></p>
-    <p><strong>Location:</strong> <code>backend/app/api/chat.py</code>, <code>backend/app/main.py</code></p>
-    <p>No authentication middleware. Any user on the network can connect to the WebSocket and query data. The <code>/ws/chat</code> endpoint accepts connections without verifying identity.</p>
-    <p><strong>Risk:</strong> Unauthorized access to all ON24 analytics data for client 10710 and sub-clients.</p>
+    <p><span class="severity high">HIGH — REMEDIATED</span> — <strong>SEC-01: API Key Authentication</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/main.py</code> (HTTP middleware), <code>backend/app/api/chat.py</code> (WebSocket upgrade)</p>
+    <p><strong>Fix applied (Mar 15, 2026):</strong> API key authentication via <code>API_KEY</code> env var. HTTP routes validate <code>Authorization: Bearer &lt;key&gt;</code> or <code>?api_key=</code> query param. WebSocket validates <code>?api_key=</code> on upgrade (closes 4001 if invalid). <code>/health</code> and <code>/docs/*</code> exempt. Auth disabled when <code>API_KEY</code> is empty (dev mode).</p>
+    <p><strong>Remaining:</strong> Integrate with ON24 SSO (SAML/OIDC) for production. Current API key is a shared secret — suitable for internal/staging use.</p>
     <p><strong>Recommendation:</strong> Implement JWT or OAuth2 bearer token authentication. Validate tokens on WebSocket upgrade and all API routes. Integrate with ON24 SSO (SAML/OIDC).</p>
   </div>
 
   <div class="finding high">
-    <p><span class="severity high">HIGH</span> — <strong>SEC-02: No Rate Limiting on User-Facing Endpoints</strong></p>
-    <p><strong>Location:</strong> <code>backend/app/api/chat.py</code>, <code>backend/app/main.py</code></p>
-    <p>The ON24 REST API has rate limiting, but user-facing endpoints (chat, calendar, hierarchy) have none. A single user or bot could exhaust Anthropic API quota or create a denial-of-service.</p>
-    <p><strong>Risk:</strong> Resource exhaustion, Anthropic API cost explosion, degraded service for all users.</p>
+    <p><span class="severity high">HIGH — REMEDIATED</span> — <strong>SEC-02: Rate Limiting on All Endpoints</strong></p>
+    <p><strong>Location:</strong> <code>backend/app/main.py</code> (slowapi middleware), <code>backend/app/api/chat.py</code> (per-IP WS limiter)</p>
+    <p><strong>Fix applied (Mar 15, 2026):</strong> slowapi middleware on all REST API routes. Per-IP WebSocket message rate limiter: 20 msg/min default (configurable via <code>RATE_LIMIT_PER_MINUTE</code>). REST API: 100 calls/min per IP. Returns HTTP 429 with clear message when exceeded.</p>
+    <p><strong>Remaining:</strong> Add per-user (not just per-IP) limits when authentication supports individual user identity.</p>
     <p><strong>Recommendation:</strong> Add per-IP or per-session rate limiting via <code>slowapi</code> or custom middleware. Suggested limits: 20 msg/min per user, 100 REST calls/min per IP.</p>
   </div>
 
   <div class="finding high">
-    <p><span class="severity high">HIGH</span> — <strong>SEC-03: CORS Configuration Too Permissive</strong></p>
+    <p><span class="severity high">HIGH — REMEDIATED</span> — <strong>SEC-03: CORS Restricted</strong></p>
     <p><strong>Location:</strong> <code>backend/app/main.py</code></p>
-    <p>CORS middleware likely allows all origins (<code>allow_origins=["*"]</code>) for development convenience. This permits cross-site requests from any domain.</p>
-    <p><strong>Risk:</strong> Cross-site request forgery, data exfiltration via malicious pages.</p>
+    <p><strong>Fix applied (Mar 15, 2026):</strong> CORS origins restricted to <code>localhost:3000</code> and <code>localhost:3001</code> (configurable via <code>CORS_ORIGINS</code>). <code>allow_methods</code> restricted to <code>GET, POST, PUT, DELETE</code> (was <code>*</code>). <code>allow_headers</code> restricted to <code>Authorization, Content-Type</code> (was <code>*</code>).</p>
+    <p><strong>Remaining:</strong> Update <code>CORS_ORIGINS</code> to production domain(s) before deployment (e.g., <code>https://nexus.on24.com</code>).</p>
     <p><strong>Recommendation:</strong> Restrict <code>allow_origins</code> to the frontend domain(s) only. In production: <code>["https://nexus.on24.com"]</code>.</p>
   </div>
 
@@ -229,13 +229,13 @@
   <div class="card">
     <table>
       <tr><th>OWASP Category</th><th>Status</th><th>Notes</th></tr>
-      <tr><td>A01: Broken Access Control</td><td><span class="tag red">Gap</span></td><td>No authentication (SEC-01). Tenant isolation is strong once connected.</td></tr>
+      <tr><td>A01: Broken Access Control</td><td><span class="tag green">Remediated</span></td><td>API key auth (SEC-01). Tenant isolation via hierarchy. Permission-based UI filtering.</td></tr>
       <tr><td>A02: Cryptographic Failures</td><td><span class="tag amber">Partial</span></td><td>No HTTPS (SEC-10). API keys in env vars (SEC-04). SSL certs handled correctly.</td></tr>
       <tr><td>A03: Injection</td><td><span class="tag green">Strong</span></td><td>Parameterized SQL, input sanitization, prompt injection defense, DOMPurify.</td></tr>
       <tr><td>A04: Insecure Design</td><td><span class="tag green">Good</span></td><td>Admin confirmation flow, MCP blocklist, audit logging.</td></tr>
-      <tr><td>A05: Security Misconfiguration</td><td><span class="tag amber">Partial</span></td><td>CORS too permissive (SEC-03). Security headers are good.</td></tr>
+      <tr><td>A05: Security Misconfiguration</td><td><span class="tag green">Remediated</span></td><td>CORS restricted (SEC-03). Security headers comprehensive. CSP enforced.</td></tr>
       <tr><td>A06: Vulnerable Components</td><td><span class="tag green">Good</span></td><td>Recent dependency versions. DOMPurify 3.3.3 (latest).</td></tr>
-      <tr><td>A07: Auth Failures</td><td><span class="tag red">Gap</span></td><td>No authentication implemented (SEC-01).</td></tr>
+      <tr><td>A07: Auth Failures</td><td><span class="tag green">Remediated</span></td><td>API key auth on HTTP + WebSocket (SEC-01). Rate limiting (SEC-02).</td></tr>
       <tr><td>A08: Software/Data Integrity</td><td><span class="tag green">Good</span></td><td>Docker health checks, gitignored secrets, no CDN integrity issues.</td></tr>
       <tr><td>A09: Logging/Monitoring</td><td><span class="tag green">Good</span></td><td>Audit logging on all agent tool calls. Feedback tracking.</td></tr>
       <tr><td>A10: SSRF</td><td><span class="tag green">Good</span></td><td>ON24 API base URL is config-controlled. No user-controlled URL fetching.</td></tr>
@@ -250,7 +250,7 @@
       <tr><td>Data exfiltration via AI</td><td><span class="tag green">Mitigated</span></td><td>Agents can only call pre-defined tools; no arbitrary code execution</td></tr>
       <tr><td>Training data poisoning</td><td><span class="tag green">N/A</span></td><td>Uses Anthropic API, not custom training</td></tr>
       <tr><td>Model output leakage</td><td><span class="tag amber">Partial</span></td><td>System prompts could be extracted; no output filtering</td></tr>
-      <tr><td>Cost attacks</td><td><span class="tag red">Gap</span></td><td>No per-user API cost limits (SEC-02)</td></tr>
+      <tr><td>Cost attacks</td><td><span class="tag green">Remediated</span></td><td>Per-IP rate limiting (SEC-02), Redis response cache (2-min TTL), prompt caching</td></tr>
       <tr><td>Tool misuse</td><td><span class="tag green">Mitigated</span></td><td>Admin tools require confirmation; MCP write blocklist</td></tr>
     </table>
   </div>
@@ -259,9 +259,9 @@
   <div class="card">
     <table>
       <tr><th>Priority</th><th>Finding</th><th>Effort</th></tr>
-      <tr><td><span class="tag red">P1</span></td><td>SEC-01: Add authentication (JWT/OAuth2)</td><td>2–3 days</td></tr>
-      <tr><td><span class="tag red">P1</span></td><td>SEC-02: Add user-facing rate limiting</td><td>0.5 day</td></tr>
-      <tr><td><span class="tag red">P1</span></td><td>SEC-03: Restrict CORS origins</td><td>0.5 hour</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>SEC-01: API key authentication (HTTP + WebSocket)</td><td>Done — Mar 15</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>SEC-02: Per-IP rate limiting (slowapi + WS limiter)</td><td>Done — Mar 15</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>SEC-03: CORS restricted (methods + headers + origins)</td><td>Done — Mar 15</td></tr>
       <tr><td><span class="tag amber">P2</span></td><td>SEC-05: WebSocket connection limits</td><td>0.5 day</td></tr>
       <tr><td><span class="tag amber">P2</span></td><td>SEC-07: RBAC for admin operations</td><td>1 day (after auth)</td></tr>
       <tr><td><span class="tag amber">P2</span></td><td>SEC-10: HTTPS / TLS termination</td><td>0.5 day</td></tr>

@@ -205,6 +205,10 @@ Implementation:
 **Decision:** Applied 15+ WCAG fixes: skip-to-content link, focus-visible outlines, aria-live regions, aria-expanded on collapsible sections, dark mode contrast (#94a0b8 for text-secondary), chat input labels, chart role="img", DOMPurify on calendar HTML.
 **Rationale:** VPAT audit revealed multiple Partially Supports criteria. Fixes bring 9 criteria to full Supports status. 4 items remain open (calendar keyboard nav, chart axes contrast, calendar responsive 320px, chart data tables).
 
+## 2026-03-15: SEC-01/02/03 Security Remediation
+**Decision:** Implemented API key auth (HTTP middleware + WebSocket upgrade), per-IP rate limiting (slowapi + custom WS limiter), and tightened CORS (restricted methods/headers).
+**Rationale:** All 3 HIGH findings from the security review. API_KEY env var — empty disables auth (dev mode). Rate limit: 20 WS msg/min, 100 REST/min per IP. CORS: only localhost:3000/3001 origins, explicit methods/headers.
+
 ## 2026-03-14: Permission-Based UI Filtering (Simulated Admin)
 **Decision:** Admin permissions from `admin_property_info` (prop_code where value='Yes') stored in sessionStorage. UI elements filtered based on permission presence. No admin selected = show everything.
 **Permission mapping:** view-webcasts→Elite, manage-engagement-hub→Hub, manage-target-experiences→Target, manage-virtual-events→GoLive, manage-brand-settings→Branding, manage-integrations→Connect, manage-users→Users, view-analytics→data agent tiles.
