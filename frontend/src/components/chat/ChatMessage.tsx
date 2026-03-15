@@ -362,9 +362,12 @@ function ContentHtmlPreview({ html }: { html: string }) {
   const sanitized = DOMPurify.sanitize(html, {
     FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input'],
     FORBID_ATTR: ['onerror', 'onclick', 'onload', 'onmouseover'],
+    ALLOW_DATA_ATTR: false,
+    ADD_TAGS: ['img'],
+    ADD_ATTR: ['src', 'alt', 'width', 'height'],
   })
 
-  const baseStyles = `<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;max-width:720px;margin:auto;padding:2rem;color:#1a1d2e;}</style>`
+  const baseStyles = `<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;max-width:720px;margin:auto;padding:2rem;color:#1a1d2e;}img{max-width:100%;height:auto;border-radius:8px;margin:1rem 0;}</style>`
   const srcdoc = baseStyles + sanitized
 
   const handleClose = useCallback(() => setOpen(false), [])
@@ -438,6 +441,9 @@ function ContentHtmlPreview({ html }: { html: string }) {
       {/* Modal */}
       {open && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="content-preview-title"
           onClick={handleClose}
           style={{
             position: 'fixed',
@@ -474,7 +480,7 @@ function ContentHtmlPreview({ html }: { html: string }) {
               borderBottom: '1px solid var(--color-border)',
               flexShrink: 0,
             }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-heading, var(--color-text))' }}>
+              <span id="content-preview-title" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-heading, var(--color-text))' }}>
                 Content Preview
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -535,7 +541,7 @@ function ContentHtmlPreview({ html }: { html: string }) {
               <iframe
                 ref={iframeRef}
                 srcDoc={srcdoc}
-                sandbox=""
+                sandbox="allow-same-origin"
                 title="Content preview"
                 style={{ width: '100%', height: '100%', border: 'none', minHeight: 400 }}
               />
