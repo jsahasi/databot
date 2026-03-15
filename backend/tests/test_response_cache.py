@@ -95,7 +95,7 @@ class TestCacheResponse:
         mock_redis.setex.assert_called_once()
         args = mock_redis.setex.call_args[0]
         assert args[0].startswith("chat:resp:10710:")
-        assert args[1] == 120  # TTL from config default
+        assert args[1] == 300  # TTL from config default (5 min)
         stored = json.loads(args[2])
         assert stored["text"] == "hello"
 

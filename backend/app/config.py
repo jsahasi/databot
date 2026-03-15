@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # Redis (response cache)
     redis_url: str = "redis://redis:6379/0"
-    response_cache_ttl: int = 120  # seconds (2 min)
+    response_cache_ttl: int = 300  # seconds (5 min)
 
     # Authentication
     api_key: str = ""  # Set API_KEY in .env.local to enable auth; empty = auth disabled (dev mode)

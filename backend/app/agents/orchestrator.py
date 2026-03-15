@@ -51,7 +51,7 @@ class OrchestratorAgent:
 
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        self.model = "claude-opus-4-6"
+        self.model = "claude-sonnet-4-6"
         self.data_agent = DataAgent()
         self.content_agent = ContentAgent()
         self.admin_agent = AdminAgent()
