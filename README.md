@@ -1,117 +1,139 @@
-# ON24 Data Agent
+# ON24 Nexus — AI-Powered Analytics Platform
 
-A multi-agent AI application for exploring ON24 webinar analytics — events, audiences, engagement, and content performance — through a conversational chat interface backed by direct database access.
-
-## Prerequisites
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running)
-- `.env.local` file at the project root with all required secrets (see [Environment Variables](#environment-variables) below)
-- VPN or ON24 internal network access for ON24 database queries
+Multi-agent application for exploring ON24 client webinar data (events, audiences, engagement) with data visualizations and conversational analytics. 11 development phases complete.
 
 ## Quick Start
 
 ```bash
-docker compose up --build
+cp .env.example .env.local   # Fill in secrets
+docker compose up --build     # App: http://localhost:3001 | API: http://localhost:8000/docs
 ```
 
-Then open: **http://localhost:3001**
-
-> First run takes ~2 minutes (builds images, runs DB migrations, starts all services).
-
-## Key URLs
-
-| Service | URL |
-|---------|-----|
-| App (React frontend) | http://localhost:3001 |
-| API docs (Swagger) | http://localhost:8000/docs |
-| WebSocket chat | ws://localhost:8000/ws/chat |
-| Postgres (host) | localhost:5433 |
-
-> **Note:** Postgres is exposed on host port **5433** (not 5432) to avoid conflict with other local containers.
+> Postgres host port: **5433** (not 5432). ON24 DB requires VPN (10.3.7.233:5458).
 
 ## Architecture
 
-- **Backend**: FastAPI (Python 3.12) with async SQLAlchemy + Alembic, running on port 8000
-- **Frontend**: React 18 + TypeScript + Vite, served on port 3001
-- **Databases**: PostgreSQL 16 (app data, port 5433 on host) + ON24 master DB (read-only, direct asyncpg connection for analytics)
-- **Agents**: 4-agent system (Orchestrator, Data, Content, Admin) using Anthropic SDK `messages.create()` with tool_use
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Backend | Python 3.12, FastAPI, SQLAlchemy (async) | 5 gunicorn workers, Anthropic prompt caching |
+| Frontend | React 18, TypeScript, Vite, Recharts | TanStack Query, Vitest + Playwright |
+| Database | PostgreSQL 16 | Local (metadata/KB) + ON24 master DB (analytics, read-only) |
+| AI Agents | Anthropic Claude Sonnet 4 | 4-agent system with multi-round tool_use loops |
+| Cache | Redis 7 | Response cache (2-min TTL) for repeated queries |
+| MCP Server | FastMCP (streamable-HTTP) | 67 ON24 REST API tools on port 8001 |
 
-The Data Agent queries ON24's PostgreSQL database (`on24master`) directly via a read-only connection — no ETL sync needed for analytics. The Admin Agent uses the ON24 REST API for write operations only.
+## Agent System
 
-> **ON24 DB requires VPN**: `ON24_DB_URL` points to `10.3.7.233` (ON24 internal network). Analytics queries will fail if you are not connected to VPN or the ON24 corporate network.
+| Agent | Purpose | Tools |
+|-------|---------|------:|
+| Orchestrator | Routes intent, synthesizes responses, KB search | 6 |
+| Data Agent | DB queries, KPIs, charts, leads, polls, tags | 20 |
+| Content Agent | Topic suggestions, brand-voice content creation | 7 |
+| Admin Agent | ON24 write operations (with confirmation flow) | 5 |
+
+All queries are tenant-scoped: client 10710 + 9 sub-clients via `WHERE client_id = ANY(get_tenant_client_ids())`.
+
+## Codebase
+
+| Component | Lines |
+|-----------|------:|
+| Backend Python (`app/`) | 9,953 |
+| Frontend TypeScript (`src/`) | 6,619 |
+| MCP Server | 1,151 |
+| Agent Prompts (`.md`) | 514 |
+| HTML Documentation | 2,744 |
+| **Total application** | **~21,000** |
+
+## Test Suite
+
+| Suite | Tests | Lines | Status |
+|-------|------:|------:|--------|
+| Backend unit (pytest) | 247 | 4,116 | All pass |
+| Frontend Vitest (components) | 23 | 145 | All pass |
+| Frontend Playwright (E2E) | 8 | 93 | All pass |
+| Regression prompts (core) | 26 | 554 | All pass |
+| Persona prompts (marketer + director) | 300 | 501 | Runner ready |
+| **Total** | **604** | **5,409** | |
+
+### Backend Coverage
+
+| Area | Coverage | Notes |
+|------|---------|-------|
+| **Overall** | **39%** | Dragged down by unused ETL + REST client |
+| Query tools (20 functions) | ~85% | 53 tests, mocked asyncpg pool |
+| Models / schemas | 94-100% | Full ORM coverage |
+| Rate limiter | 98% | Token bucket algorithm |
+| Chart generation | ~95% | All 10 chart types tested |
+| Security (OWASP) | ~80% | Input validation, tenant isolation, headers |
+| ON24 REST client | 35% | 71 endpoints, write ops mostly untested |
+| Sync service | 0% | ETL not in use (direct DB reads) |
+
+## Key Features
+
+- **Conversational analytics** — natural language to charts and data
+- **10 chart types** — bar, line, pie, radar, funnel, gauge, treemap, scatter, heatmap, waterfall
+- **Event calendar** — month/week/day views with KPIs and AI-ACE content tiles
+- **Content creation** — brand-voice-aware blog posts, scripts, social media, eBooks
+- **Proposed content calendar** — AI-suggested 3-month plans with TOFU/MOFU/BOFU balance
+- **Knowledge base** — 637 articles + 71 API endpoints, vector search (OpenAI embeddings)
+- **Lead analytics** — filterable lead search + aggregate stats from dw_lead (105M rows)
+- **Permission-based UI** — simulated admin dropdown filters products by ON24 permissions
+- **Agent permission awareness** — restricted products suppressed in agent responses, upsell with admin contacts
+- **Prompt caching** — 90% input token discount via Anthropic ephemeral cache
+- **Redis response cache** — 2-min TTL eliminates redundant LLM calls
+- **Multi-tenant** — per-request client_id via contextvars, full sub-client hierarchy
+- **Dark/light mode** — CSS variable theming, persisted to localStorage
+- **WCAG 2.1 AA** — skip links, focus-visible, aria-live, contrast compliance
+- **Feedback loop** — thumbs up/down saves LLM-ready improvement prompts to `data/improvement-inbox-*.txt`
+
+## Documentation
+
+9 HTML docs in [`frontend/public/docs/`](frontend/public/docs/) — accessible from the app sidebar and at these paths when running locally:
+
+| Document | Path | Content |
+|----------|------|---------|
+| [MRD](http://localhost:3001/docs/mrd.html) | `/docs/mrd.html` | Market Requirements Document |
+| [PRD](http://localhost:3001/docs/prd.html) | `/docs/prd.html` | Product Requirements Document |
+| [Tech Spec](http://localhost:3001/docs/tech-spec.html) | `/docs/tech-spec.html` | Architecture, data access, MCP server |
+| [Test Plan](http://localhost:3001/docs/test-plan.html) | `/docs/test-plan.html` | 278 tests, pass rates, coverage |
+| [Scalability](http://localhost:3001/docs/scalability.html) | `/docs/scalability.html` | 2K-6K concurrent user analysis |
+| [Security Review](http://localhost:3001/docs/security-review.html) | `/docs/security-review.html` | OWASP Top 10, 15 findings |
+| [Accessibility VPAT](http://localhost:3001/docs/accessibility-vpat.html) | `/docs/accessibility-vpat.html` | WCAG 2.1 AA compliance |
+| [API vs DB Benchmark](http://localhost:3001/docs/api-vs-db-benchmark.html) | `/docs/api-vs-db-benchmark.html` | REST vs MCP vs DB comparison |
+| [Recent Changes](http://localhost:3001/docs/recent-changes.html) | `/docs/recent-changes.html` | Latest capabilities |
+
+All docs support dark/light theme via `?theme=dark` URL parameter.
+
+## Commands
+
+```bash
+# Backend
+cd backend && pip install -e ".[dev]"
+pytest tests/ -v                              # 247 tests
+pytest tests/ --cov=app --cov-report=term     # With coverage
+ruff check app/ && ruff format app/
+
+# Frontend
+cd frontend && npm install
+npx vitest run                                # 23 component tests
+npx playwright test                           # 8 E2E tests
+npm run typecheck && npm run lint
+
+# Regression (requires running backend)
+python -m pytest tests/test_chat_prompts.py -v        # 26 core prompts
+python -m pytest tests/test_persona_prompts.py -v     # 300 persona prompts
+python -m pytest tests/test_persona_prompts.py --max-prompts 10  # Quick smoke test
+```
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and fill in secrets. Docker Compose loads `.env.local` via `env_file`.
+See `.env.example` for the full template. Key groups:
 
-Key variables:
-
-```
-ON24_DB_URL          # PostgreSQL URL for ON24 master DB (PROD: 10.3.7.233:5458/on24master)
-ON24_CLIENT_ID       # Root client ID (10710 for ON24)
-ON24_ACCESS_TOKEN_KEY / ON24_ACCESS_TOKEN_SECRET  # ON24 REST API credentials
-ANTHROPIC_API_KEY    # Anthropic API key for agent LLM calls
-POSTGRES_PASSWORD    # Password for the local app database
-```
-
-See `.env.example` for the full list with descriptions.
-
-## Agents
-
-| Agent | Role | Tools |
-|-------|------|-------|
-| Orchestrator | Routes queries to the right agent | route_to_data/content/admin_agent |
-| Data Agent | Queries ON24 DB, returns analytics + charts | list_events, get_event_kpis, get_top_events, get_attendance_trends, get_audience_companies, get_audience_sources, get_polls, get_top_events_by_polls, get_poll_overview, get_resources, generate_chart_data |
-| Content Agent | Topic analysis, scheduling patterns, suggestions | analyze_topic_performance, compare_event_performance, suggest_topics |
-| Admin Agent | ON24 API write operations (with confirmation) | create_event, update_event, add_registrant, remove_registrant |
-
-All Data Agent queries are tenant-scoped to client 10710 + 9 sub-clients via `client_id = ANY(get_tenant_client_ids())`.
-
-## Charts
-
-- **Bar / Line charts**: default for multi-event comparisons and trend data
-- **Pie charts**: for audience source distributions (`event_user.partnerref`); only shown when data exists
-- Suggestion chips are context-aware — never suggest the currently displayed view type
-
-## Event Calendar
-
-Click the calendar icon in the top nav (or "Show event calendar" on the home screen) to open an Outlook-style calendar modal:
-
-- **Month view** and **Week view** with forward/back navigation
-- Color-coded event pills with title and time
-- Click any event for a summary card: title, abstract, registrants, attendees, conversion rate, poll/survey responses, resource downloads (nonzero items only)
-- Future events show "Performance data available after the event concludes"
-
-## Feedback Loop
-
-Each bot response shows a thumbs up / thumbs down on hover.
-
-- **Thumbs down** opens an inline popup: "Tell me what I got wrong"
-- Feedback is saved to `data/improvement-inbox-MM-DD-YYYY.txt` as a structured LLM-ready improvement prompt including timestamp, client ID, agent used, user question, bot response, and diagnostic questions
-- A new file is created each day; the `data/` folder is mounted as a Docker volume
-
-## Regression Tests
-
-```bash
-python -m pytest tests/test_chat_prompts.py -q
-```
-
-26 prompt tests — 22 pass, 4 skipped (known data gaps: no poll responses or resource clicks for client 10710 since 2023).
-Each test uses an isolated session ID to prevent cross-test history contamination.
-
-## Development
-
-```bash
-# Backend (without Docker)
-cd backend && pip install -e ".[dev]"
-pytest tests/ -q
-ruff check app/
-
-# Frontend (without Docker)
-cd frontend && npm install
-npm run dev        # Dev server at localhost:5173 (proxies /api and /ws to backend)
-npm run typecheck
-npm run lint
-```
-
-> **Frontend note**: The deployed frontend is a nginx production build — run `docker compose up --build -d frontend` after any frontend change. No hot-reload in Docker.
+| Group | Variables |
+|-------|----------|
+| ON24 DB | `ON24_DB_URL`, `DB_PG_SSL_*` (3 cert vars) |
+| ON24 API | `ON24_BASE_URL`, `ON24_ACCESS_TOKEN_KEY/SECRET`, `ON24_CLIENT_ID` |
+| AI | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` |
+| App DB | `DATABASE_URL`, `POSTGRES_PASSWORD` |
+| Cache | `REDIS_URL`, `RESPONSE_CACHE_TTL` |
+| MCP | `USE_MCP`, `USE_MCP_BLOCKLIST`, `MCP_SERVER_URL` |
