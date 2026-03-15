@@ -350,6 +350,16 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Daily improvement digest: 11:59 PM email with improvement-inbox-*.txt attached
 - [x] Fix: event card Decimal serialization, get_ai_content media_name column error
 
+## Security Remediation (Mar 15 audit) — COMPLETE (2026-03-15)
+- [x] SEC: Replace regex HTML sanitizer with nh3 (Rust-based allowlist)
+- [x] SEC: Email address validation — strict regex, CRLF rejection
+- [x] SEC: Attachment path traversal guard — /app/data only
+- [x] SEC: Control-char stripping in HTTP fallback validator
+- [x] SEC: Gmail SMTP runs in asyncio.to_thread (non-blocking)
+- [x] A11y: Modal role="dialog", aria-modal, aria-labelledby
+- [x] Image support: DOMPurify allows img tags, responsive CSS, sandbox allow-same-origin
+- [x] 287 tests total (25 new: 12 content_html + 8 email + 4 security input + 1 sanitizer)
+
 ## Backlog / Next Steps
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
