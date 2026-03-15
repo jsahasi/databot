@@ -20,45 +20,39 @@
 <body>
 
 <div class="item">
+  <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot indigo"></span>Multi-step content creation + event tools</div>
+  <div class="desc">Content agent now supports multi-step workflows: event listing tools, image vision analysis, transcript summarization with cap. PDF attachment handling fixed for message-too-long errors.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot pink"></span>Security remediation: 3 HIGH findings fixed</div>
+  <div class="desc">SEC-01: API key auth on HTTP + WebSocket. SEC-02: Per-IP rate limiting (slowapi + WS 20 msg/min). SEC-03: CORS restricted to localhost origins, specific methods/headers only.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot green"></span>260 backend tests passing, 0 failures</div>
+  <div class="desc">11 test files covering query tools (53), security (46), accessibility (35), charts (26), ON24 client (21), uploads (18), rate limiter (18), orchestrator (15), response cache (13), data agent (12), API health (3). All 260 pass in 5.0s.</div>
+</div>
+
+<div class="item">
   <div class="date">Mar 14, 2026</div>
   <div class="title"><span class="dot amber"></span>Simulated Admin + permission-based UI</div>
-  <div class="desc">TopNav admin dropdown with 108 active admins. Selecting an admin fetches permissions from admin_property_info, stores in sessionStorage, and filters UI: home tiles, experience links, config links, and how-to options hidden when the admin lacks the corresponding permission.</div>
+  <div class="desc">TopNav admin dropdown with 108 active admins. Permission-based UI filtering: home tiles, experience links, config links, and how-to options hidden when the admin lacks the corresponding permission.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
   <div class="title"><span class="dot indigo"></span>Prompt caching + Redis response cache</div>
-  <div class="desc">Anthropic prompt caching (cache_control ephemeral) on all agent calls — 90% input token discount. Redis 7 response cache with 2-min TTL for data/concierge queries. 5 gunicorn workers with 3 DB connections each (capacity ~25-50 concurrent users).</div>
+  <div class="desc">Anthropic prompt caching (cache_control ephemeral) on all agent calls — 90% input token discount. Redis 7 response cache with 2-min TTL for data/concierge queries.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot blue"></span>Lead analytics + comprehensive test suite</div>
-  <div class="desc">dw_lead query tools (get_leads, get_lead_stats). 247 backend tests (all passing), 23 Vitest component tests, 8 Playwright E2E tests, 300 persona regression prompts. 7 pre-existing test failures fixed.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot green"></span>WCAG 2.1 AA accessibility compliance</div>
-  <div class="desc">Skip-to-content link, focus-visible outlines, aria-live regions, improved contrast ratios, chart ARIA roles, and chat input labels. VPAT document tracks 9 fixed criteria with 4 remaining open items.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot pink"></span>Security review and OWASP hardening</div>
-  <div class="desc">15 findings documented across OWASP Top 10. Controls in place: security headers, prompt injection filtering, SSL cert cleanup, tenant isolation validation, DOMPurify sanitization.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot amber"></span>Documentation suite (8 living docs)</div>
-  <div class="desc">Test plan, scalability, security review, accessibility VPAT, and API benchmark docs. All support dark/light theme. Sidebar Documents dropdown. Architecture extracted to .ai/architecture.md.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 14, 2026</div>
-  <div class="title"><span class="dot indigo"></span>MCP server + scalability analysis</div>
-  <div class="desc">MCP architecture in tech spec (67 tools, streamable-HTTP, port 8001). Scalability analysis for 2K-6K concurrent users with recommended CDN/load-balancer/Redis/PgBouncer architecture.</div>
+  <div class="title"><span class="dot blue"></span>Technical contact lookup + doc navigation</div>
+  <div class="desc">Home page shows ON24 technical rep via REST API. Floating Documents dropdown nav (doc-nav.js) added to all 8 HTML docs with theme-aware styling and current page highlighting.</div>
 </div>
 
 </body>

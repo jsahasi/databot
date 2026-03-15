@@ -328,6 +328,15 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] CSP fix for docs — inline scripts for theme detection
 - [x] 7 pre-existing test failures fixed (auth headers, security tests)
 
+## html-docs Skill Creation — COMPLETE (2026-03-15)
+- [x] SKILL.md: full template (~300 lines), auto-discovery per doc type, responsive CSS, dark mode
+- [x] README.md: marketing/adoption page alongside SKILL.md
+- [x] Document registration: doc-manifest.json for external docs wired into nav
+- [x] Nav exclusion: `"nav": false` hides docs from dropdown while keeping them accessible
+- [x] Regenerated test-plan.html with fresh pytest data (260 tests, 11 files, 5.0s)
+- [x] Updated recent-changes.html with latest capabilities
+- [x] Created doc-manifest.json for existing project docs
+
 ## Backlog / Next Steps
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8

@@ -48,7 +48,7 @@ All queries are tenant-scoped: client 10710 + 9 sub-clients via `WHERE client_id
 
 | Suite | Tests | Lines | Status |
 |-------|------:|------:|--------|
-| Backend unit (pytest) | 247 | 4,116 | All pass |
+| Backend unit (pytest) | 260 | 4,500 | All pass |
 | Frontend Vitest (components) | 23 | 145 | All pass |
 | Frontend Playwright (E2E) | 8 | 93 | All pass |
 | Regression prompts (core) | 26 | 554 | All pass |
@@ -95,21 +95,21 @@ All queries are tenant-scoped: client 10710 + 9 sub-clients via `WHERE client_id
 | [MRD](http://localhost:3001/docs/mrd.html) | `/docs/mrd.html` | Market Requirements Document |
 | [PRD](http://localhost:3001/docs/prd.html) | `/docs/prd.html` | Product Requirements Document |
 | [Tech Spec](http://localhost:3001/docs/tech-spec.html) | `/docs/tech-spec.html` | Architecture, data access, MCP server |
-| [Test Plan](http://localhost:3001/docs/test-plan.html) | `/docs/test-plan.html` | 278 tests, pass rates, coverage |
+| [Test Plan](http://localhost:3001/docs/test-plan.html) | `/docs/test-plan.html` | 291 tests, pass rates, coverage |
 | [Scalability](http://localhost:3001/docs/scalability.html) | `/docs/scalability.html` | 2K-6K concurrent user analysis |
 | [Security Review](http://localhost:3001/docs/security-review.html) | `/docs/security-review.html` | OWASP Top 10, 15 findings |
 | [Accessibility VPAT](http://localhost:3001/docs/accessibility-vpat.html) | `/docs/accessibility-vpat.html` | WCAG 2.1 AA compliance |
 | [API vs DB Benchmark](http://localhost:3001/docs/api-vs-db-benchmark.html) | `/docs/api-vs-db-benchmark.html` | REST vs MCP vs DB comparison |
 | [Recent Changes](http://localhost:3001/docs/recent-changes.html) | `/docs/recent-changes.html` | Latest capabilities |
 
-All docs support dark/light theme via `?theme=dark` URL parameter.
+All docs support dark/light theme via `?theme=dark` URL parameter. Generated and maintained via the [`html-docs` Claude Code skill](~/.claude/plugins/local/user-skills/skills/html-docs/) — auto-discovers project state (test results, security patterns, infrastructure) and produces themed, responsive HTML.
 
 ## Commands
 
 ```bash
 # Backend
 cd backend && pip install -e ".[dev]"
-pytest tests/ -v                              # 247 tests
+pytest tests/ -v                              # 260 tests
 pytest tests/ --cov=app --cov-report=term     # With coverage
 ruff check app/ && ruff format app/
 

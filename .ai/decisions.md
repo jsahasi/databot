@@ -209,6 +209,11 @@ Implementation:
 **Decision:** Implemented API key auth (HTTP middleware + WebSocket upgrade), per-IP rate limiting (slowapi + custom WS limiter), and tightened CORS (restricted methods/headers).
 **Rationale:** All 3 HIGH findings from the security review. API_KEY env var — empty disables auth (dev mode). Rate limit: 20 WS msg/min, 100 REST/min per IP. CORS: only localhost:3000/3001 origins, explicit methods/headers.
 
+## 2026-03-15: html-docs Skill — Standalone Documentation Generator
+**Decision:** Created a reusable Claude Code skill (`html-docs`) that generates professional, responsive, themed HTML documentation with auto-discovery. Self-contained — no awareness of the parent application.
+**Rationale:** Docs rot because updating them is manual. This skill auto-discovers project state (pytest results, security patterns, infrastructure config) and generates polished HTML docs. Supports document registration (external docs wired into nav), nav exclusion (docs excluded from dropdown), custom theming, dark mode, and scheduled regeneration via cron or shell script.
+**Location:** `~/.claude/plugins/local/user-skills/skills/html-docs/SKILL.md`
+
 ## 2026-03-14: Permission-Based UI Filtering (Simulated Admin)
 **Decision:** Admin permissions from `admin_property_info` (prop_code where value='Yes') stored in sessionStorage. UI elements filtered based on permission presence. No admin selected = show everything.
 **Permission mapping:** view-webcasts→Elite, manage-engagement-hub→Hub, manage-target-experiences→Target, manage-virtual-events→GoLive, manage-brand-settings→Branding, manage-integrations→Connect, manage-users→Users, view-analytics→data agent tiles.

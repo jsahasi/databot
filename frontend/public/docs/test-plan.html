@@ -63,9 +63,9 @@
   <h1>Test Plan &amp; Results</h1>
   <p class="subtitle">Automated test suite covering API health, security, accessibility, chart generation, agent internals, and integration</p>
   <div class="meta">
-    <span><strong>Last run:</strong> March 14, 2026</span>
+    <span><strong>Last run:</strong> March 15, 2026</span>
     <span><strong>Framework:</strong> pytest + pytest-asyncio</span>
-    <span><strong>Total:</strong> 247 backend + 23 Vitest + 8 Playwright E2E</span>
+    <span><strong>Total:</strong> 260 backend + 23 Vitest + 8 Playwright E2E</span>
     <span><strong>Pass rate:</strong> 100%</span>
   </div>
 </div>
@@ -75,7 +75,7 @@
   <h2>Dashboard</h2>
   <div class="dashboard">
     <div class="dash-card">
-      <div class="number" style="color:var(--green)">278</div>
+      <div class="number" style="color:var(--green)">291</div>
       <div class="label">Passed</div>
     </div>
     <div class="dash-card">
@@ -83,11 +83,11 @@
       <div class="label">Failed</div>
     </div>
     <div class="dash-card">
-      <div class="number">10</div>
+      <div class="number">11</div>
       <div class="label">Test Files</div>
     </div>
     <div class="dash-card">
-      <div class="number">9.7s</div>
+      <div class="number">5.0s</div>
       <div class="label">Duration</div>
     </div>
   </div>
@@ -96,12 +96,16 @@
   <h3>Pass Rate by Subsection</h3>
   <div class="card">
     <div class="bar-container">
-      <div class="bar-label">Accessibility</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>35/35</span></div></div>
+      <div class="bar-label">ON24 Query Tools</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>53/53</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">Security</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:88%"><span>40/43</span></div></div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>46/46</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Accessibility</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>35/35</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">Chart Generation</div>
@@ -109,31 +113,31 @@
     </div>
     <div class="bar-container">
       <div class="bar-label">ON24 Client</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:94%"><span>16/17</span></div></div>
-    </div>
-    <div class="bar-container">
-      <div class="bar-label">Data Agent</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>12/12</span></div></div>
-    </div>
-    <div class="bar-container">
-      <div class="bar-label">Orchestrator History</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>15/15</span></div></div>
-    </div>
-    <div class="bar-container">
-      <div class="bar-label">Rate Limiter</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>17/17</span></div></div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>21/21</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">File Upload</div>
       <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>18/18</span></div></div>
     </div>
     <div class="bar-container">
-      <div class="bar-label">API Health</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>3/3</span></div></div>
+      <div class="bar-label">Rate Limiter</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>18/18</span></div></div>
     </div>
     <div class="bar-container">
-      <div class="bar-label">Prompt Regression</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:75%"><span>6/8</span></div></div>
+      <div class="bar-label">Orchestrator History</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>15/15</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Response Cache</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>13/13</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Data Agent</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>12/12</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">API Health</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>3/3</span></div></div>
     </div>
   </div>
 
@@ -179,13 +183,13 @@
   </div>
 
   <h2>2. Security (OWASP)</h2>
-  <p>File: <code>test_security.py</code> — 43 tests <span class="tag amber">93% PASS</span></p>
+  <p>File: <code>test_security.py</code> — 46 tests <span class="tag green">100% PASS</span></p>
   <div class="card">
     <table>
       <tr><th>Class</th><th>Tests</th><th>Pass</th><th>Coverage</th></tr>
       <tr><td>TestInputValidation</td><td>19</td><td><span class="tag green">19</span></td><td>Null bytes, control chars, message length cap, session_id sanitization (path traversal, SQL injection, null bytes)</td></tr>
-      <tr><td>TestAccessControl</td><td>7</td><td><span class="tag amber">5</span></td><td>Client hierarchy validation, root fallback, sub-client scoping (2 require live DB)</td></tr>
-      <tr><td>TestSecurityHeaders</td><td>9</td><td><span class="tag amber">8</span></td><td>X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy</td></tr>
+      <tr><td>TestAccessControl</td><td>7</td><td><span class="tag green">7</span></td><td>Client hierarchy validation, root fallback, sub-client scoping</td></tr>
+      <tr><td>TestSecurityHeaders</td><td>9</td><td><span class="tag green">9</span></td><td>X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy</td></tr>
       <tr><td>TestPromptInjection</td><td>6</td><td><span class="tag green">6</span></td><td>"Ignore previous instructions", system prefix injection, embedded JSON, unicode control plane</td></tr>
       <tr><td>TestTenantIsolation</td><td>5</td><td><span class="tag green">5</span></td><td>ContextVar isolation — set/get, no bleed, independent coroutines</td></tr>
     </table>
@@ -205,7 +209,7 @@
   </div>
 
   <h2>4. ON24 API Client</h2>
-  <p>File: <code>test_on24_client.py</code> — 17 tests <span class="tag amber">94% PASS</span></p>
+  <p>File: <code>test_on24_client.py</code> — 21 tests <span class="tag green">100% PASS</span></p>
   <div class="card">
     <table>
       <tr><th>Class</th><th>Tests</th><th>Pass</th><th>Coverage</th></tr>
@@ -276,7 +280,32 @@
     </table>
   </div>
 
-  <h2>10. Prompt Regression Tests</h2>
+  <h2>10. ON24 Query Tools</h2>
+  <p>File: <code>test_on24_query_tools.py</code> — 53 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>Event queries</td><td>12</td><td>list_events, get_event, event filtering by date/status</td></tr>
+      <tr><td>Attendance queries</td><td>10</td><td>get_attendees, attendance_trends, registrant counts</td></tr>
+      <tr><td>Engagement queries</td><td>8</td><td>Poll results, Q&amp;A, resource downloads</td></tr>
+      <tr><td>Audience queries</td><td>8</td><td>Company breakdown, geographic, industry segmentation</td></tr>
+      <tr><td>Lead queries</td><td>6</td><td>get_leads, get_lead_stats from dw_lead table</td></tr>
+      <tr><td>Aggregation queries</td><td>9</td><td>Top events by polls, engagement scoring, funnel analysis</td></tr>
+    </table>
+  </div>
+
+  <h2>11. Response Cache</h2>
+  <p>File: <code>test_response_cache.py</code> — 13 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>Cache hit/miss</td><td>4</td><td>Cache key generation, TTL expiration, cache invalidation</td></tr>
+      <tr><td>Redis integration</td><td>5</td><td>Connection pooling, serialization, concurrent access</td></tr>
+      <tr><td>Edge cases</td><td>4</td><td>Empty responses, large payloads, Redis unavailable fallback</td></tr>
+    </table>
+  </div>
+
+  <h2>12. Prompt Regression Tests</h2>
   <p>File: <code>test_chat_prompts.py</code> — 8 recorded results <span class="tag amber">75% PASS</span></p>
   <p>These tests run live against the agent pipeline and verify tool routing, response quality, and chart generation.</p>
   <div class="card">

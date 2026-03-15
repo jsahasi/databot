@@ -1,0 +1,13 @@
+{
+  "docs": [
+    { "label": "MRD", "path": "mrd.html", "type": "registered" },
+    { "label": "PRD", "path": "prd.html", "type": "registered" },
+    { "label": "Tech Spec", "path": "tech-spec.html", "type": "registered" },
+    { "label": "Test Plan", "path": "test-plan.html", "type": "managed" },
+    { "label": "Scalability", "path": "scalability.html", "type": "managed" },
+    { "label": "Security Review", "path": "security-review.html", "type": "managed" },
+    { "label": "Accessibility VPAT", "path": "accessibility-vpat.html", "type": "registered" },
+    { "label": "API vs DB Benchmark", "path": "api-vs-db-benchmark.html", "type": "registered" },
+    { "label": "Recent Changes", "path": "recent-changes.html", "type": "managed", "nav": false }
+  ]
+}
