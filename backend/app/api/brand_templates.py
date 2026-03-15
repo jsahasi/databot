@@ -1,4 +1,8 @@
-"""Brand template management — simple JSON file storage."""
+"""Brand template management — per-client JSON file storage.
+
+Each client_id gets its own file: data/brand_templates_{client_id}.json
+No client shares templates with any other client.
+"""
 
 import json
 import uuid
@@ -6,11 +10,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
+
 from pydantic import BaseModel
+
+from app.db.on24_db import get_client_id
 
 router = APIRouter()
 
-TEMPLATES_FILE = Path("/app/data/brand_templates.json")
+DATA_DIR = Path("/app/data")
 
 GOOGLE_FONTS = [
     "Inter", "Roboto", "Open Sans", "Lato", "Montserrat", "Poppins",
@@ -59,18 +66,26 @@ class BrandTemplateUpdate(BaseModel):
     isDefault: bool | None = None
 
 
-def _load_templates() -> list[dict]:
-    if TEMPLATES_FILE.exists():
+def _templates_file(client_id: int | None = None) -> Path:
+    """Return the per-client templates JSON file path."""
+    cid = client_id or get_client_id()
+    return DATA_DIR / f"brand_templates_{cid}.json"
+
+
+def _load_templates(client_id: int | None = None) -> list[dict]:
+    f = _templates_file(client_id)
+    if f.exists():
         try:
-            return json.loads(TEMPLATES_FILE.read_text())
+            return json.loads(f.read_text())
         except (json.JSONDecodeError, OSError):
             return []
     return []
 
 
-def _save_templates(templates: list[dict]) -> None:
-    TEMPLATES_FILE.parent.mkdir(parents=True, exist_ok=True)
-    TEMPLATES_FILE.write_text(json.dumps(templates, indent=2))
+def _save_templates(templates: list[dict], client_id: int | None = None) -> None:
+    f = _templates_file(client_id)
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(templates, indent=2))
 
 
 @router.get("/fonts")
@@ -81,7 +96,7 @@ def list_fonts():
 
 @router.get("/default")
 def get_default_template():
-    """Return the default brand template."""
+    """Return the default brand template for the current client."""
     templates = _load_templates()
     for t in templates:
         if t.get("isDefault"):
@@ -93,14 +108,14 @@ def get_default_template():
 
 @router.get("")
 def list_templates():
-    """List all brand templates."""
+    """List all brand templates for the current client."""
     templates = _load_templates()
     return {"templates": templates}
 
 
 @router.post("")
 def create_template(body: BrandTemplateCreate):
-    """Create a new brand template."""
+    """Create a new brand template for the current client."""
     templates = _load_templates()
     if body.isDefault:
         for t in templates:
@@ -125,7 +140,7 @@ def create_template(body: BrandTemplateCreate):
 
 @router.put("/{template_id}")
 def update_template(template_id: str, body: BrandTemplateUpdate):
-    """Update an existing brand template."""
+    """Update an existing brand template for the current client."""
     templates = _load_templates()
     target = None
     for t in templates:
@@ -159,7 +174,6 @@ def delete_template(template_id: str):
         raise HTTPException(status_code=400, detail="Cannot delete the last default template")
 
     templates = [t for t in templates if t["id"] != template_id]
-    # If we deleted the default, make the first one default
     if target.get("isDefault") and templates:
         templates[0]["isDefault"] = True
     _save_templates(templates)

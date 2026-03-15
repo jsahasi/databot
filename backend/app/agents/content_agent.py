@@ -182,20 +182,16 @@ def _inject_banner(html: str, banner_url: str) -> str:
 
 
 def _load_default_banner_url() -> str:
-    """Load the banner image URL from the default brand template."""
+    """Load the banner image URL from the default brand template for the current client."""
     try:
-        import json as _json
-        templates_file = Path("/app/data/brand_templates.json")
-        if templates_file.exists():
-            templates = _json.loads(templates_file.read_text())
-            # Find the default template
-            for t in templates:
-                if t.get("isDefault") and t.get("bannerImageUrl"):
-                    return t["bannerImageUrl"]
-            # Fallback to first template with a banner
-            for t in templates:
-                if t.get("bannerImageUrl"):
-                    return t["bannerImageUrl"]
+        from app.api.brand_templates import _load_templates
+        templates = _load_templates()  # uses get_client_id() internally
+        for t in templates:
+            if t.get("isDefault") and t.get("bannerImageUrl"):
+                return t["bannerImageUrl"]
+        for t in templates:
+            if t.get("bannerImageUrl"):
+                return t["bannerImageUrl"]
     except Exception as e:
         logger.debug(f"Banner URL load skipped: {e}")
     return ""
