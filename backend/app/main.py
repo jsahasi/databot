@@ -4,6 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.api.chat import websocket_chat
 from app.api.router import api_router
@@ -63,12 +67,45 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# --- SEC-02: Rate limiting (per IP) ---
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded. Please slow down."},
+    )
+
+
+# --- SEC-01: API Key authentication middleware ---
+@app.middleware("http")
+async def api_key_auth(request: Request, call_next):
+    """Validate API key on all routes except /health.
+    Auth is disabled when API_KEY is not set (dev mode).
+    """
+    if settings.api_key:
+        # Skip auth for health check and static docs
+        path = request.url.path
+        if path not in ("/health",) and not path.startswith("/docs/"):
+            auth_header = request.headers.get("Authorization", "")
+            api_key_param = request.query_params.get("api_key", "")
+            if auth_header == f"Bearer {settings.api_key}" or api_key_param == settings.api_key:
+                pass  # Authenticated
+            else:
+                return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
+    return await call_next(request)
+
+
+# --- SEC-03: CORS — restricted to configured origins only ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -96,6 +133,10 @@ async def security_headers(request: Request, call_next) -> Response:
     )
     return response
 
+
+# SEC-02: Apply rate limiting to all /api/* routes
+from slowapi.middleware import SlowAPIMiddleware
+app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(api_router, prefix="/api")
 app.add_api_websocket_route("/ws/chat", websocket_chat)

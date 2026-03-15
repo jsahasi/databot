@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     response_cache_ttl: int = 120  # seconds (2 min)
 
+    # Authentication
+    api_key: str = ""  # Set API_KEY in .env.local to enable auth; empty = auth disabled (dev mode)
+
+    # Rate limiting
+    rate_limit_per_minute: int = 20  # Chat messages per IP per minute
+    rate_limit_api_per_minute: int = 100  # REST API calls per IP per minute
+
     # App
     app_name: str = "DataBot"
     debug: bool = False

@@ -27,6 +27,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "gunicorn>=22.0.0",
     "redis[hiredis]>=5.0.0",
+    "slowapi>=0.1.9",
 ]
 
 [project.optional-dependencies]

@@ -4,6 +4,8 @@ import asyncio
 import json
 import logging
 import re
+import time
+from collections import defaultdict
 from typing import Any
 
 import anthropic
@@ -21,6 +23,22 @@ router = APIRouter()
 
 # Store active sessions (in production, use Redis or similar)
 _sessions: dict[str, OrchestratorAgent] = {}
+
+# SEC-02: Per-IP WebSocket message rate limiter
+_ws_rate: dict[str, list[float]] = defaultdict(list)
+_WS_RATE_WINDOW = 60.0  # seconds
+
+
+def _check_ws_rate(client_ip: str) -> bool:
+    """Return True if under limit, False if rate exceeded."""
+    now = time.monotonic()
+    limit = settings.rate_limit_per_minute
+    # Prune old entries
+    _ws_rate[client_ip] = [t for t in _ws_rate[client_ip] if now - t < _WS_RATE_WINDOW]
+    if len(_ws_rate[client_ip]) >= limit:
+        return False
+    _ws_rate[client_ip].append(now)
+    return True
 
 # Permission → product name mapping for restriction context
 _PERM_PRODUCT_MAP = {
@@ -231,7 +249,15 @@ async def websocket_chat(websocket: WebSocket):
     Server -> Client: {"type": "message_complete", "agent_used": "..."}
     Server -> Client: {"type": "error", "message": "..."}
     """
+    # SEC-01: Validate API key on WebSocket upgrade (if auth enabled)
+    if settings.api_key:
+        query_params = dict(websocket.query_params)
+        if query_params.get("api_key") != settings.api_key:
+            await websocket.close(code=4001, reason="Unauthorized")
+            return
+
     await websocket.accept()
+    client_ip = websocket.client.host if websocket.client else "unknown"
     session_id = "default"
 
     try:
@@ -275,6 +301,11 @@ async def websocket_chat(websocket: WebSocket):
                 content = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content).strip()
                 if not content:
                     await websocket.send_json({"type": "error", "message": "Empty message"})
+                    continue
+
+                # SEC-02: Rate limit WebSocket messages per IP
+                if not _check_ws_rate(client_ip):
+                    await websocket.send_json({"type": "error", "message": f"Rate limit exceeded ({settings.rate_limit_per_minute} messages/min). Please slow down."})
                     continue
 
                 # Bound message length to prevent prompt-stuffing and resource exhaustion (A03).
