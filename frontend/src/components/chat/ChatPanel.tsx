@@ -69,6 +69,15 @@ function filterByPermissions<T extends { label: string }>(items: T[], perms: str
 export default function ChatPanel() {
   const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, setProposedEvents, resetChat } = useChatContext()
   const [input, setInput] = useState('')
+  const [techContacts, setTechContacts] = useState<string[]>([])
+
+  // Fetch technical contacts on mount
+  useEffect(() => {
+    fetch('/api/technicalrep')
+      .then(r => r.json())
+      .then(d => setTechContacts((d.contacts || []).slice(0, 3).map((c: any) => c.name)))
+      .catch(() => setTechContacts([]))
+  }, [])
   const [showHowDoI, setShowHowDoI] = useState(false)
   const [showExperiences, setShowExperiences] = useState(false)
   const [showConfigureEnv, setShowConfigureEnv] = useState(false)
@@ -317,6 +326,11 @@ export default function ChatPanel() {
                       </span>
                     ))}
                   </div>
+                  {techContacts.length > 0 && (
+                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>
+                      Technical contacts: {techContacts.join(', ')}
+                    </p>
+                  )}
                 </div>
               )}
             </>

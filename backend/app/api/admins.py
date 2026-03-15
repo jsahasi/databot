@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from app.db.on24_db import get_pool, get_tenant_client_ids
+from app.services.on24_client import ON24Client
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -72,3 +73,22 @@ async def get_admin_permissions(admin_id: int):
         "admin_id": admin_id,
         "permissions": [r["prop_code"] for r in rows],
     }
+
+
+@router.get("/technicalrep")
+async def get_technical_contacts():
+    """Return technical rep contacts for the current client via ON24 REST API."""
+    try:
+        client = ON24Client()
+        result = await client._request("GET", "technicalrep")
+        await client.close()
+        contacts = result.get("technicalcontacts", [])
+        return {
+            "contacts": [
+                {"id": c.get("contactid"), "name": c.get("contactname", "")}
+                for c in contacts
+            ]
+        }
+    except Exception as e:
+        logger.warning(f"Technical rep lookup failed: {e}")
+        return {"contacts": []}
