@@ -357,6 +357,9 @@ function EventCardsGrid({ cards }: { cards: any[] }) {
 function ContentHtmlPreview({ html }: { html: string }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [showShareForm, setShowShareForm] = useState(false)
+  const [shareEmails, setShareEmails] = useState('')
+  const [shareStatus, setShareStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const sanitized = DOMPurify.sanitize(html, {
@@ -391,14 +394,36 @@ function ContentHtmlPreview({ html }: { html: string }) {
     iframeRef.current?.contentWindow?.print()
   }
 
-  const handleShare = async () => {
-    const plain = sanitized.replace(/<[^>]*>/g, '').slice(0, 500)
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Content Preview', text: plain }) } catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(plain)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+  const handleShare = () => {
+    setShowShareForm(true)
+    setShareStatus('idle')
+    setShareEmails('')
+  }
+
+  const handleShareSend = async () => {
+    const emails = shareEmails.split(',').map(e => e.trim()).filter(Boolean)
+    if (emails.length === 0) return
+    setShareStatus('sending')
+    try {
+      const adminInfo = JSON.parse(sessionStorage.getItem('adminInfo') || 'null')
+      const adminId = sessionStorage.getItem('selectedAdmin') || ''
+      const res = await fetch('/api/shares', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content_html: html,
+          title: 'Content Preview',
+          recipients: emails,
+          admin_id: parseInt(adminId) || 0,
+          admin_email: adminInfo?.email || '',
+          session_id: '',
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to share')
+      setShareStatus('sent')
+      setTimeout(() => { setShowShareForm(false); setShareStatus('idle') }, 2000)
+    } catch {
+      setShareStatus('error')
     }
   }
 
@@ -536,6 +561,83 @@ function ContentHtmlPreview({ html }: { html: string }) {
                 </button>
               </div>
             </div>
+            {/* Share form — inline below header */}
+            {showShareForm && (
+              <div style={{
+                padding: '0.75rem 1rem',
+                borderBottom: '1px solid var(--color-border)',
+                background: 'var(--color-bg)',
+              }}>
+                {shareStatus === 'sent' ? (
+                  <div style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Link sent!
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.4rem' }}>
+                      Share via email
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={shareEmails}
+                        onChange={e => setShareEmails(e.target.value)}
+                        placeholder="email1@example.com, email2@example.com"
+                        onKeyDown={e => { if (e.key === 'Enter') handleShareSend() }}
+                        style={{
+                          flex: 1,
+                          padding: '0.4rem 0.6rem',
+                          fontSize: '0.78rem',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 6,
+                          background: 'var(--color-card)',
+                          color: 'var(--color-text)',
+                          outline: 'none',
+                          fontFamily: 'inherit',
+                        }}
+                      />
+                      <button
+                        onClick={handleShareSend}
+                        disabled={shareStatus === 'sending' || !shareEmails.trim()}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          background: shareEmails.trim() && shareStatus !== 'sending' ? 'var(--color-primary)' : '#e5e7eb',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          cursor: shareEmails.trim() && shareStatus !== 'sending' ? 'pointer' : 'not-allowed',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {shareStatus === 'sending' ? 'Sending...' : 'Send'}
+                      </button>
+                      <button
+                        onClick={() => { setShowShareForm(false); setShareStatus('idle') }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          color: 'var(--color-text-secondary)',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {shareStatus === 'error' && (
+                      <div style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: '0.35rem' }}>
+                        Failed to send. Please try again.
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
             {/* Body — iframe */}
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <iframe

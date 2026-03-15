@@ -7,10 +7,12 @@ import EventDetail from './pages/EventDetail'
 import Audiences from './pages/Audiences'
 import ContentInsights from './pages/ContentInsights'
 import Settings from './pages/Settings'
+import ShareReview from './pages/ShareReview'
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/share/:shareId" element={<ShareReview />} />
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<ChatPanel />} />
         <Route path="/analytics" element={<Dashboard />} />
