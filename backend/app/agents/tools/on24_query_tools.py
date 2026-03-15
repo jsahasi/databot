@@ -1136,15 +1136,25 @@ async def query_ai_content(
 
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, *params, timeout=_QUERY_TIMEOUT)
-    return [
-        {
-            "content_type": row["content_type"] or "",
+
+    # Deduplicate: keep only the longest article per (event_id, content_type)
+    # ON24 often stores multiple versions; the longest is the most complete.
+    best: dict[tuple, dict] = {}
+    for row in rows:
+        ct = row["content_type"] or ""
+        if not ct:
+            continue
+        key = (row["event_id"], ct)
+        article = {
+            "content_type": ct,
             "title": row["event_title"] or "",
-            "content": (row["content"] or "")[:50000],  # allow full transcripts (~20K words)
+            "content": (row["content"] or "")[:50000],
             "event_id": row["event_id"],
             "event_title": row["event_title"] or "",
             "created_at": row["created_at"].isoformat() if row["created_at"] else None,
         }
-        for row in rows
-        if row["content_type"]  # skip rows where source strip produced empty type
-    ]
+        existing = best.get(key)
+        if not existing or len(article["content"]) > len(existing["content"]):
+            best[key] = article
+
+    return list(best.values())
