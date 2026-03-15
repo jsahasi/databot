@@ -21,38 +21,38 @@
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot amber"></span>Brand templates + social media platform posts</div>
+  <div class="desc">Brand template system (colors, fonts, logos) with CRUD management modal. Templates apply to HTML content preview via Google Fonts. Social media posts now include emojis, hashtags, platform-specific lengths, and compose/share URLs for LinkedIn, X, Facebook.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot indigo"></span>Content sharing & approval workflow</div>
-  <div class="desc">Share generated content via signed links (HMAC-SHA256, 7-day expiry). Standalone review page with 5-star rating, thumbs up/down approval, comment thread. "Approved" badge when all recipients approve. Email delivery via SendGrid or Gmail SMTP.</div>
+  <div class="desc">Share generated content via signed links (HMAC-SHA256, 7-day expiry). Standalone review page with 5-star rating, thumbs up/down approval, comment thread. "Approved" badge when all recipients approve. Email via SendGrid or Gmail.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot pink"></span>HTML content modal + input validation</div>
-  <div class="desc">Content agent wraps generated HTML in fenced blocks; frontend renders in sandboxed iframe modal with copy/print/share icons. nh3 (Rust) HTML sanitization. Client-side and server-side HTML/JS input rejection. Image support.</div>
+  <div class="desc">Content agent wraps generated HTML in fenced blocks; frontend renders in sandboxed iframe modal with copy/print/share icons. nh3 (Rust) HTML sanitization. Client + server-side HTML/JS input rejection. Image support.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot green"></span>Security remediation: 3 HIGH findings fixed</div>
-  <div class="desc">nh3 replaces regex HTML sanitizer. Email address validation prevents header injection. Attachment path traversal guard. SEC-01/02/03: API key auth, rate limiting, CORS tightened.</div>
+  <div class="title"><span class="dot green"></span>Security: 3 HIGH findings fixed + 297 tests</div>
+  <div class="desc">nh3 replaces regex HTML sanitizer. Email validation prevents header injection. Path traversal guard. API key auth, rate limiting, CORS. 297 backend tests across 14 files, all passing.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot blue"></span>Email service + daily improvement digest</div>
-  <div class="desc">SendGrid (preferred) or Gmail SMTP email service. Daily 11:59 PM email sends improvement-inbox file to configured recipient for debugging/fixes.</div>
+  <div class="desc">SendGrid/Gmail email service. Daily 11:59 PM improvement-inbox digest. html-docs skill for auto-generating documentation from codebase scans.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot amber"></span>html-docs skill for documentation generation</div>
-  <div class="desc">Reusable Claude Code skill generates professional themed HTML docs from codebase scans. Auto-discovers all 9 doc types. Document registration + nav exclusion via doc-manifest.json.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot green"></span>297 tests, all passing</div>
-  <div class="desc">13 test files: query tools (53), security (50), accessibility (35), charts (26), ON24 client (21), uploads (18), rate limiter (18), orchestrator (15), response cache (13), content HTML (12), shares (10), email service (8), data agent (12), API health (3).</div>
+  <div class="title"><span class="dot indigo"></span>Multi-step content creation + event tools</div>
+  <div class="desc">Content agent multi-step workflows: event listing, image vision, transcript summarization. PDF attachment fix. Decimal serialization fix. Theme toggle pill in doc-nav.</div>
 </div>
 
 </body>

@@ -350,6 +350,14 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Daily improvement digest: 11:59 PM email with improvement-inbox-*.txt attached
 - [x] Fix: event card Decimal serialization, get_ai_content media_name column error
 
+## Brand Templates + Social Media — COMPLETE (2026-03-15)
+- [x] Brand templates: CRUD API with JSON file storage, 25 Google Fonts, default fallback
+- [x] BrandTemplateManager modal: color pickers, font dropdown, logo URL, default toggle
+- [x] "Brand Templates" tile in Configure environment sub-menu
+- [x] ContentHtmlPreview: template dropdown applies selected template to iframe content
+- [x] Social media prompt: emojis, hashtags, platform-specific lengths (LinkedIn/X/FB/IG)
+- [x] Post links: compose/share URLs for LinkedIn, X, Facebook
+
 ## Content Sharing & Approval Workflow — COMPLETE (2026-03-15)
 - [x] Backend: 3 new tables (content_shares, share_recipients, share_comments), migration 0003
 - [x] Backend: 4 API endpoints (POST /shares, GET /shares/{id}, POST respond, POST comments)
