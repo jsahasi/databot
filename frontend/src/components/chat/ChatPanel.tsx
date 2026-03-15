@@ -18,14 +18,15 @@ const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: stri
 const SMART_TIPS_URL = 'https://wcc.on24.com/webcast/keyinsightssummary'
 
 const SUGGESTIONS: { text: string; agent: AgentKey; href?: string }[] = [
+  // Grouped by agent — 2 per row
   { text: 'Recent events',             agent: 'concierge'                    },
-  { text: 'Experiences',               agent: 'config'                       },
   { text: 'How do I ...? (ON24 help)',  agent: 'concierge'                    },
-  { text: 'Configure environment',     agent: 'config'                       },
   { text: 'Trends',                    agent: 'data'                         },
   { text: 'Insights',                  agent: 'data',  href: SMART_TIPS_URL  },
   { text: 'Create Content',            agent: 'content'                      },
   { text: 'Explore Content',           agent: 'content'                      },
+  { text: 'Experiences',               agent: 'config'                       },
+  { text: 'Configure environment',     agent: 'config'                       },
 ]
 
 const EXPERIENCE_LINKS = [
