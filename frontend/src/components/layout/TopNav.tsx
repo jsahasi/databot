@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useChatContext } from '../../context/ChatContext'
+import { useClientContext } from '../../context/ClientContext'
 
 interface AdminUser {
   admin_id: number
@@ -10,6 +11,7 @@ interface AdminUser {
 
 export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
   const { isConnected, openCalendar, resetChat } = useChatContext()
+  const { selectedClientId } = useClientContext()
   const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark')
   const [dbEnv, setDbEnv] = useState<string>('')
   const [qaAvailable, setQaAvailable] = useState(false)
@@ -22,13 +24,16 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
     localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
 
-  // Fetch active admins on mount
+  // Fetch active admins on mount and when client_id changes
   useEffect(() => {
+    setSelectedAdmin('')
+    sessionStorage.removeItem('adminPermissions')
+    sessionStorage.removeItem('adminInfo')
     fetch('/api/admins')
       .then(r => r.json())
       .then(d => setAdmins(d.admins || []))
       .catch(() => setAdmins([]))
-  }, [])
+  }, [selectedClientId])
 
   // Poll DB environment status every 30s
   useEffect(() => {

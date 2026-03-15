@@ -334,8 +334,8 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [ ] Reload admin dropdown when client_id changes via breadcrumb
 - [ ] Populate api-vs-db-benchmark.html with actual benchmark data and REST API usage docs
 - [ ] Technical contact lookup on home page via /v2/client/{clientId}/technicalrep
-- [ ] Fix concierge no-response for "what helper endpoints in REST?"
-- [ ] Add manage-forums-lite to UI permission filtering
+- [x] Fix concierge no-response for "what helper endpoints in REST?" — removed tools from KB followup call, commit d8a4d58
+- [x] manage-forums-lite — no UI link to filter (Forums not in EXPERIENCE_LINKS/CONFIG_LINKS); permission tag shows correctly
 - [ ] Enhance test coverage — response_cache, knowledge_base, brand_voice
 
 ## Verified ON24 Schema (on24master)
