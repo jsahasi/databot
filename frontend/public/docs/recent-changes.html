@@ -21,8 +21,20 @@
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot indigo"></span>Content sharing & approval workflow</div>
+  <div class="desc">Share generated content via signed links (HMAC-SHA256, 7-day expiry). Standalone review page with 5-star rating, thumbs up/down approval, comment thread. "Approved" badge when all recipients approve. Email delivery via SendGrid or Gmail SMTP.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot pink"></span>HTML content modal + input validation</div>
-  <div class="desc">Content agent wraps generated HTML in fenced blocks; frontend renders in sandboxed iframe modal with copy/print/share icons. DOMPurify sanitization + image support. Client-side and server-side HTML/JS input rejection.</div>
+  <div class="desc">Content agent wraps generated HTML in fenced blocks; frontend renders in sandboxed iframe modal with copy/print/share icons. nh3 (Rust) HTML sanitization. Client-side and server-side HTML/JS input rejection. Image support.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot green"></span>Security remediation: 3 HIGH findings fixed</div>
+  <div class="desc">nh3 replaces regex HTML sanitizer. Email address validation prevents header injection. Attachment path traversal guard. SEC-01/02/03: API key auth, rate limiting, CORS tightened.</div>
 </div>
 
 <div class="item">
@@ -33,26 +45,14 @@
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot indigo"></span>Multi-step content creation + event tools</div>
-  <div class="desc">Content agent now supports multi-step workflows: event listing tools, image vision analysis, transcript summarization with cap. PDF attachment handling fixed for message-too-long errors.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot green"></span>Security remediation: 3 HIGH findings fixed</div>
-  <div class="desc">SEC-01: API key auth on HTTP + WebSocket. SEC-02: Per-IP rate limiting (slowapi + WS 20 msg/min). SEC-03: CORS restricted to localhost origins, specific methods/headers only.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot amber"></span>html-docs skill for documentation generation</div>
-  <div class="desc">Reusable Claude Code skill generates professional themed HTML docs from codebase scans. Auto-discovers MRD, PRD, Tech Spec, test plan, security review, scalability, accessibility. Document registration + nav exclusion via doc-manifest.json.</div>
+  <div class="desc">Reusable Claude Code skill generates professional themed HTML docs from codebase scans. Auto-discovers all 9 doc types. Document registration + nav exclusion via doc-manifest.json.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot green"></span>260 backend tests, all passing</div>
-  <div class="desc">11 test files: query tools (53), security (46), accessibility (35), charts (26), ON24 client (21), uploads (18), rate limiter (18), orchestrator (15), response cache (13), data agent (12), API health (3). Duration 5.0s.</div>
+  <div class="title"><span class="dot green"></span>297 tests, all passing</div>
+  <div class="desc">13 test files: query tools (53), security (50), accessibility (35), charts (26), ON24 client (21), uploads (18), rate limiter (18), orchestrator (15), response cache (13), content HTML (12), shares (10), email service (8), data agent (12), API health (3).</div>
 </div>
 
 </body>
