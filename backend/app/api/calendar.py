@@ -204,15 +204,20 @@ async def get_calendar_event(event_id: int):
                 """
                 ai_rows = await conn.fetch(ai_sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
                 if ai_rows:
-                    # Collect unique types + first text per type
+                    # Collect unique types + best text per type
+                    # For KEYTAKEAWAYS: prefer the longest article (most sections)
+                    # For others: prefer the most recent (first in DESC order)
                     seen_types: list[str] = []
                     articles: dict[str, str] = {}
                     for r in ai_rows:
                         t = r["type"]
                         if t not in seen_types:
                             seen_types.append(t)
-                        if t not in articles and r["text"]:
-                            articles[t] = r["text"]
+                        if r["text"]:
+                            if t not in articles:
+                                articles[t] = r["text"]
+                            elif t == "KEYTAKEAWAYS" and len(r["text"]) > len(articles[t]):
+                                articles[t] = r["text"]
                     # Pre-parse KEYTAKEAWAYS into named sections
                     kt_sections: dict[str, str] = {}
                     if "KEYTAKEAWAYS" in articles:

@@ -3,6 +3,8 @@
 import pytest
 from unittest.mock import patch
 
+from app.api.brand_templates import _templates_file
+
 _mock_store: list[dict] = []
 
 
@@ -133,3 +135,19 @@ class TestBrandTemplates:
         defaults = [t for t in templates if t["isDefault"]]
         assert len(defaults) == 1
         assert defaults[0]["name"] == "Second"
+
+
+# ===========================================================================
+# Client-ID scoping
+# ===========================================================================
+
+
+class TestTemplatesClientIdScoping:
+    """Verify _templates_file uses get_client_id() for per-client isolation."""
+
+    def test_templates_file_uses_client_id(self):
+        """_templates_file returns a path containing the client_id."""
+        with patch("app.api.brand_templates.get_client_id", return_value=12345):
+            path = _templates_file()
+        assert "12345" in str(path)
+        assert str(path).endswith(".json")

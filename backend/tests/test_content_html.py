@@ -10,7 +10,7 @@ Run with:
 
 import pytest
 
-from app.agents.content_agent import _extract_html, _sanitize_html
+from app.agents.content_agent import _extract_html, _inject_banner, _sanitize_html
 
 
 # ===========================================================================
@@ -162,3 +162,42 @@ class TestSanitizeHtml:
         result = _sanitize_html(html)
         # nh3 handles entity-encoded content safely
         assert "safe" in result
+
+
+# ===========================================================================
+# 3. _inject_banner
+# ===========================================================================
+
+
+class TestInjectBanner:
+    """Tests for banner image injection into HTML content."""
+
+    def test_inject_banner_with_url(self):
+        """_inject_banner adds a banner div at the top of the HTML."""
+        html = "<h1>Blog Post</h1><p>Content here</p>"
+        result = _inject_banner(html, "https://example.com/banner.jpg")
+        assert result.startswith("<div")
+        assert "https://example.com/banner.jpg" in result
+        assert result.endswith(html)
+
+    def test_inject_banner_empty_url(self):
+        """_inject_banner returns html unchanged when banner_url is empty."""
+        html = "<h1>Blog Post</h1><p>Content here</p>"
+        result = _inject_banner(html, "")
+        assert result == html
+
+    def test_inject_banner_has_object_fit_cover(self):
+        """Banner CSS includes object-fit:cover for 16:9 cropping."""
+        html = "<p>Content</p>"
+        result = _inject_banner(html, "https://example.com/banner.jpg")
+        assert "object-fit:cover" in result
+
+    def test_inject_banner_escapes_malicious_url(self):
+        """Banner URL with quotes/HTML is escaped to prevent attribute injection."""
+        html = "<p>Content</p>"
+        malicious_url = '" onerror="alert(1)'
+        result = _inject_banner(html, malicious_url)
+        # The raw double quote must NOT appear unescaped — it should be &quot;
+        assert "&quot;" in result
+        # The raw injection pattern must not appear as an actual HTML attribute
+        assert ' onerror="alert(1)"' not in result

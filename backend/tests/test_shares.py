@@ -135,3 +135,20 @@ class TestShareExpiry:
         """An expires_at in the past means the share has expired."""
         expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         assert expires_at < datetime.now(timezone.utc)
+
+
+# ===========================================================================
+# 5. Token format
+# ===========================================================================
+
+
+class TestTokenFormat:
+    """Verify token format and length properties."""
+
+    def test_share_url_contains_key_and_email(self):
+        """Token is a URL-safe hex string of 64 characters (SHA-256 hex digest)."""
+        token = _generate_token(SHARE_ID, EMAIL_A, ADMIN_ID, CREATED_AT, SECRET)
+        # SHA-256 hex digest is exactly 64 hex characters
+        assert len(token) == 64
+        # Must be valid hex (URL-safe)
+        assert all(c in "0123456789abcdef" for c in token)

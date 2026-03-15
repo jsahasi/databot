@@ -255,6 +255,11 @@ Implementation:
 **Decision:** Content agent routing (rule 4) now comes before data agent routing (rule 6) in orchestrator. Explicit triggers: "suggest topics", "what topic", "create a script".
 **Rationale:** "Create a script" and "suggest topics" requests were being routed to data agent (which showed raw tables) instead of content agent (which provides creative recommendations). Fixed duplicate rule numbering.
 
+## 2026-03-15: Brand Templates Per-Client Isolation
+**Decision:** Store brand templates in per-client JSON files (`data/brand_templates_{client_id}.json`) rather than a single shared file or database table.
+**Rationale:** Strict tenant isolation — each client's brand templates are completely independent with no risk of cross-client data leakage. File-based storage avoids a migration and keeps templates simple to inspect/debug. The `{client_id}` suffix ensures templates from one client can never be read or modified by another, even if a bug bypasses the API-level client scoping. Default template fallback is also per-client.
+**Consequences:** Templates do not survive container rebuilds unless `data/` is mounted as a Docker volume (already the case). No cross-client template sharing or "global" templates — acceptable for current requirements.
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.

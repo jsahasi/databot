@@ -378,6 +378,10 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Image support: DOMPurify allows img tags, responsive CSS, sandbox allow-same-origin
 - [x] 287 tests total (25 new: 12 content_html + 8 email + 4 security input + 1 sanitizer)
 
+## Welcome Admin UX — COMPLETE (2026-03-15)
+- [x] Welcome admin by first name on home page greeting
+- [x] "Login as:" label added to admin dropdown in TopNav
+
 ## Backlog / Next Steps
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8

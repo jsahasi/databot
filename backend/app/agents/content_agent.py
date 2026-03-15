@@ -173,9 +173,11 @@ def _inject_banner(html: str, banner_url: str) -> str:
     """Inject a banner image at the top of HTML content, with 16:9 crop via CSS."""
     if not banner_url:
         return html
+    # Sanitise URL to prevent attribute injection (escape quotes and angle brackets)
+    safe_url = banner_url.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
     banner_html = (
         '<div style="width:100%;max-height:300px;overflow:hidden;border-radius:12px;margin-bottom:1.5rem;">'
-        f'<img src="{banner_url}" alt="Banner" style="width:100%;height:300px;object-fit:cover;object-position:center;" />'
+        f'<img src="{safe_url}" alt="Banner" style="width:100%;height:300px;object-fit:cover;object-position:center;" />'
         '</div>'
     )
     return banner_html + html

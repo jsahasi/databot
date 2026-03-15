@@ -1,0 +1,229 @@
+{
+  "timestamp": "2026-03-14T11:58:41.833430",
+  "client_id": "",
+  "base_url": "https://apiqa.on24.com",
+  "mcp_url": "http://on24-mcp:8001/mcp",
+  "event_id_used": null,
+  "runs_per_endpoint": 3,
+  "rest_api": [
+    {
+      "name": "list_events",
+      "median_ms": 72.3,
+      "min_ms": 72.0,
+      "max_ms": 76.2,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//event"
+    },
+    {
+      "name": "list_client_attendees",
+      "median_ms": 75.4,
+      "min_ms": 74.5,
+      "max_ms": 76.1,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//attendee"
+    },
+    {
+      "name": "get_attendee_by_email",
+      "median_ms": 79.5,
+      "min_ms": 77.2,
+      "max_ms": 82.7,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//attendee/test@example.com"
+    },
+    {
+      "name": "get_attendee_all_events",
+      "median_ms": 84.8,
+      "min_ms": 82.3,
+      "max_ms": 98.5,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//attendee/test@example.com/allevents"
+    },
+    {
+      "name": "list_client_registrants",
+      "median_ms": 75.6,
+      "min_ms": 74.6,
+      "max_ms": 95.9,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//registrant"
+    },
+    {
+      "name": "get_registrant_by_email",
+      "median_ms": 76.3,
+      "min_ms": 75.4,
+      "max_ms": 77.7,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//registrant/test@example.com"
+    },
+    {
+      "name": "get_registrant_all_events",
+      "median_ms": 76.3,
+      "min_ms": 75.8,
+      "max_ms": 76.6,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//registrant/test@example.com/allevents"
+    },
+    {
+      "name": "get_survey_library",
+      "median_ms": 75.4,
+      "min_ms": 75.3,
+      "max_ms": 75.4,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//surveylibrary"
+    },
+    {
+      "name": "get_engaged_accounts",
+      "median_ms": 76.4,
+      "min_ms": 73.2,
+      "max_ms": 94.3,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//engagedaccount"
+    },
+    {
+      "name": "list_client_leads",
+      "median_ms": 76.2,
+      "min_ms": 74.8,
+      "max_ms": 76.4,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//lead"
+    },
+    {
+      "name": "get_pep",
+      "median_ms": 78.0,
+      "min_ms": 73.2,
+      "max_ms": 80.5,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//lead/test@example.com"
+    },
+    {
+      "name": "list_client_presenters",
+      "median_ms": 75.0,
+      "min_ms": 74.8,
+      "max_ms": 79.0,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//presenter"
+    },
+    {
+      "name": "list_sub_clients",
+      "median_ms": 72.3,
+      "min_ms": 72.3,
+      "max_ms": 75.4,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client/"
+    },
+    {
+      "name": "get_realtime_user_questions",
+      "median_ms": 74.7,
+      "min_ms": 72.6,
+      "max_ms": 76.5,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//userquestions"
+    },
+    {
+      "name": "list_users",
+      "median_ms": 74.8,
+      "min_ms": 72.4,
+      "max_ms": 77.8,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//users"
+    },
+    {
+      "name": "list_media_manager_content",
+      "median_ms": 75.1,
+      "min_ms": 73.7,
+      "max_ms": 77.4,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//mediamanager"
+    },
+    {
+      "name": "get_custom_account_tags",
+      "median_ms": 75.5,
+      "min_ms": 74.4,
+      "max_ms": 78.7,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//customaccounttag"
+    },
+    {
+      "name": "get_account_managers",
+      "median_ms": 71.2,
+      "min_ms": 71.0,
+      "max_ms": 72.2,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//accountmanager"
+    },
+    {
+      "name": "get_event_managers",
+      "median_ms": 73.6,
+      "min_ms": 73.3,
+      "max_ms": 78.9,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//eventmanager"
+    },
+    {
+      "name": "get_event_profiles",
+      "median_ms": 75.0,
+      "min_ms": 72.3,
+      "max_ms": 75.3,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//eventprofile"
+    },
+    {
+      "name": "get_event_types",
+      "median_ms": 76.3,
+      "min_ms": 75.4,
+      "max_ms": 120.4,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//eventtypes"
+    },
+    {
+      "name": "get_languages",
+      "median_ms": 75.3,
+      "min_ms": 71.7,
+      "max_ms": 76.5,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//languages"
+    },
+    {
+      "name": "get_replacement_tokens",
+      "median_ms": 72.5,
+      "min_ms": 72.1,
+      "max_ms": 74.2,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//tokens"
+    },
+    {
+      "name": "get_sales_reps",
+      "median_ms": 74.3,
+      "min_ms": 71.2,
+      "max_ms": 74.8,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//salesrep"
+    },
+    {
+      "name": "get_signal_contacts",
+      "median_ms": 80.0,
+      "min_ms": 71.8,
+      "max_ms": 81.1,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//signalrep"
+    },
+    {
+      "name": "get_technical_reps",
+      "median_ms": 1050.2,
+      "min_ms": 70.7,
+      "max_ms": 2040.7,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//technicalrep"
+    },
+    {
+      "name": "get_timezones",
+      "median_ms": 2042.9,
+      "min_ms": 1940.6,
+      "max_ms": 2043.4,
+      "runs": 3,
+      "error": "HTTP 404: Resource not found: /v2/client//timezones"
+    }
+  ],
+  "mcp": [],
+  "direct_db": [],
+  "comparison": []
+}

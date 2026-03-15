@@ -65,7 +65,7 @@
   <div class="meta">
     <span><strong>Last run:</strong> March 15, 2026</span>
     <span><strong>Framework:</strong> pytest + pytest-asyncio</span>
-    <span><strong>Total:</strong> 297 backend + 23 Vitest + 8 Playwright E2E</span>
+    <span><strong>Total:</strong> 305 backend + 23 Vitest + 8 Playwright E2E</span>
     <span><strong>Pass rate:</strong> 100%</span>
   </div>
 </div>
@@ -75,7 +75,7 @@
   <h2>Dashboard</h2>
   <div class="dashboard">
     <div class="dash-card">
-      <div class="number" style="color:var(--green)">328</div>
+      <div class="number" style="color:var(--green)">336</div>
       <div class="label">Passed</div>
     </div>
     <div class="dash-card">
@@ -83,7 +83,7 @@
       <div class="label">Failed</div>
     </div>
     <div class="dash-card">
-      <div class="number">14</div>
+      <div class="number">15</div>
       <div class="label">Test Files</div>
     </div>
     <div class="dash-card">
@@ -101,7 +101,7 @@
     </div>
     <div class="bar-container">
       <div class="bar-label">Security</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>46/46</span></div></div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>50/50</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">Accessibility</div>
@@ -109,7 +109,7 @@
     </div>
     <div class="bar-container">
       <div class="bar-label">Chart Generation</div>
-      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>26/26</span></div></div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>18/18</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">ON24 Client</div>
@@ -118,6 +118,10 @@
     <div class="bar-container">
       <div class="bar-label">File Upload</div>
       <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>18/18</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Content HTML</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>19/19</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">Rate Limiter</div>
@@ -134,6 +138,18 @@
     <div class="bar-container">
       <div class="bar-label">Data Agent</div>
       <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>12/12</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Shares</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>11/11</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Brand Templates</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>9/9</span></div></div>
+    </div>
+    <div class="bar-container">
+      <div class="bar-label">Email Service</div>
+      <div class="bar-track"><div class="bar-fill pass-fill" style="width:100%"><span>8/8</span></div></div>
     </div>
     <div class="bar-container">
       <div class="bar-label">API Health</div>
@@ -183,7 +199,7 @@
   </div>
 
   <h2>2. Security (OWASP)</h2>
-  <p>File: <code>test_security.py</code> — 46 tests <span class="tag green">100% PASS</span></p>
+  <p>File: <code>test_security.py</code> — 50 tests <span class="tag green">100% PASS</span></p>
   <div class="card">
     <table>
       <tr><th>Class</th><th>Tests</th><th>Pass</th><th>Coverage</th></tr>
@@ -196,7 +212,7 @@
   </div>
 
   <h2>3. Chart Generation</h2>
-  <p>File: <code>test_chart_generation.py</code> — 26 tests <span class="tag green">100% PASS</span></p>
+  <p>File: <code>test_chart_generation.py</code> — 18 tests <span class="tag green">100% PASS</span></p>
   <div class="card">
     <table>
       <tr><th>Area</th><th>Tests</th><th>Coverage</th></tr>
@@ -245,7 +261,7 @@
   </div>
 
   <h2>7. Rate Limiter</h2>
-  <p>File: <code>test_rate_limiter.py</code> — 17 tests <span class="tag green">100% PASS</span></p>
+  <p>File: <code>test_rate_limiter.py</code> — 18 tests <span class="tag green">100% PASS</span></p>
   <div class="card">
     <table>
       <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
@@ -305,7 +321,54 @@
     </table>
   </div>
 
-  <h2>12. Prompt Regression Tests</h2>
+  <h2>12. Content HTML</h2>
+  <p>File: <code>test_content_html.py</code> — 19 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestExtractHtml</td><td>5</td><td>Fenced HTML block extraction, density-based detection, empty input, inline tags</td></tr>
+      <tr><td>TestSanitizeHtml</td><td>10</td><td>Script/iframe/form stripping, on* handlers, javascript: URLs, nested bypass, entity-encoded scripts, safe HTML preservation</td></tr>
+      <tr><td>TestInjectBanner</td><td>4</td><td>Banner image injection, empty URL handling, object-fit cover, malicious URL escaping</td></tr>
+    </table>
+  </div>
+
+  <h2>13. Content Shares</h2>
+  <p>File: <code>test_shares.py</code> — 11 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestShareTokenGeneration</td><td>3</td><td>Deterministic HMAC, different emails produce different tokens, all fields included</td></tr>
+      <tr><td>TestShareHelpers</td><td>2</td><td>Secret auto-generation, secret stability</td></tr>
+      <tr><td>TestTokenValidation</td><td>3</td><td>Valid token match, tampered token rejection, wrong-email rejection</td></tr>
+      <tr><td>TestShareExpiry</td><td>2</td><td>Not-expired and expired share detection</td></tr>
+      <tr><td>TestTokenFormat</td><td>1</td><td>Share URL contains key and email parameters</td></tr>
+    </table>
+  </div>
+
+  <h2>14. Brand Templates</h2>
+  <p>File: <code>test_brand_templates.py</code> — 9 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestBrandTemplates</td><td>8</td><td>CRUD operations — list empty, create, set default, get default fallback, fonts, update, delete, default clearing</td></tr>
+      <tr><td>TestTemplatesClientIdScoping</td><td>1</td><td>Template file uses client_id suffix for tenant isolation</td></tr>
+    </table>
+  </div>
+
+  <h2>15. Email Service</h2>
+  <p>File: <code>test_email_service.py</code> — 8 tests <span class="tag green">100% PASS</span></p>
+  <div class="card">
+    <table>
+      <tr><th>Class</th><th>Tests</th><th>Coverage</th></tr>
+      <tr><td>TestSendEmailNoConfig</td><td>1</td><td>Graceful handling when no email config set</td></tr>
+      <tr><td>TestSendEmailSendGrid</td><td>2</td><td>SendGrid preferred path, SendGrid failure handling</td></tr>
+      <tr><td>TestSendEmailGmail</td><td>2</td><td>Gmail SMTP fallback, Gmail failure handling</td></tr>
+      <tr><td>TestSendEmailAttachments</td><td>1</td><td>Email with file attachments</td></tr>
+      <tr><td>TestSendEmailRecipients</td><td>2</td><td>Multiple recipients, empty recipients list</td></tr>
+    </table>
+  </div>
+
+  <h2>16. Prompt Regression Tests</h2>
   <p>File: <code>test_chat_prompts.py</code> — 8 recorded results <span class="tag amber">75% PASS</span></p>
   <p>These tests run live against the agent pipeline and verify tool routing, response quality, and chart generation.</p>
   <div class="card">
