@@ -333,10 +333,10 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
 - [x] Reload admin dropdown when client_id changes via breadcrumb — watches selectedClientId, commit edaf511
 - [x] Populate api-vs-db-benchmark.html — added Section 7 listing all actively used REST endpoints with reasons
-- [ ] Technical contact lookup on home page via /v2/client/{clientId}/technicalrep
+- [x] Technical contact lookup on home page — GET /api/technicalrep, shows first 3 names, commit f0829b9
 - [x] Fix concierge no-response for "what helper endpoints in REST?" — removed tools from KB followup call, commit d8a4d58
 - [x] manage-forums-lite — no UI link to filter (Forums not in EXPERIENCE_LINKS/CONFIG_LINKS); permission tag shows correctly
-- [ ] Enhance test coverage — response_cache, knowledge_base, brand_voice
+- [x] Enhance test coverage — 13 response_cache tests (cache key, get, set, close, Redis unavailable)
 
 ## Verified ON24 Schema (on24master)
 
