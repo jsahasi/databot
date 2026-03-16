@@ -340,9 +340,11 @@ class OrchestratorAgent:
                         })
 
                         # Let the orchestrator generate a grounded text response (no tools — prevents recursion)
+                        # Use Haiku for synthesis: KB articles are already retrieved; simple text composition
+                        # doesn't need Sonnet reasoning — saves ~3s per concierge response.
                         try:
                             followup = await self.client.messages.create(
-                                model=self.model,
+                                model="claude-haiku-4-5-20251001",
                                 max_tokens=2048,
                                 system=system_blocks,
                                 messages=self.conversation_history,

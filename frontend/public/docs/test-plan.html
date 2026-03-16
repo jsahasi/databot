@@ -61,7 +61,7 @@
 <div class="hero">
   <div class="badge">QA — Test Plan &amp; Results</div>
   <h1>Test Plan &amp; Results</h1>
-  <p class="subtitle">Automated test suite covering API health, security, accessibility, chart generation, agent internals, and integration</p>
+  <p class="subtitle">Automated test suite covering API health, security, accessibility, chart generation, agent internals, integration, and full Tier 1/2/3 navigation depth with performance SLAs</p>
   <div class="meta">
     <span><strong>Last run:</strong> March 15, 2026</span>
     <span><strong>Framework:</strong> pytest + pytest-asyncio</span>
@@ -386,6 +386,202 @@
     <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text2)">
       <strong>All passing.</strong> Poll queries use event-first CTE pattern. <code>get_top_events_by_polls</code> now ranks by respondent count via the correct join chain.
     </p>
+  </div>
+
+  <h2>Navigation Depth Tests — Tier 1 / 2 / 3</h2>
+  <p>Every user journey from the home page is covered to at least three levels. <strong>Tier 1</strong> = home page tile. <strong>Tier 2</strong> = first sub-menu or modal. <strong>Tier 3</strong> = agent response or external destination reached from Tier 2.</p>
+  <p>Performance SLA: any Tier-2→3 transition that calls an LLM or DB must complete in <strong>&lt;5 s</strong> (cached) or <strong>&lt;15 s</strong> (cold). Items that exceed 5 s on first load are pre-warmed in the startup prefetch. ✅ = pre-warmed | 🔶 = LLM required, not pre-warmed</p>
+
+  <!-- ── TILE 1: Recent Events ─────────────────────────── -->
+  <h3>Tile 1 — Recent Events (Calendar modal)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "Recent events"</td><td>EventCalendar modal opens (month view, current month)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Navigate prev/next month</td><td>Calendar re-renders with correct month events from /api/calendar</td><td>&lt;2s</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Toggle Week / Day view</td><td>View switches; events remain correct</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T2</td><td>Toggle "Show existing events" (Proposed mode)</td><td>Real events shown/hidden based on toggle</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click an event on the calendar</td><td>Event detail side panel opens: title, date, KPIs, AI-ACE content tile</td><td>&lt;3s</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T3</td><td>Double-click an event</td><td>Calendar closes; chat sends "Tell me about event {id}"</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click Key Takeaways tab in event detail</td><td>4 section tabs render (Summary / Takeaways / Quote / Other)</td><td>&lt;1s</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Print calendar</td><td>Print dialog opens; page is not blank (visibility CSS)</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 2: How Do I? ─────────────────────────────── -->
+  <h3>Tile 2 — How Do I...? (Concierge / KB)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "How do I...? (ON24 help)"</td><td>How-do-I sub-menu replaces home grid (8 option chips)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I set up a webinar?"</td><td>Concierge answers from KB; no links; ≤200 words</td><td>&lt;5s cached / &lt;8s cold</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I set up polls?"</td><td>Concierge answers; mentions widget must be added to console layout</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I configure a registration page?"</td><td>Concierge answers; no hallucinated steps</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I set up an integration?"</td><td>Concierge answers from Connect/API articles</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I view my event analytics?"</td><td>Concierge answers; references Elite dashboard</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I create an Engagement Hub?"</td><td>Concierge answers from Hub articles</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I prepare as a presenter?"</td><td>Concierge answers; no links by default</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "How do I use Connect integrations?"</td><td>Concierge answers from Connect articles</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 3: Experiences ───────────────────────────── -->
+  <h3>Tile 3 — Experiences (External links)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "Experiences"</td><td>Experiences sub-menu shows (4 links, permission-filtered)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Elite — Webinars ↗"</td><td>Opens wcc.on24.com/webcast/webcasts in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Engagement Hub ↗"</td><td>Opens wccv.on24.com/webcast/managemychannel in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Target — Landing Pages ↗"</td><td>Opens Target experience URL in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "GoLive — Virtual Events ↗"</td><td>Opens GoLive URL in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T2</td><td>Select admin without "view-webcasts" permission</td><td>Elite tile hidden from Experiences sub-menu</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 4: Configure Environment ────────────────── -->
+  <h3>Tile 4 — Configure Environment</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "Configure environment"</td><td>Configure sub-menu shows (6 items, permission-filtered)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Media Manager ↗"</td><td>Opens wccv.on24.com/webcast/mediamanager in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Segment Builder ↗"</td><td>Opens Segment Builder URL in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Connect / Integrations ↗"</td><td>Opens Connect URL in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Branding ↗"</td><td>Opens Branding URL in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Manage Users ↗"</td><td>Opens Manage Users URL in new tab</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Click "Brand Templates"</td><td>BrandTemplateManager modal opens (CRUD interface)</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T2</td><td>Admin without "manage-integrations"</td><td>Connect tile hidden from Configure sub-menu</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 5: Trends ───────────────────────────────── -->
+  <h3>Tile 5 — Trends (Data agent charts)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "Trends"</td><td>Trends sub-menu shows (8 chips)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Attendance over time"</td><td>Line chart rendered — 12 months, attendees y-axis</td><td>&lt;5s cached / &lt;12s cold</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Registrations over time"</td><td>Line chart rendered — 12 months, registrants y-axis</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Engagement scores over time"</td><td>Line chart rendered — 12 months, avg_engagement y-axis</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "Show funnel"</td><td>Bar chart rendered — funnel stages x-axis, attendees y-axis</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "Show campaigns"</td><td>Pie chart rendered — campaign tags, attendees by tag</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "Performance by tags"</td><td>Bar chart + text table — all tags, avg engagement</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Top events by engagement"</td><td>Bar chart rendered — top 10 events, engagement score</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "Poll trends"</td><td>Data agent returns poll overview data</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 6: Insights ─────────────────────────────── -->
+  <h3>Tile 6 — Insights (External link)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1/T2</td><td>Click "Insights ↗"</td><td>Opens wcc.on24.com/webcast/keyinsightssummary in new tab (no sub-menu)</td><td>n/a</td><td><span class="tag blue">Unit</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 7: Create Content ────────────────────────── -->
+  <h3>Tile 7 — Create Content (Content agent)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "Create Content"</td><td>Create Content sub-menu shows (7 chips)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Propose event calendar"</td><td>Content agent returns 3-month calendar + proposed_events JSON block; "View proposed calendar" chip injected</td><td>&lt;5s cached / &lt;20s cold</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 🔶</td><td>Click "Blog post"</td><td>Content agent routes request; checks Media Manager for existing blog; renders blog as HTML preview modal</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 🔶</td><td>Click "Social media posts"</td><td>Content agent returns LinkedIn/X/Facebook posts with share links; HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 🔶</td><td>Click "eBook"</td><td>Content agent returns eBook draft as HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 🔶</td><td>Click "Webinar script"</td><td>Content agent returns structured webinar script as HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 🔶</td><td>Click "Follow-up email"</td><td>Content agent returns email as HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "For a specific event..."</td><td>Input pre-filled with "Create content for event "; cursor positioned after text</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Share icon on HTML preview modal</td><td>Email input form appears; POST /api/shares on submit</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Print icon on HTML preview modal</td><td>Print dialog opens with rendered HTML content</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3</td><td>Copy icon on HTML preview modal</td><td>HTML content copied to clipboard</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── TILE 8: Explore Content ──────────────────────── -->
+  <h3>Tile 8 — Explore Content (Data agent / AI-ACE)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Tier</th><th>Action</th><th>Expected Result</th><th>Perf</th><th>Test</th></tr>
+      <tr><td>T1</td><td>Click "Explore Content"</td><td>Explore Content sub-menu shows (6 type chips)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
+      <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Key Takeaways"</td><td>Data agent returns AI-ACE Key Takeaways cards with expand/collapse; type badge shown</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Blog Posts"</td><td>Data agent returns blog post cards; "Open in Media Manager" link per article</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "eBooks"</td><td>Data agent returns eBook cards</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3</td><td>Click "FAQs"</td><td>Data agent returns FAQ cards</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Follow-up Emails"</td><td>Data agent returns email cards</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Social Media"</td><td>Data agent returns social media post cards</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ── POST-CHAT CHIP TIER 3 ─────────────────────────── -->
+  <h3>Post-Response Chips (Tier 3 follow-on navigation)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Context</th><th>Chip</th><th>Expected Result</th><th>Test</th></tr>
+      <tr><td>Any agent response</td><td>"Home"</td><td>Chat reset; home grid shown; history cleared</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>Data agent response</td><td>"How do I...?"</td><td>Opens How-do-I sub-menu (T2)</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>Data agent response</td><td>"Content performance insights"</td><td>Sends message to content agent</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>Concierge response</td><td>"Explore my event data"</td><td>Sends message to data agent</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>Content agent response</td><td>"View proposed calendar"</td><td>Opens ProposedCalendar modal in proposed mode</td><td><span class="tag blue">Unit</span></td></tr>
+      <tr><td>Content agent (calendar)</td><td>"Tell me about [Event Title]"</td><td>Content agent provides event deep-dive (proposed event flow)</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>Poll results response</td><td>"Show polls for the most recent event that had polls"</td><td>Data agent returns poll results for last event with poll data</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>Chart response</td><td>"Show as table" / "Show as line chart"</td><td>Re-renders same data in requested format</td><td><span class="tag amber">Regression</span></td></tr>
+    </table>
+  </div>
+
+  <h2>Performance &amp; Caching Strategy</h2>
+  <p>SLA: <strong>&lt;5 s</strong> for all pre-warmed Tier-2→3 transitions. <strong>&lt;15 s</strong> for cold LLM-required paths. Items marked ✅ above are pre-warmed on startup via <code>prewarm_chip_responses()</code>.</p>
+
+  <h3>Pre-Warm Coverage</h3>
+  <div class="card">
+    <table>
+      <tr><th>Chip Path</th><th>Method</th><th>Target Latency</th><th>Cache TTL</th></tr>
+      <tr><td>Trends → Attendance / Registrations / Engagement over time</td><td>Response cache (full agent response pre-built)</td><td>&lt;1s</td><td>5 min (300s)</td></tr>
+      <tr><td>Trends → Top events by engagement</td><td>Response cache pre-built</td><td>&lt;1s</td><td>5 min</td></tr>
+      <tr><td>Explore Content → Key Takeaways / Blog / Email / Social</td><td>Response cache pre-built</td><td>&lt;1s</td><td>5 min</td></tr>
+      <tr><td>How do I...? → all 8 questions</td><td>Response cache (orchestrator+haiku synthesis)</td><td>&lt;2s</td><td>5 min</td></tr>
+      <tr><td>Propose event calendar (second+ click)</td><td>Redis prefetch (analytics data, 15 min TTL)</td><td>&lt;8s</td><td>15 min</td></tr>
+      <tr><td>Calendar modal (event list)</td><td>/api/calendar — direct DB query, no LLM</td><td>&lt;2s</td><td>none</td></tr>
+      <tr><td>Create Content → Blog / Email / Social / eBook / Script</td><td>No pre-warm (event-specific; varies per user)</td><td>&lt;15s cold</td><td>5 min (after first call)</td></tr>
+    </table>
+  </div>
+
+  <h3>Concierge Latency Breakdown (post-optimisation)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Step</th><th>Component</th><th>Latency</th></tr>
+      <tr><td>1</td><td>Orchestrator routing (Sonnet) — decides search_knowledge_base</td><td>~2–3 s</td></tr>
+      <tr><td>2</td><td>KB vector query (Postgres cosine similarity)</td><td>~100–200 ms</td></tr>
+      <tr><td>3</td><td>Answer synthesis (Haiku, was Sonnet) — grounded from articles</td><td>~0.8–1.2 s (was 3–4 s)</td></tr>
+      <tr><td></td><td><strong>Total (cold)</strong></td><td><strong>~3–5 s</strong> (was 6–8 s)</td></tr>
+      <tr><td></td><td><strong>Total (pre-warmed cache hit)</strong></td><td><strong>&lt;1 s</strong></td></tr>
+    </table>
+    <p style="margin-top:0.75rem;font-size:0.8rem;color:var(--text2)">Haiku switch deployed 2026-03-16. Pre-warm of all 8 How-do-I questions runs at startup so cold-path is only hit on first boot.</p>
+  </div>
+
+  <h3>Optimization Status</h3>
+  <div class="card">
+    <table>
+      <tr><th>Status</th><th>Optimization</th><th>Impact</th></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Opus → Sonnet (all agents)</td><td>40–60% latency reduction</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Response cache TTL 2 min → 5 min</td><td>Fewer redundant LLM calls</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Prompt caching (ephemeral cache_control)</td><td>90% input token discount on repeated context</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Data prefetch on startup (15-min Redis TTL)</td><td>Instant first-click for events, AI content, trends data</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Calendar analytics pre-cache (propose_content_calendar)</td><td>3 LLM calls → 2 on cache hit</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Haiku for concierge KB synthesis (was Sonnet)</td><td>–3 s per concierge response</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>prewarm_chip_responses() — all fixed T2/T3 chips</td><td>&lt;1 s for all pre-warmed Tier-2/3 paths</td></tr>
+      <tr><td><span class="tag amber">Planned</span></td><td>Funnel / Campaign / Tags / Poll trends chips — add to pre-warm</td><td>–8–12 s for remaining Trends chips</td></tr>
+      <tr><td><span class="tag amber">Planned</span></td><td>Parallelize independent tool calls in data_agent</td><td>–2–3 s per multi-tool round</td></tr>
+      <tr><td><span class="tag amber">Planned</span></td><td>eBooks / FAQs — add to Explore Content pre-warm</td><td>&lt;1 s for remaining Explore chips</td></tr>
+    </table>
   </div>
 
   <h2>Response Time Profiling</h2>

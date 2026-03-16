@@ -184,6 +184,13 @@ async def prefetch_common_data() -> None:
     except Exception as e:
         logger.warning(f"Prefetch calendar data failed (outer): {e}")
 
+    # 7. Pre-warm fixed Tier-2 chip responses (Trends + Explore Content + How-do-I)
+    #    These are constant prompts — caching them makes Tier-2/3 navigation <1s.
+    try:
+        await prewarm_chip_responses(client_id)
+    except Exception as e:
+        logger.warning(f"Prefetch chip pre-warm failed: {e}")
+
     elapsed = asyncio.get_event_loop().time() - t0
     logger.info(f"Prefetch complete in {elapsed:.1f}s for client {client_id}")
 
@@ -225,3 +232,84 @@ async def prefetch_calendar_data(client_id: int | None = None) -> bool:
 async def get_prefetched_calendar_data(client_id: int) -> dict | None:
     """Return pre-fetched calendar analytics, or None if not cached."""
     return await get_prefetched(CALENDAR_DATA_KEY, client_id)
+
+
+# Fixed Tier-2 chip prompts that are candidates for pre-warming.
+# Key = display label used in the UI, value = prompt sent to the agent.
+TRENDS_CHIP_PROMPTS: list[tuple[str, str]] = [
+    ("Attendance over time",       "Show me attendance trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"attendees\"]. Title: \"Attendance Over Time\"."),
+    ("Registrations over time",    "Show me registration trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"registrants\"]. Title: \"Registrations Over Time\"."),
+    ("Engagement scores over time","Show me average engagement score trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"avg_engagement\"]. Title: \"Avg Engagement Score Over Time\"."),
+    ("Top events by engagement",   "Show me the top 10 events by engagement score as a bar chart."),
+]
+
+EXPLORE_CONTENT_PROMPTS: list[tuple[str, str]] = [
+    ("Key Takeaways",    "Show me the most recent AI-generated Key Takeaways articles"),
+    ("Blog Posts",       "Show me the most recent AI-generated blog posts"),
+    ("Follow-up Emails", "Show me the most recent AI-generated follow-up emails"),
+    ("Social Media",     "Show me the most recent AI-generated social media posts"),
+]
+
+HOW_DO_I_PROMPTS: list[str] = [
+    "How do I set up a webinar?",
+    "How do I set up polls for my event?",
+    "How do I configure a registration page?",
+    "How do I set up an integration?",
+    "How do I view my event analytics?",
+    "How do I create an Engagement Hub?",
+    "How do I prepare as a presenter?",
+    "How do I use Connect integrations?",
+]
+
+
+async def prewarm_chip_responses(client_id: int) -> None:
+    """Pre-warm response cache for all fixed Tier-2 chip prompts.
+
+    Calls the DataAgent and OrchestratorAgent directly for fixed prompts so the
+    first user to click any Tier-2 chip gets a cached response (<1s) instead of
+    waiting for a live LLM call (~5-10s).
+
+    Only warms if the cache entry is missing — safe to call repeatedly.
+    """
+    from app.services.response_cache import get_cached_response, cache_response
+    from app.agents.data_agent import DataAgent
+    from app.agents.orchestrator import OrchestratorAgent
+
+    data_agent = DataAgent()
+    orch = OrchestratorAgent()
+
+    async def _warm_data(prompt: str) -> None:
+        """Warm a single data-agent prompt if not already cached."""
+        if await get_cached_response(prompt, client_id):
+            return  # already warm
+        try:
+            result = await data_agent.run(prompt)
+            await cache_response(prompt, client_id, result)
+            logger.debug(f"Chip pre-warm cached: {prompt[:60]}")
+        except Exception as e:
+            logger.debug(f"Chip pre-warm failed for '{prompt[:40]}': {e}")
+
+    async def _warm_orch(prompt: str) -> None:
+        """Warm an orchestrator prompt (concierge how-to) if not already cached."""
+        if await get_cached_response(prompt, client_id):
+            return
+        try:
+            result = await orch.process_message(prompt)
+            if result.get("agent_used") == "concierge":
+                await cache_response(prompt, client_id, result)
+                logger.debug(f"How-to pre-warm cached: {prompt[:60]}")
+        except Exception as e:
+            logger.debug(f"How-to pre-warm failed for '{prompt[:40]}': {e}")
+
+    # Trends chips (parallel)
+    await asyncio.gather(*[_warm_data(p) for _, p in TRENDS_CHIP_PROMPTS], return_exceptions=True)
+    logger.info("Chip pre-warm: Trends done")
+
+    # Explore Content chips (parallel)
+    await asyncio.gather(*[_warm_data(p) for _, p in EXPLORE_CONTENT_PROMPTS], return_exceptions=True)
+    logger.info("Chip pre-warm: Explore Content done")
+
+    # How-do-I chips (parallel — each spawns 2 LLM calls so throttle slightly)
+    for prompt in HOW_DO_I_PROMPTS:
+        await _warm_orch(prompt)
+    logger.info("Chip pre-warm: How-do-I done")
