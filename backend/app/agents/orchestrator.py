@@ -103,7 +103,13 @@ class OrchestratorAgent:
         },
         {
             "name": "route_to_data_agent",
-            "description": "Route the user's question to the Data Agent for database queries, analytics, KPIs, and chart generation.",
+            "description": (
+                "Route the user's question to the Data Agent for database queries, analytics, "
+                "KPIs, attendance trends, and chart generation. "
+                "Do NOT use this tool when the user asks to write, draft, or create content "
+                "(blog posts, emails, social media posts, etc.) — even if they reference a specific "
+                "event. Use route_to_content_agent instead."
+            ),
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -114,11 +120,19 @@ class OrchestratorAgent:
         },
         {
             "name": "route_to_content_agent",
-            "description": "Route to Content Agent for content strategy, topic recommendations, and writing/drafting articles.",
+            "description": (
+                "Route to Content Agent for: content strategy, topic recommendations, AND "
+                "writing/drafting ANY content (blog posts, emails, social media posts, FAQs, "
+                "key takeaways, eBooks, webinar scripts). "
+                "IMPORTANT: Use this tool even when the user says 'based on my most recent event', "
+                "'based on event X', or references a specific event — the Content Agent has its own "
+                "list_events and get_ai_content tools and will look up the event itself. "
+                "Do NOT route to the Data Agent first to fetch event details for content writing."
+            ),
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "The refined query for content analysis"},
+                    "query": {"type": "string", "description": "The refined query for content creation or analysis"},
                 },
                 "required": ["query"],
             },
