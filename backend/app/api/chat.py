@@ -118,6 +118,44 @@ async def _build_restriction_context(permissions: list[str]) -> str:
     )
 
 
+def _extract_inline_options(text: str) -> list[str] | None:
+    """Extract ≤5 agent-presented options from the tail of a response for use as chips.
+
+    Matches lines like:
+      - Extend the horizon — push this out to 6 or 12 months
+      1. Shift funnel weighting — heavier BOFU focus
+      • Adjust for a different success metric
+
+    Returns the short label (part before ' — ' or first 6 words) if 2–5 items found,
+    else None.
+    """
+    # Strip trailing proposed_events / quick_replies blocks
+    clean = re.sub(r'```\w*[\s\S]*?```', '', text).strip()
+    lines = clean.splitlines()
+    items: list[str] = []
+    for line in reversed(lines):
+        stripped = line.strip()
+        m = re.match(r'^(?:[-•*]|\*\*[-•*]\*\*|\d+[.)]\s*(?:\*\*)?)\s*(.+)', stripped)
+        if m:
+            label = m.group(1).strip().rstrip('*')
+            # Use only the part before ' — ' or ' - ' (the short version)
+            for sep in (' — ', ' – ', ' - '):
+                if sep in label:
+                    label = label.split(sep)[0].strip()
+                    break
+            else:
+                # Fallback: first 6 words
+                words = label.split()
+                label = ' '.join(words[:6]) + ('…' if len(words) > 6 else '')
+            if label:
+                items.insert(0, label)
+        elif stripped == '' or re.match(r'^[A-Z*#]', stripped):
+            # Blank line or new section heading — stop scanning upward
+            if items:
+                break
+    return items if 2 <= len(items) <= 5 else None
+
+
 async def generate_suggestions(
     user_message: str,
     response_text: str,
@@ -187,11 +225,22 @@ async def generate_suggestions(
             "Return only a JSON array of exactly 2 strings, nothing else."
         )
     else:
+        is_calendar = agent_used == "content_agent" and any(
+            kw in response_text.lower() for kw in ("tofu", "mofu", "bofu", "content calendar", "proposed event", "apr ", "may ", "jun ", "jul ", "aug ")
+        )
+        calendar_rule = (
+            "\n\nThe response was a PROPOSED CONTENT CALENDAR. "
+            "Suggest 2 things the user can do next:\n"
+            "- Ask for a deeper dive on one of the proposed events (suggest one by its actual title, e.g. 'Tell me more about [Event Title]')\n"
+            "- Refine the calendar (extend the horizon, shift funnel weighting, focus on a theme)\n"
+            "Do NOT use event IDs or numbers. Reference events by their title only."
+        ) if is_calendar else ""
         system_prompt = (
             "You anticipate the next 2 questions a user would naturally ask next in a "
             "webinar analytics chatbot conversation. Think ahead: if they just saw one event, "
             "they'll want KPIs, attendees, polls, trends, comparisons, etc. "
             f"{view_rule}"
+            f"{calendar_rule}"
             "Each suggestion must be 3-7 words, conversational, specific to the context. "
             "\n\nCRITICAL — Only suggest things the system can actually do. "
             "The system has these capabilities ONLY:\n"
@@ -466,6 +515,9 @@ async def websocket_chat(websocket: WebSocket):
                     _has_chart = bool(_chart_data)
                     _chart_type = _chart_data.get("type") if _chart_data else None
                     _response_text = result.get("text", "")
+                    # Strip proposed_events JSON block before passing to Haiku — it contains
+                    # negative placeholder IDs that cause chips like "Tell me about event -1"
+                    _suggestions_text = re.sub(r'```proposed_events[\s\S]*?```', '', _response_text).strip()
                     _has_table = "|" in _response_text and "---" in _response_text
 
                     async def _send_suggestions(
@@ -473,6 +525,27 @@ async def websocket_chat(websocket: WebSocket):
                         has_chart: bool, has_table: bool, chart_type: str | None,
                     ) -> None:
                         try:
+                            # If the response presents ≤5 inline options, promote them to chips directly
+                            inline_opts = _extract_inline_options(text)
+                            if inline_opts:
+                                # Always append agent-switch + Home after the inline options
+                                _AGENT_SWITCHES_LOCAL: dict[str | None, list[str]] = {
+                                    "content_agent": ["Explore my event data", "How do I...?"],
+                                    "data_agent":    ["How do I...?", "Content performance insights"],
+                                    None:            ["Explore my event data", "How do I...?"],
+                                }
+                                tail = _AGENT_SWITCHES_LOCAL.get(agent, _AGENT_SWITCHES_LOCAL[None])
+                                suggestions = inline_opts + [t for t in tail if t not in inline_opts] + ["Home"]
+                                # Still inject calendar chip for calendar responses
+                                if agent == "content_agent" and any(
+                                    kw in text.lower() for kw in ("tofu", "mofu", "bofu", "content calendar", "proposed event")
+                                ):
+                                    cal_chip = "View proposed calendar"
+                                    if cal_chip not in suggestions:
+                                        suggestions = [cal_chip] + [s for s in suggestions if s != cal_chip]
+                                await ws.send_json({"type": "suggestions", "suggestions": suggestions})
+                                return
+
                             suggestions = await asyncio.wait_for(
                                 generate_suggestions(user_msg, text, agent, has_chart, has_table, chart_type),
                                 timeout=8.0,
@@ -506,7 +579,7 @@ async def websocket_chat(websocket: WebSocket):
                     asyncio.create_task(_send_suggestions(
                         websocket,
                         content,
-                        _response_text,
+                        _suggestions_text,
                         result.get("agent_used"),
                         _has_chart,
                         _has_table,
@@ -514,12 +587,17 @@ async def websocket_chat(websocket: WebSocket):
                     ))
 
                 except Exception as e:
-                    # Log full detail server-side; send only a generic message to the client
+                    # Log full detail server-side; send only a safe message to the client
                     # to prevent leaking stack traces, SQL errors, or internal details (A02).
                     logger.error(f"Agent error: {e}", exc_info=True)
+                    _err_str = str(e).lower()
+                    if any(kw in _err_str for kw in ("timeout", "connecttimeout", "timed out")):
+                        _user_msg = "Network timeout connecting to AI service. Please try again."
+                    else:
+                        _user_msg = "An error occurred processing your request. Please try again."
                     await websocket.send_json({
                         "type": "error",
-                        "message": "An error occurred processing your request. Please try again.",
+                        "message": _user_msg,
                     })
 
             elif data.get("type") == "reset":

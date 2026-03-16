@@ -71,6 +71,26 @@ async def get_attendance_trends():
     return {"trends": trends, "source": "live"}
 
 
+@router.get("/calendar-data")
+async def get_calendar_data():
+    """Return prefetched calendar analytics (attendance trends + top events by engagement).
+
+    Called by the frontend when the user clicks 'Propose event calendar' to pre-warm the
+    cache before the LLM flow starts, eliminating the data agent step.
+    """
+    client_id = get_client_id()
+    from app.services.data_prefetch import get_prefetched_calendar_data
+    cached = await get_prefetched_calendar_data(client_id)
+    if cached:
+        return {"data": cached, "source": "prefetch"}
+
+    # Trigger a background warm and return empty — caller can retry
+    from app.services.data_prefetch import prefetch_calendar_data
+    import asyncio
+    asyncio.create_task(prefetch_calendar_data(client_id))
+    return {"data": None, "source": "warming"}
+
+
 @router.post("/refresh")
 async def refresh_prefetch():
     """Manually trigger a prefetch refresh."""

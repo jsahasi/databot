@@ -26,7 +26,10 @@ function LayoutInner() {
         </main>
       </div>
       <EventCalendar isOpen={isCalendarOpen} proposedMode={calendarProposedMode} proposedEvents={proposedEvents} onClose={closeCalendar} onEventToChat={(ev) => {
-        sendMessage(`Tell me about event ${ev.event_id} — ${ev.title}`)
+        const msg = ev.event_id < 0
+          ? `Tell me about this proposed event — ${ev.title}`
+          : `Tell me about event ${ev.event_id} — ${ev.title}`
+        sendMessage(msg)
         closeCalendar()
       }} />
     </div>

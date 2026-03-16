@@ -827,10 +827,26 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
     finally { setLoading(false) }
   }, [])
 
-  // Reset to today + toggle off whenever modal opens
+  // Keep refs so the isOpen effect always reads current values without stale closure
+  const proposedModeRef = useRef(proposedMode)
+  proposedModeRef.current = proposedMode
+  const proposedEventsRef = useRef(proposedEvents)
+  proposedEventsRef.current = proposedEvents
+
+  // Reset to today (or first proposed event month) whenever modal opens
   useEffect(() => {
     if (isOpen) {
-      const d = new Date()
+      let d = new Date()
+
+      if (proposedModeRef.current && proposedEventsRef.current.length > 0) {
+        // Jump to the earliest month that contains at least one proposed event
+        const firstMonth = [...new Set(proposedEventsRef.current.map(e => e.date.slice(0, 7)))].sort()[0]
+        if (firstMonth) {
+          const [y, m] = firstMonth.split('-').map(Number)
+          d = new Date(y, m - 1, 1)
+        }
+      }
+
       setYear(d.getFullYear())
       setMonth(d.getMonth())
       setDayDate(d)

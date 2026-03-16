@@ -19,6 +19,35 @@ _ORCHESTRATOR_TEMPLATE = (Path(__file__).parent / "prompts" / "orchestrator.md")
 
 import re
 
+
+def _is_timeout(exc: Exception) -> bool:
+    """Return True if the exception looks like a network/connect timeout."""
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("timeout", "connecttimeout", "timed out", "connect"))
+
+
+def _log_error_to_inbox(context: str, user_query: str, error_detail: str) -> None:
+    """Append a structured error entry to today's improvement-inbox file."""
+    try:
+        from datetime import datetime, timezone
+        from pathlib import Path
+        now = datetime.now(timezone.utc)
+        data_dir = Path("/app/data")
+        data_dir.mkdir(parents=True, exist_ok=True)
+        filename = data_dir / f"improvement-inbox-{now.strftime('%m-%d-%Y')}.txt"
+        entry = (
+            f"\n{'='*60}\n"
+            f"[AUTO-ERROR] {now.isoformat()}\n"
+            f"Context: {context}\n"
+            f"User query: {user_query[:300]}\n"
+            f"Error: {error_detail[:500]}\n"
+        )
+        with open(filename, "a", encoding="utf-8") as f:
+            f.write(entry)
+    except Exception:
+        pass  # Never let logging block the request
+
+
 def _extract_proposed_events(text: str) -> list[dict] | None:
     """Extract proposed_events JSON from a fenced block in the content agent response."""
     # Try exact tag first, then any fenced block containing a JSON array with date/title keys
@@ -172,6 +201,73 @@ class OrchestratorAgent:
                 "confirmation_summary": str | None,
             }
         """
+        import re as _re
+
+        # If the user typed just a number (or ordinal word), check whether the last assistant
+        # message contained a numbered list of options — and if so, expand the selection.
+        _num_match = _re.fullmatch(
+            r'\s*(?:(\d+)|one|first|two|second|three|third|four|fourth|five|fifth)\s*[.)]?\s*',
+            user_message,
+            _re.IGNORECASE,
+        )
+        if _num_match:
+            _word_map = {"one": 1, "first": 1, "two": 2, "second": 2,
+                         "three": 3, "third": 3, "four": 4, "fourth": 4, "five": 5, "fifth": 5}
+            _n = int(_num_match.group(1)) if _num_match.group(1) else _word_map.get(user_message.strip().lower().rstrip('.'), 0)
+            # Find the last plain-text assistant turn
+            _last_text = next(
+                (m["content"] for m in reversed(self.conversation_history)
+                 if m["role"] == "assistant" and isinstance(m["content"], str)),
+                "",
+            )
+            # Extract numbered options from that turn
+            _opts: list[str] = []
+            for _line in _last_text.splitlines():
+                _om = _re.match(r'^\s*(\d+)[.)]\s*(?:\*{1,2})?(.+?)(?:\*{1,2})?(?:\s*[—–-].*)?$', _line.strip())
+                if _om:
+                    _opts.append((_om.group(1), _om.group(2).strip()))
+            if _opts and 1 <= _n <= len(_opts):
+                _selected_label = _opts[_n - 1][1]
+                user_message = (
+                    f"Option {_n}: {_selected_label}"
+                )
+
+        # Detect references to proposed-calendar events:
+        #   "Tell me about event -1 — Title"  (old chip format, still handle for safety)
+        #   "Tell me about this proposed event — Title"  (new chip format)
+        _proposed_match = _re.search(
+            r'(?:\bevent\s+-\d+|this proposed event)\s*(?:[—\-]+\s*(.+))?',
+            user_message, _re.IGNORECASE
+        )
+        if _proposed_match:
+            title = (_proposed_match.group(1) or "").strip() or "this proposed event"
+            enriched_query = (
+                f"The user wants to know more about the proposed event '{title}' from the content calendar you just created. "
+                f"Using the calendar data and past event performance you already have, provide:\n"
+                f"1. Why you proposed this event — which past events or data points justify it\n"
+                f"2. A full webinar outline: objectives, 4-6 key talking points, suggested format and duration, and target audience\n"
+                f"3. One concrete action to get it on the schedule"
+            )
+            self.conversation_history.append({"role": "user", "content": user_message})
+            try:
+                result = await self.content_agent.run(
+                    enriched_query,
+                    conversation_history=self._text_history()[:-1],  # exclude the just-appended user turn
+                    restriction_context=self.restriction_context,
+                )
+            except Exception:
+                self.conversation_history.pop()
+                raise
+            self.conversation_history.append({"role": "assistant", "content": result["text"]})
+            return {
+                "text": result["text"],
+                "agent_used": "content_agent",
+                "chart_data": result.get("chart_data"),
+                "content_html": result.get("content_html"),
+                "requires_confirmation": False,
+                "confirmation_summary": None,
+            }
+
         # Build user message — include image as vision block if attached
         if self.image_block:
             user_content = [{"type": "text", "text": user_message}, self.image_block]
@@ -339,26 +435,79 @@ class OrchestratorAgent:
                         months = block.input.get("months", 3)
                         logger.info(f"Two-step content calendar: gathering data then routing to Content Agent")
 
-                        # Step 1: Gather analytics from the data agent
-                        data_query = (
-                            f"Get attendance trends for the last {months} months and the top 20 events by engagement score."
-                        )
+                        # Step 1: Try cache first — skip data agent call if analytics already warmed
+                        data_text: str = ""
+                        cache_hit = False
                         try:
-                            data_result = await self.data_agent.run(
-                                data_query,
-                                conversation_history=self._text_history(),
-                                restriction_context=self.restriction_context,
+                            from app.db.on24_db import get_client_id as _get_cid
+                            from app.services.data_prefetch import get_prefetched_calendar_data
+                            cached = await get_prefetched_calendar_data(_get_cid())
+                            if cached:
+                                trends = cached.get("attendance_trends", [])
+                                top_events = cached.get("top_events", [])
+                                trend_lines = "\n".join(
+                                    f"- {t.get('month', '')}: {t.get('total_registrants', 0)} registrants, "
+                                    f"{t.get('total_attendees', 0)} attendees"
+                                    for t in trends
+                                ) or "No trend data available."
+                                event_lines = "\n".join(
+                                    f"- {e.get('description', 'Unknown')} (ID {e.get('event_id')}): "
+                                    f"{e.get('avg_engagement', 0):.1f} avg engagement, {e.get('total_attendees', 0)} attendees"
+                                    for e in top_events
+                                ) or "No top events available."
+                                data_text = (
+                                    f"## Attendance Trends (Last 3 Months)\n{trend_lines}\n\n"
+                                    f"## Top Events by Engagement\n{event_lines}"
+                                )
+                                cache_hit = True
+                                logger.info("Calendar analytics: cache HIT — skipping data agent call")
+                        except Exception as e:
+                            logger.warning(f"Calendar cache lookup failed: {e}")
+
+                        if not cache_hit:
+                            # Fallback: gather analytics from data agent
+                            data_query = (
+                                f"Get attendance trends for the last {months} months and the top 20 events by engagement score."
                             )
-                        except Exception:
-                            self.conversation_history.pop()  # assistant tool_use
-                            self.conversation_history.pop()  # user message
-                            raise
+                            try:
+                                data_result = await self.data_agent.run(
+                                    data_query,
+                                    conversation_history=self._text_history(),
+                                    restriction_context=self.restriction_context,
+                                )
+                                data_text = data_result["text"]
+                                # Warm cache in background for next time
+                                try:
+                                    from app.db.on24_db import get_client_id as _get_cid2
+                                    from app.services.data_prefetch import prefetch_calendar_data
+                                    import asyncio as _asyncio
+                                    _asyncio.create_task(prefetch_calendar_data(_get_cid2()))
+                                except Exception:
+                                    pass
+                            except Exception as e:
+                                logger.error(f"Calendar data agent failed: {e}", exc_info=True)
+                                self.conversation_history.pop()  # assistant tool_use
+                                self.conversation_history.pop()  # user message
+                                _log_error_to_inbox("propose_content_calendar/data_agent", query, str(e))
+                                _err = "network timeout" if _is_timeout(e) else "an error"
+                                return {
+                                    "text": (
+                                        f"I couldn't retrieve your analytics data ({_err}). "
+                                        "Please try again — the next attempt may be faster."
+                                    ),
+                                    "agent_used": "content_agent",
+                                    "chart_data": None,
+                                    "content_html": None,
+                                    "requires_confirmation": False,
+                                    "confirmation_summary": None,
+                                    "proposed_events": None,
+                                }
 
                         # Step 2: Pass data + original query to content agent
                         enriched_query = (
                             f"{query}\n\n"
                             f"Here is the analytics data you need to build this calendar:\n\n"
-                            f"{data_result['text']}"
+                            f"{data_text}"
                         )
                         try:
                             result = await self.content_agent.run(
@@ -366,10 +515,24 @@ class OrchestratorAgent:
                                 conversation_history=self._text_history(),
                                 restriction_context=self.restriction_context,
                             )
-                        except Exception:
+                        except Exception as e:
+                            logger.error(f"Calendar content agent failed: {e}", exc_info=True)
                             self.conversation_history.pop()  # assistant tool_use
                             self.conversation_history.pop()  # user message
-                            raise
+                            _log_error_to_inbox("propose_content_calendar/content_agent", query, str(e))
+                            _err = "network timeout" if _is_timeout(e) else "an error"
+                            return {
+                                "text": (
+                                    f"I gathered your analytics but couldn't generate the calendar ({_err}). "
+                                    "Your data is now cached — please try again."
+                                ),
+                                "agent_used": "content_agent",
+                                "chart_data": None,
+                                "content_html": None,
+                                "requires_confirmation": False,
+                                "confirmation_summary": None,
+                                "proposed_events": None,
+                            }
 
                         self.conversation_history.append({
                             "role": "user",

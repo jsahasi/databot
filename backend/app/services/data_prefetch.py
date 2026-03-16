@@ -178,5 +178,50 @@ async def prefetch_common_data() -> None:
     except Exception as e:
         logger.warning(f"Prefetch trends failed: {e}")
 
+    # 6. Calendar analytics (3-month trends + top events by engagement)
+    try:
+        await prefetch_calendar_data(client_id)
+    except Exception as e:
+        logger.warning(f"Prefetch calendar data failed (outer): {e}")
+
     elapsed = asyncio.get_event_loop().time() - t0
     logger.info(f"Prefetch complete in {elapsed:.1f}s for client {client_id}")
+
+
+CALENDAR_DATA_KEY = "calendar_analytics"
+
+
+async def prefetch_calendar_data(client_id: int | None = None) -> bool:
+    """Pre-fetch calendar analytics: 3-month attendance trends + top 20 events by engagement.
+
+    Returns True if data was fetched and stored, False if already cached or failed.
+    Safe to call repeatedly — skips if cache is already warm.
+    """
+    from app.db.on24_db import get_client_id as _get_client_id
+
+    try:
+        cid = client_id if client_id is not None else _get_client_id()
+    except Exception:
+        return False
+
+    # Skip if already cached
+    if await get_prefetched(CALENDAR_DATA_KEY, cid):
+        return False
+
+    try:
+        from app.agents.tools.on24_query_tools import query_attendance_trends, query_top_events
+        trends, top_events = await asyncio.gather(
+            query_attendance_trends(months=3),
+            query_top_events(limit=20, sort_by="engagement", months=3),
+        )
+        await _store(CALENDAR_DATA_KEY, {"attendance_trends": trends, "top_events": top_events}, cid)
+        logger.info(f"Prefetch: calendar analytics cached ({len(trends)} months, {len(top_events)} events)")
+        return True
+    except Exception as e:
+        logger.warning(f"Prefetch calendar data failed: {e}")
+        return False
+
+
+async def get_prefetched_calendar_data(client_id: int) -> dict | None:
+    """Return pre-fetched calendar analytics, or None if not cached."""
+    return await get_prefetched(CALENDAR_DATA_KEY, client_id)
