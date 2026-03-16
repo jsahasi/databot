@@ -468,14 +468,25 @@ async def main() -> None:
         print(f"  [SKIP] MCP server not available: {exc}")
 
     if mcp_available:
+        # Client-level reads (15 tools)
         mcp_benchmarks = [
             ("list_events", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
             ("list_client_attendees", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
             ("list_client_registrants", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
             ("list_client_leads", {"start_date": "2025-12-01", "end_date": "2026-03-14", "items_per_page": 10}),
-            ("get_event_types", {}),
-            ("get_timezones", {}),
+            ("get_survey_library", {}),
+            ("get_engaged_accounts", {}),
+            ("list_client_presenters", {}),
+            ("list_sub_clients", {}),
+            ("get_realtime_user_questions", {}),
+            ("list_users", {}),
+            ("get_attendee_by_email", {"email": "test@example.com"}),
+            ("get_attendee_all_events", {"email": "test@example.com", "items_per_page": 10}),
+            ("get_registrant_by_email", {"email": "test@example.com"}),
+            ("get_registrant_all_events", {"email": "test@example.com", "items_per_page": 10}),
+            ("get_pep", {"email": "test@example.com"}),
         ]
+        # Event-level reads (18 tools)
         if event_id is not None:
             mcp_benchmarks += [
                 ("get_event", {"event_id": event_id}),
@@ -484,7 +495,37 @@ async def main() -> None:
                 ("get_event_polls", {"event_id": event_id}),
                 ("get_event_surveys", {"event_id": event_id}),
                 ("get_event_resources", {"event_id": event_id}),
+                ("get_event_ctas", {"event_id": event_id}),
+                ("get_event_group_chat", {"event_id": event_id}),
+                ("get_event_email_stats", {"event_id": event_id}),
+                ("get_event_certifications", {"event_id": event_id}),
+                ("get_event_content_activity", {"event_id": event_id}),
+                ("get_event_presenters", {"event_id": event_id}),
+                ("get_event_calendar_reminder", {"event_id": event_id}),
+                ("get_event_email", {"event_id": event_id}),
+                ("get_event_presenter_chat", {"event_id": event_id}),
+                ("get_event_slides", {"event_id": event_id}),
+                ("get_event_viewing_sessions", {"event_id": event_id, "items_per_page": 10}),
+                ("get_registration_fields", {"event_id": event_id}),
             ]
+        # Media & content (2 tools — get_ehub_content skipped, requires gateway_id)
+        mcp_benchmarks += [
+            ("list_media_manager_content", {"items_per_page": 10}),
+        ]
+        # Configuration & helper reads (11 tools)
+        mcp_benchmarks += [
+            ("get_event_types", {}),
+            ("get_timezones", {}),
+            ("get_languages", {}),
+            ("get_event_profiles", {}),
+            ("get_replacement_tokens", {}),
+            ("get_custom_account_tags", {}),
+            ("get_account_managers", {}),
+            ("get_event_managers", {}),
+            ("get_sales_reps", {}),
+            ("get_signal_contacts", {}),
+            ("get_technical_reps", {}),
+        ]
 
         for tool_name, args in mcp_benchmarks:
             result = await benchmark_endpoint(
