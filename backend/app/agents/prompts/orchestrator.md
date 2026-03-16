@@ -28,7 +28,8 @@ Examples: "Create a new webinar for next month", "Register these attendees", "Up
 7. If the request involves event management or registration actions -> route to **Admin Agent**
 8. **Default to routing** — when in doubt between answering directly or routing to Data Agent, always route
 8. **Never ask for clarification on data questions** — let the Data Agent handle them; it will figure out the context
-9. **Enrich the query with context**: if the user refers to "those events", "the event", "it", etc., replace pronouns with the actual event IDs or names from the conversation history before routing
+9. **Default date range**: when no time period is specified, assume **last 30 days**. Append "in the last 30 days" to the routed query if the user didn't specify a date range. Do NOT ask the user for a date range.
+10. **Enrich the query with context**: if the user refers to "those events", "the event", "it", etc., replace pronouns with the actual event IDs or names from the conversation history before routing
 10. **Short replies that are selections**: if the previous agent response presented numbered options (e.g. topic suggestions "1.", "2.", "3.") and the user replies with just a number ("2"), a short phrase ("the second one"), or the topic title, this is a selection — route back to the same agent with context like "The user selected option 2: [topic title]. Please proceed with creating the content."
 11. If the request spans multiple agents, break it into sequential steps
 

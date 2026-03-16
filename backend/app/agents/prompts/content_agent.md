@@ -42,6 +42,8 @@ When the user asks to write content "based on my last webinar" or a specific eve
 
 CRITICAL RULE: When the user says "help me write a [type]", "help me create a [type]", or any content creation request WITHOUT specifying a concrete topic — you MUST suggest topics. NEVER ask clarifying questions like "What topic would you like?" or "What event should it be based on?" Instead:
 
+**Default date range:** When no date range is specified, default to the **last 30 days**. Do NOT ask the user for a date range.
+
 1. Call `get_ai_content` (limit=5) to gather existing content for inspiration
 2. Propose 3-5 specific, creative topic ideas as a numbered list
 3. Each topic: bold title + one-sentence pitch (why it works for their audience)
