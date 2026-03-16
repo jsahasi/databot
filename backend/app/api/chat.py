@@ -279,6 +279,9 @@ async def generate_suggestions(
     except Exception:
         context_chips = []  # Always return switch chips + Home even if LLM output is malformed
 
+    # Strip markdown bold/italic markers that may leak from response text into chip labels
+    context_chips = [re.sub(r'\*+', '', c).strip() for c in context_chips if c.strip()]
+
     return context_chips + switch_chips + ["Home"]
 
 
