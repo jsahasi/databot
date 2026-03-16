@@ -394,25 +394,27 @@
   <h3>Dashboard</h3>
   <div class="dashboard">
     <div class="dash-card"><div class="number" style="color:var(--green)">0</div><div class="label">OK (&lt;5s)</div></div>
-    <div class="dash-card"><div class="number" style="color:var(--amber)">2</div><div class="label">Medium (5-10s)</div></div>
-    <div class="dash-card"><div class="number" style="color:var(--red)">0</div><div class="label">High (10-20s)</div></div>
-    <div class="dash-card"><div class="number" style="color:var(--red)">4</div><div class="label">Critical (&gt;20s)</div></div>
-    <div class="dash-card"><div class="number">23.0s</div><div class="label">Avg Response</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--amber)">3</div><div class="label">Medium (5-10s)</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--red)">5</div><div class="label">High (10-20s)</div></div>
+    <div class="dash-card"><div class="number" style="color:var(--green)">0</div><div class="label">Critical (&gt;20s)</div></div>
+    <div class="dash-card"><div class="number">10.8s</div><div class="label">Avg Response</div></div>
   </div>
 
   <h3>Per-Prompt Results</h3>
   <div class="card">
     <table>
       <tr><th>Prompt</th><th>Agent</th><th>Time</th><th>Severity</th><th>Notes</th></tr>
-      <tr><td>How many events last month?</td><td>Data</td><td>30.3s</td><td><span class="tag red">CRITICAL</span></td><td>Timeout — ON24 DB or routing delay</td></tr>
-      <tr><td>Show attendance trends as line chart</td><td>Data</td><td>30.0s</td><td><span class="tag red">CRITICAL</span></td><td>Timeout — multi-tool-round query</td></tr>
-      <tr><td>How do I set up a webinar?</td><td>Concierge</td><td>9.6s</td><td><span class="tag amber">MEDIUM</span></td><td>KB vector search + LLM grounding</td></tr>
-      <tr><td>What REST API endpoints?</td><td>Concierge</td><td>5.9s</td><td><span class="tag amber">MEDIUM</span></td><td>KB search — acceptable</td></tr>
-      <tr><td>Suggest content topics</td><td>Content</td><td>30.1s</td><td><span class="tag red">CRITICAL</span></td><td>Timeout — multi-tool + brand voice load</td></tr>
-      <tr><td>Show recent AI Key Takeaways</td><td>Data</td><td>32.1s</td><td><span class="tag red">CRITICAL</span></td><td>Timeout — get_ai_content query</td></tr>
+      <tr><td>How many events last month?</td><td>Data</td><td>10.8s</td><td><span class="tag red">HIGH</span></td><td>Orchestrator routing + data agent tool call</td></tr>
+      <tr><td>Show attendance trends as line chart</td><td>Data</td><td>13.9s</td><td><span class="tag red">HIGH</span></td><td>Multi-tool round (query + chart generation)</td></tr>
+      <tr><td>How do I set up a webinar?</td><td>Concierge</td><td>10.0s</td><td><span class="tag red">HIGH</span></td><td>KB vector search + LLM grounding</td></tr>
+      <tr><td>What REST API endpoints?</td><td>Concierge</td><td>11.4s</td><td><span class="tag red">HIGH</span></td><td>KB search + long API reference response</td></tr>
+      <tr><td>Suggest content topics</td><td>Content</td><td>19.7s</td><td><span class="tag red">HIGH</span></td><td>Multi-tool + brand voice — near critical</td></tr>
+      <tr><td>Help me write a blog post</td><td>Content</td><td>7.7s</td><td><span class="tag amber">MEDIUM</span></td><td>Single LLM call with brand context</td></tr>
+      <tr><td>Show recent AI blog posts</td><td>Data</td><td>6.0s</td><td><span class="tag amber">MEDIUM</span></td><td>get_ai_content query + card render</td></tr>
+      <tr><td>Show recent AI Key Takeaways</td><td>Data</td><td>6.9s</td><td><span class="tag amber">MEDIUM</span></td><td>get_ai_content query + card render</td></tr>
     </table>
     <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text2)">
-      <strong>Last profiled:</strong> March 15, 2026. Model: claude-sonnet-4-6. Results auto-generated from <code>tests/results/response_time_results.json</code>.
+      <strong>Last profiled:</strong> March 15, 2026 (post-Sonnet switch + prefetch). Model: claude-sonnet-4-6. Avg improved from 23.0s → 10.8s. Critical: 4 → 0.
     </p>
   </div>
 

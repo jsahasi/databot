@@ -74,10 +74,21 @@ async def prefetch_common_data() -> None:
     logger.info(f"Prefetch: warming cache for client {client_id}...")
     t0 = asyncio.get_event_loop().time()
 
-    # 1. Recent 10 events
+    # 1. Recent events — all events back to first of previous month, min 10, max 25
     try:
         from app.agents.tools.on24_query_tools import query_events
-        events = await query_events(limit=10, past_only=True)
+        events = await query_events(limit=25, past_only=True)
+        # Keep at least 10, but trim to events from first of previous month onward
+        if len(events) > 10:
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc)
+            if now.month == 1:
+                cutoff_year, cutoff_month = now.year - 1, 12
+            else:
+                cutoff_year, cutoff_month = now.year, now.month - 1
+            cutoff = datetime(cutoff_year, cutoff_month, 1, tzinfo=timezone.utc)
+            recent = [e for e in events if e.get("goodafter") and e["goodafter"] >= cutoff.isoformat()]
+            events = recent if len(recent) >= 10 else events[:max(10, len(recent))]
         await _store("recent_events", events, client_id)
         logger.info(f"Prefetch: {len(events)} recent events cached")
 

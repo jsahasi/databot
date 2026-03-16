@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-03-16T03:30:20.203237+00:00",
+  "results": [
+    {
+      "id": "data_simple",
+      "prompt": "How many events did we have last month?",
+      "agent": "data",
+      "elapsed_seconds": 10.76,
+      "severity": "high",
+      "response_length": 435,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "data_chart",
+      "prompt": "Show attendance trends as a line chart",
+      "agent": "data",
+      "elapsed_seconds": 13.89,
+      "severity": "high",
+      "response_length": 156,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "concierge_howto",
+      "prompt": "How do I set up a webinar?",
+      "agent": "concierge",
+      "elapsed_seconds": 10.01,
+      "severity": "high",
+      "response_length": 616,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "concierge_api",
+      "prompt": "What REST API endpoints are available?",
+      "agent": "concierge",
+      "elapsed_seconds": 11.45,
+      "severity": "high",
+      "response_length": 1195,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "content_suggest",
+      "prompt": "Suggest content topics based on my best-performing events",
+      "agent": "content",
+      "elapsed_seconds": 19.66,
+      "severity": "high",
+      "response_length": 2095,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "content_create",
+      "prompt": "Help me write a blog post about our most recent webinar",
+      "agent": "content",
+      "elapsed_seconds": 7.67,
+      "severity": "medium",
+      "response_length": 195,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "ai_content_blog",
+      "prompt": "Show me the most recent AI-generated blog posts",
+      "agent": "data",
+      "elapsed_seconds": 6.02,
+      "severity": "medium",
+      "response_length": 38,
+      "agent_used": "orchestrator",
+      "has_error": false
+    },
+    {
+      "id": "ai_content_kt",
+      "prompt": "Show me the most recent AI-generated Key Takeaways",
+      "agent": "data",
+      "elapsed_seconds": 6.91,
+      "severity": "medium",
+      "response_length": 65,
+      "agent_used": "orchestrator",
+      "has_error": false
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "ok": 0,
+    "medium": 3,
+    "high": 5,
+    "critical": 0,
+    "avg_seconds": 10.8
+  }
+}
