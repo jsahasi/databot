@@ -1,6 +1,7 @@
 """Content sharing and approval endpoints."""
 
 import hashlib
+import html as html_mod
 import logging
 import re
 import secrets
@@ -170,9 +171,9 @@ async def create_share(req: CreateShareRequest):
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
             <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);border-radius:12px;padding:2rem;color:#fff;margin-bottom:1.5rem;">
                 <h1 style="margin:0 0 0.5rem;font-size:1.5rem;">Content Review Request</h1>
-                <p style="margin:0;opacity:0.9;">From {req.admin_email}</p>
+                <p style="margin:0;opacity:0.9;">From {html_mod.escape(req.admin_email)}</p>
             </div>
-            <h2 style="color:#1f2937;margin:0 0 1rem;">{req.title}</h2>
+            <h2 style="color:#1f2937;margin:0 0 1rem;">{html_mod.escape(req.title)}</h2>
             <p style="color:#4b5563;line-height:1.6;">
                 You've been invited to review and approve content.
                 Click the button below to view the content and provide your feedback.
