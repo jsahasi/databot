@@ -558,7 +558,7 @@ async def websocket_chat(websocket: WebSocket):
                             if "no funnel tags found" in text.lower():
                                 suggestions = [
                                     "How do I add funnel tags?",
-                                    "Analyze funnel stages anyway",
+                                    "Classify my events into TOFU/MOFU/BOFU using their titles — no tags needed. TOFU = awareness, intro, overview, trends, keynote, demo. MOFU = deep-dive, how-to, comparison, case study, best practices, workshop. BOFU = customer success, training, onboarding, advanced, certification, ROI. Fetch events from the last 30 days, classify each, sum registrants per stage, and show a funnel chart. Add note: Approximate funnel based on event title classification.",
                                 ]
                             # Inject "Suggest something" chip when content agent asks for direction
                             if agent == "content_agent" and any(

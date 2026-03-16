@@ -401,27 +401,16 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 
 ## Backlog / Next Steps
 
-### Content Calendar Pre-Cache (Priority: HIGH)
-**Bug:** "Propose a content calendar for the next 3 months based on my best-performing events" fails with `httpx.ConnectTimeout` on Anthropic API.
-**Root cause:** Two-step orchestrator flow (data agent → content agent) requires 3 sequential LLM calls. If any TCP connection to api.anthropic.com fails, entire flow dies. Generic error shown to user.
-**Solution — Lazy-load analytics on first data agent interaction:**
-- [ ] When user first interacts with data agent, background-prefetch content calendar inputs:
-  - `get_attendance_trends(months=3)` + `get_top_events(sort_by="engagement", limit=20)`
-  - Store results in Redis with 15-min TTL (same pattern as existing prefetch service)
-- [ ] `propose_content_calendar` orchestrator tool: check Redis cache first
-  - If cached: skip Step 1 (data agent call), inject cached analytics directly into content agent enriched_query
-  - If not cached: fall back to current two-step flow
-- [ ] Reduce serial LLM chain from 3 calls to 2 (orchestrator + content agent) for cached path
-- [ ] Add structured error handling: if content agent fails, return partial result with "retry" suggestion chip instead of generic error
-- [ ] Log actual error detail to improvement-inbox (not just generic message) for debugging
-**Files to modify:** orchestrator.py (propose_content_calendar), data_agent.py (trigger background prefetch), prefetch_service.py (add calendar data), chat.py (better error context)
-**Estimated effort:** ~2 hours
-
-### Content Calendar Resilience Improvements
-- [ ] Wrap data agent compound query into two separate calls with labeled section headers (`## ATTENDANCE TRENDS` / `## TOP EVENTS`) for clearer content agent parsing
-- [ ] Add `httpx` retry with exponential backoff (1s, 2s, 4s) on `ConnectTimeout` for all Anthropic API calls
-- [ ] Surface specific error type in WS error message: "Network timeout — please try again" vs generic message
-- [ ] Add `/api/prefetch/calendar-data` endpoint for frontend to pre-warm cache via chip click
+## Content Calendar Pre-Cache + Resilience — COMPLETE (2026-03-16, commit 514b91b)
+- [x] prefetch_calendar_data(): 3-month trends + top 20 events by engagement → Redis (15-min TTL)
+- [x] get_prefetched_calendar_data(): retrieve from Redis; called by propose_content_calendar
+- [x] prefetch_common_data(): auto-warms calendar analytics on startup (step 6)
+- [x] propose_content_calendar: cache-first path → 3 LLM calls → 2 on hit; background warm on miss
+- [x] Structured error handling: data agent fail → specific message; content agent fail → "data cached, retry"
+- [x] _log_error_to_inbox(): logs actual error detail (context/query/error) to improvement-inbox
+- [x] _is_timeout(): detects ConnectTimeout/network errors for user-friendly messaging
+- [x] chat.py: "Network timeout..." vs generic message in WS error handler
+- [x] GET /api/prefetch/calendar-data: returns cached data or triggers background warm
 
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
@@ -431,6 +420,16 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Fix concierge no-response for "what helper endpoints in REST?" — removed tools from KB followup call, commit d8a4d58
 - [x] manage-forums-lite — no UI link to filter (Forums not in EXPERIENCE_LINKS/CONFIG_LINKS); permission tag shows correctly
 - [x] Enhance test coverage — 13 response_cache tests (cache key, get, set, close, Redis unavailable)
+
+## Bug Fixes + Chip Pre-warm Expansion — COMPLETE (2026-03-16)
+- [x] Blog post routing fix: orchestrator.md Rule 4 now explicitly states write/draft/create → Content Agent ALWAYS (even if existing content might exist)
+- [x] orchestrator.md Data Agent description: added "NOT for writing/drafting new content"
+- [x] orchestrator.md Rule 6: clarified "show/list/find/view" only → Data Agent; write/create → Content Agent
+- [x] Funnel "Analyze funnel stages anyway" chip: now sends full instructional TOFU/MOFU/BOFU classification prompt (busts stale cache, gives agent unambiguous instructions)
+- [x] ChatPanel.tsx: chip display map — long instructional prompts show short labels to users
+- [x] Poll trends chip: fixed from bare "Poll trends" to full 12-month line chart prompt (cache key alignment)
+- [x] data_prefetch.py TRENDS_CHIP_PROMPTS: added Show funnel, Show campaigns, Performance by tags, Poll trends (4 more pre-warmed chips)
+- [x] data_prefetch.py EXPLORE_CONTENT_PROMPTS: added eBooks and FAQs (now all 6 types pre-warmed)
 
 ## Verified ON24 Schema (on24master)
 

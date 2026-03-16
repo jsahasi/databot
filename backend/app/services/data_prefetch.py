@@ -240,12 +240,18 @@ TRENDS_CHIP_PROMPTS: list[tuple[str, str]] = [
     ("Attendance over time",       "Show me attendance trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"attendees\"]. Title: \"Attendance Over Time\"."),
     ("Registrations over time",    "Show me registration trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"registrants\"]. Title: \"Registrations Over Time\"."),
     ("Engagement scores over time","Show me average engagement score trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"avg_engagement\"]. Title: \"Avg Engagement Score Over Time\"."),
+    ("Show funnel",                "Show me events by funnel stage for the last month. Use get_events_by_tag with tag_type=\"funnel\", aggregate=true, months=1. Then show a bar chart with the funnel stages on the x-axis and total attendees on the y-axis. Title it \"Leads by Funnel Stage — Last 30 Days\"."),
+    ("Show campaigns",             "Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type=\"campaign\", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it \"Leads by Campaign — Last 30 Days\"."),
+    ("Performance by tags",        "Show me performance by all tags used in the last month. Use get_events_by_tag with aggregate=true, months=1. List all tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag."),
     ("Top events by engagement",   "Show me the top 10 events by engagement score as a bar chart."),
+    ("Poll trends",                "Show me poll participation trends over the last 12 months. For each month, show how many poll responses were collected across all events. Use generate_chart_data with chart_type=\"line\" to show the trend over time. Title: \"Poll Participation Trends — Last 12 Months\"."),
 ]
 
 EXPLORE_CONTENT_PROMPTS: list[tuple[str, str]] = [
     ("Key Takeaways",    "Show me the most recent AI-generated Key Takeaways articles"),
     ("Blog Posts",       "Show me the most recent AI-generated blog posts"),
+    ("eBooks",           "Show me the most recent AI-generated eBooks"),
+    ("FAQs",             "Show me the most recent AI-generated FAQ articles"),
     ("Follow-up Emails", "Show me the most recent AI-generated follow-up emails"),
     ("Social Media",     "Show me the most recent AI-generated social media posts"),
 ]

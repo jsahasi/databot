@@ -374,7 +374,7 @@ export default function ChatPanel() {
                     { label: 'Show campaigns',             prompt: 'Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type="campaign", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it "Leads by Campaign — Last 30 Days".', display: 'Show campaigns' },
                     { label: 'Performance by tags',        prompt: 'Show me performance by all tags used in the last month. Use get_events_by_tag with aggregate=true, months=1. List all tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag.', display: 'Performance by tags — last month' },
                     { label: 'Top events by engagement',   prompt: 'Show me the top 10 events by engagement score as a bar chart.', display: 'Top events by engagement' },
-                    { label: 'Poll trends',      prompt: 'Poll trends', display: 'Poll trends' },
+                    { label: 'Poll trends',      prompt: 'Show me poll participation trends over the last 12 months. For each month, show how many poll responses were collected across all events. Use generate_chart_data with chart_type="line" to show the trend over time. Title: "Poll Participation Trends — Last 12 Months".', display: 'Poll trends' },
                   ].map(({ label, prompt, display }) => (
                     <button key={label}
                       onClick={() => { sendMessage(prompt, display); setInput(''); setShowTrends(false) }}
@@ -689,16 +689,24 @@ export default function ChatPanel() {
                     marginBottom: '1rem',
                     marginLeft: '0.5rem',
                   }}>
-                    {msg.suggestions.map((s, i) => (
+                    {msg.suggestions.map((s, i) => {
+                      // Some chips send a detailed instructional prompt but display a short label
+                      const CHIP_DISPLAY: Record<string, string> = {
+                        'Classify my events into TOFU': 'Analyze funnel stages anyway',
+                      }
+                      const displayLabel = Object.keys(CHIP_DISPLAY).find(k => s.startsWith(k))
+                        ? CHIP_DISPLAY[Object.keys(CHIP_DISPLAY).find(k => s.startsWith(k))!]
+                        : s
+                      return (
                       <button
                         key={i}
-                        aria-label={`Suggest: ${s}`}
+                        aria-label={`Suggest: ${displayLabel}`}
                         onClick={() => {
                           if (s === 'Home') { resetChat() }
                           else if (s === 'How do I...?') { setShowHowDoI(true) }
                           else if (s === 'Recent events') { openCalendar() }
                           else if (s === 'View proposed calendar') { openProposedCalendar() }
-                          else { sendMessage(s); setInput('') }
+                          else { sendMessage(s, displayLabel !== s ? displayLabel : undefined); setInput('') }
                         }}
                         style={{
                           padding: '0.35rem 0.875rem',
@@ -712,9 +720,10 @@ export default function ChatPanel() {
                           fontWeight: 500,
                         }}
                       >
-                        {s}
+                        {displayLabel}
                       </button>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </React.Fragment>
