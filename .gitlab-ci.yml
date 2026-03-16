@@ -76,10 +76,6 @@ test:frontend:
   image: p-eng05.on24.com:8888/gcp/gitlab-builder:latest
   tags:
     - docker
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   before_script:
