@@ -128,8 +128,8 @@ deploy:dev:
         export IMAGE_FRONTEND=\"$IMAGE_FRONTEND\"
         export IMAGE_MCP=\"$IMAGE_MCP\"
         export IMAGE_TAG=\"$CI_COMMIT_SHORT_SHA\"
-        docker compose pull
-        docker compose up -d --remove-orphans
+        docker-compose pull
+        docker-compose up -d --remove-orphans
         docker image prune -f
         docker logout $NEXUS_REGISTRY
       "
