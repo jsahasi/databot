@@ -73,7 +73,9 @@ test:frontend:
 
 .build-common: &build-common
   stage: build
-  image: docker:24
+  image: p-eng05.on24.com:8888/gcp/gitlab-builder:latest
+  tags:
+    - docker
   services:
     - docker:24-dind
   variables:
@@ -105,7 +107,9 @@ build:mcp:
 
 deploy:dev:
   stage: deploy
-  image: alpine:3.20
+  image: p-eng05.on24.com:8888/gcp/gitlab-builder:latest
+  tags:
+    - docker
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   environment:
