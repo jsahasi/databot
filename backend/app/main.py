@@ -34,6 +34,10 @@ async def lifespan(app: FastAPI):
     # Startup: clean up expired uploads (>24h)
     from app.api.upload import cleanup_old_uploads
     cleanup_old_uploads()
+    # Startup: prefetch common data into Redis cache (non-blocking)
+    prefetch_task = asyncio.create_task(_prefetch_data())
+    _background_tasks.add(prefetch_task)
+    prefetch_task.add_done_callback(_background_tasks.discard)
     # Startup: schedule daily improvement email if configured
     if settings.send_improvement_email_to:
         email_task = asyncio.create_task(_daily_improvement_email_loop())
@@ -43,6 +47,17 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await close_pool()
     await close_redis()
+
+
+async def _prefetch_data():
+    """Warm Redis cache with commonly requested data (runs as background task)."""
+    try:
+        # Wait a few seconds for DB pool to initialize
+        await asyncio.sleep(3)
+        from app.services.data_prefetch import prefetch_common_data
+        await prefetch_common_data()
+    except Exception:
+        logger.exception("Data prefetch failed")
 
 
 async def _daily_improvement_email_loop():
