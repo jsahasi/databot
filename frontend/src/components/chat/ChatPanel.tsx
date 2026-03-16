@@ -569,9 +569,10 @@ export default function ChatPanel() {
                     { label:'eBook',               prompt:'Help me create an eBook based on my most recent event' },
                     { label:'Webinar script',      prompt:'Help me write a webinar script based on my most successful events in the last month, as measured by engagement score' },
                     { label:'Follow-up email',     prompt:'Help me write a follow-up email for my most recent event' },
-                  ].map(({ label, prompt }) => (
+                    { label:'For a specific event...', prompt:'__prefill__', prefill: 'Create content for event ' },
+                  ].map(({ label, prompt, prefill }: any) => (
                     <button key={label}
-                      onClick={() => { sendMessage(prompt); setInput(''); setShowContentCreate(false) }}
+                      onClick={() => { if (prefill) { setInput(prefill); setShowContentCreate(false) } else { sendMessage(prompt); setInput(''); setShowContentCreate(false) } }}
                       style={{ padding:'0.875rem 1rem', background: AGENT_COLORS.content.bg, border:`1px solid ${AGENT_COLORS.content.border}`, borderLeft:`3px solid ${AGENT_COLORS.content.border}`, borderRadius:8, color:'var(--color-chip-text)', fontSize:'0.825rem', fontWeight:600, textAlign:'left', cursor:'pointer', lineHeight:1.4, transition:'background 0.12s', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.hoverBg }}
                       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = AGENT_COLORS.content.bg }}
