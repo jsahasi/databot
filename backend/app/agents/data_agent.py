@@ -245,13 +245,23 @@ class DataAgent:
                     t["tool"] not in ("list_events", "generate_chart_data")
                     for t in tool_calls_made
                 ) else None
+                # Only show content_articles if they match the specific event being discussed.
+                # Suppress unrelated articles (e.g. get_ai_content returned content from other
+                # events while the user asked about a specific one).
+                final_content_articles = None
+                if content_articles and event_card:
+                    eid = event_card.get("event_id")
+                    matching = [a for a in content_articles if a.get("event_id") == eid]
+                    final_content_articles = matching if matching else None
+                elif content_articles and not event_card:
+                    final_content_articles = content_articles
                 return {
                     "text": cleaned_text,
                     "chart_data": extracted_chart or chart_data,
                     "event_card": event_card,
                     "event_cards": final_event_cards,
                     "poll_cards": poll_cards,
-                    "content_articles": content_articles,
+                    "content_articles": final_content_articles,
                     "tool_calls": tool_calls_made,
                 }
 
@@ -271,12 +281,19 @@ class DataAgent:
         text_parts = [block.text for block in final.content if hasattr(block, "text")]
         raw_text = "\n".join(text_parts)
         cleaned_text, extracted_chart = _extract_chart(raw_text)
+        fallback_articles = None
+        if content_articles and event_card:
+            eid = event_card.get("event_id")
+            matching = [a for a in content_articles if a.get("event_id") == eid]
+            fallback_articles = matching if matching else None
+        elif content_articles and not event_card:
+            fallback_articles = content_articles
         return {
             "text": cleaned_text,
             "chart_data": extracted_chart or chart_data,
             "event_card": event_card,
             "event_cards": None,
             "poll_cards": poll_cards,
-            "content_articles": content_articles,
+            "content_articles": fallback_articles,
             "tool_calls": tool_calls_made,
         }
