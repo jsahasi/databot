@@ -563,7 +563,7 @@ export default function ChatPanel() {
                 </p>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.625rem' }}>
                   {[
-                    { label:'What do you recommend?', prompt:'Suggest content topics based on my best-performing events in the last 30 days' },
+                    { label:'Propose event calendar', prompt:'Propose a content calendar for the next 3 months based on my best-performing events in the last 30 days' },
                     { label:'Blog post',           prompt:'Help me write a blog post based on my most recent event' },
                     { label:'Social media posts',  prompt:'Help me create social media posts based on my most recent event' },
                     { label:'eBook',               prompt:'Help me create an eBook based on my most recent event' },
