@@ -269,6 +269,11 @@ Implementation:
 **Rationale:** Strict tenant isolation — each client's brand templates are completely independent with no risk of cross-client data leakage. File-based storage avoids a migration and keeps templates simple to inspect/debug. The `{client_id}` suffix ensures templates from one client can never be read or modified by another, even if a bug bypasses the API-level client scoping. Default template fallback is also per-client.
 **Consequences:** Templates do not survive container rebuilds unless `data/` is mounted as a Docker volume (already the case). No cross-client template sharing or "global" templates — acceptable for current requirements.
 
+## 2026-03-16: Content Calendar Pre-Cache Strategy
+**Decision:** Lazy-load content calendar analytics data (attendance trends + top events) into Redis on first data agent interaction. propose_content_calendar checks cache before invoking data agent.
+**Rationale:** Current two-step flow (orchestrator → data agent → content agent) requires 3 sequential Anthropic API calls. `httpx.ConnectTimeout` on any call kills the entire flow with a generic error. Pre-caching eliminates the data agent step for the content calendar, reducing the chain to 2 calls and halving timeout exposure. Same Redis + 15-min TTL pattern as existing prefetch service.
+**Consequences:** Content calendar uses slightly stale data (up to 15 min) — acceptable for "best-performing events" analysis. Fallback to real-time if cache miss.
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.

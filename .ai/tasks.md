@@ -400,6 +400,29 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] "Login as:" label added to admin dropdown in TopNav
 
 ## Backlog / Next Steps
+
+### Content Calendar Pre-Cache (Priority: HIGH)
+**Bug:** "Propose a content calendar for the next 3 months based on my best-performing events" fails with `httpx.ConnectTimeout` on Anthropic API.
+**Root cause:** Two-step orchestrator flow (data agent → content agent) requires 3 sequential LLM calls. If any TCP connection to api.anthropic.com fails, entire flow dies. Generic error shown to user.
+**Solution — Lazy-load analytics on first data agent interaction:**
+- [ ] When user first interacts with data agent, background-prefetch content calendar inputs:
+  - `get_attendance_trends(months=3)` + `get_top_events(sort_by="engagement", limit=20)`
+  - Store results in Redis with 15-min TTL (same pattern as existing prefetch service)
+- [ ] `propose_content_calendar` orchestrator tool: check Redis cache first
+  - If cached: skip Step 1 (data agent call), inject cached analytics directly into content agent enriched_query
+  - If not cached: fall back to current two-step flow
+- [ ] Reduce serial LLM chain from 3 calls to 2 (orchestrator + content agent) for cached path
+- [ ] Add structured error handling: if content agent fails, return partial result with "retry" suggestion chip instead of generic error
+- [ ] Log actual error detail to improvement-inbox (not just generic message) for debugging
+**Files to modify:** orchestrator.py (propose_content_calendar), data_agent.py (trigger background prefetch), prefetch_service.py (add calendar data), chat.py (better error context)
+**Estimated effort:** ~2 hours
+
+### Content Calendar Resilience Improvements
+- [ ] Wrap data agent compound query into two separate calls with labeled section headers (`## ATTENDANCE TRENDS` / `## TOP EVENTS`) for clearer content agent parsing
+- [ ] Add `httpx` retry with exponential backoff (1s, 2s, 4s) on `ConnectTimeout` for all Anthropic API calls
+- [ ] Surface specific error type in WS error message: "Network timeout — please try again" vs generic message
+- [ ] Add `/api/prefetch/calendar-data` endpoint for frontend to pre-warm cache via chip click
+
 - [x] Documents dropdown nav on each HTML doc — doc-nav.js shared script, commit c3f764a
 - [x] Agent permission awareness — restriction context injected into all agents, commit 2f616c8
 - [x] Reload admin dropdown when client_id changes via breadcrumb — watches selectedClientId, commit edaf511
