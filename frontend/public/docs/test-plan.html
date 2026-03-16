@@ -63,7 +63,7 @@
   <h1>Test Plan &amp; Results</h1>
   <p class="subtitle">Automated test suite covering API health, security, accessibility, chart generation, agent internals, integration, and full Tier 1/2/3 navigation depth with performance SLAs</p>
   <div class="meta">
-    <span><strong>Last run:</strong> March 15, 2026</span>
+    <span><strong>Last run:</strong> March 16, 2026</span>
     <span><strong>Framework:</strong> pytest + pytest-asyncio</span>
     <span><strong>Total:</strong> 311 backend + 23 Vitest + 8 Playwright E2E</span>
     <span><strong>Pass rate:</strong> 100%</span>
@@ -388,6 +388,56 @@
     </p>
   </div>
 
+  <h2>Bug Fixes — 2026-03-16</h2>
+  <p>The following bugs were identified and fixed on 2026-03-16. All routing and chip behaviour has been manually verified post-fix.</p>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Bug</th><th>Fix</th><th>Files Changed</th></tr>
+      <tr>
+        <td>Blog post routing</td>
+        <td>Orchestrator sometimes routed "Help me write a blog post based on my most recent event" to Data Agent instead of Content Agent when existing content was present</td>
+        <td>Orchestrator Rule 4 now explicitly states write/draft/create always goes to Content Agent — even if existing content might exist. Rule 6 tightened: show/list/find/view only → Data Agent. Data Agent description updated to include "NOT for writing/drafting new content".</td>
+        <td><code>orchestrator.md</code></td>
+      </tr>
+      <tr>
+        <td>Admin agent defaults</td>
+        <td>Admin agent asked for timezone and event type on every event creation, slowing down the workflow</td>
+        <td>Admin agent now defaults timezone=ET and event type=Webcast. Only asks one clarifying question at a time when truly ambiguous information is missing.</td>
+        <td><code>admin_agent.md</code></td>
+      </tr>
+      <tr>
+        <td>Funnel chip prompt</td>
+        <td>"Analyze funnel stages anyway" chip sent a bare label, causing the data agent to hit a stale cached generic response rather than performing the TOFU/MOFU/BOFU classification</td>
+        <td>Chip now sends the full instructional TOFU/MOFU/BOFU classification prompt. A display label map in <code>ChatPanel.tsx</code> shows the short user-facing label while the full instructional payload is sent to the LLM.</td>
+        <td><code>ChatPanel.tsx</code></td>
+      </tr>
+      <tr>
+        <td>Poll trends chip</td>
+        <td>"Poll trends" chip sent a bare label that matched no pre-warmed cache key, resulting in a cold LLM round every time</td>
+        <td>Chip now sends the full 12-month line chart prompt that matches the pre-warm key exactly, yielding &lt;1s cached response.</td>
+        <td><code>ChatPanel.tsx</code>, <code>data_prefetch.py</code></td>
+      </tr>
+      <tr>
+        <td>Chip markdown bleed</td>
+        <td>Suggestion chip labels sometimes displayed raw <code>**bold**</code> markdown markers (e.g. "**Show funnel**") because the LLM returned bold syntax in chip text</td>
+        <td>Chip generation strips <code>**</code> markers before rendering labels in the UI.</td>
+        <td><code>ChatPanel.tsx</code> (or chip generation logic)</td>
+      </tr>
+      <tr>
+        <td>Chip pre-warm coverage — Trends</td>
+        <td>Trends sub-menu had 8 chips but only 4 were pre-warmed (Attendance / Registrations / Engagement / Top events). Funnel, campaigns, tags, and poll trends all hit cold LLM paths (&gt;10s).</td>
+        <td>Added 4 more prompts to <code>TRENDS_CHIP_PROMPTS</code> in <code>data_prefetch.py</code>: Show funnel, Show campaigns, Performance by tags, Poll trends. All 8 Trends chips now pre-warmed.</td>
+        <td><code>data_prefetch.py</code></td>
+      </tr>
+      <tr>
+        <td>Chip pre-warm coverage — Explore Content</td>
+        <td>Explore Content had 6 types but only 4 were pre-warmed (Key Takeaways / Blog Posts / Follow-up Emails / Social Media). eBooks and FAQs always cold.</td>
+        <td>Added eBooks and FAQs to <code>EXPLORE_CONTENT_PROMPTS</code>. All 6 Explore Content types now pre-warmed.</td>
+        <td><code>data_prefetch.py</code></td>
+      </tr>
+    </table>
+  </div>
+
   <h2>Navigation Depth Tests — Tier 1 / 2 / 3</h2>
   <p>Every user journey from the home page is covered to at least three levels. <strong>Tier 1</strong> = home page tile. <strong>Tier 2</strong> = first sub-menu or modal. <strong>Tier 3</strong> = agent response or external destination reached from Tier 2.</p>
   <p>Performance SLA: any Tier-2→3 transition that calls an LLM or DB must complete in <strong>&lt;5 s</strong> (cached) or <strong>&lt;15 s</strong> (cold). Items that exceed 5 s on first load are pre-warmed in the startup prefetch. ✅ = pre-warmed | 🔶 = LLM required, not pre-warmed</p>
@@ -468,11 +518,11 @@
       <tr><td>T3 ✅</td><td>Click "Attendance over time"</td><td>Line chart rendered — 12 months, attendees y-axis</td><td>&lt;5s cached / &lt;12s cold</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Registrations over time"</td><td>Line chart rendered — 12 months, registrants y-axis</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Engagement scores over time"</td><td>Line chart rendered — 12 months, avg_engagement y-axis</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3</td><td>Click "Show funnel"</td><td>Bar chart rendered — funnel stages x-axis, attendees y-axis</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3</td><td>Click "Show campaigns"</td><td>Pie chart rendered — campaign tags, attendees by tag</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3</td><td>Click "Performance by tags"</td><td>Bar chart + text table — all tags, avg engagement</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Show funnel"</td><td>Bar chart rendered — funnel stages x-axis, attendees y-axis</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Show campaigns"</td><td>Pie chart rendered — campaign tags, attendees by tag</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Performance by tags"</td><td>Bar chart + text table — all tags, avg engagement</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Top events by engagement"</td><td>Bar chart rendered — top 10 events, engagement score</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3</td><td>Click "Poll trends"</td><td>Data agent returns poll overview data</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "Poll trends"</td><td>12-month line chart: poll engagement over time</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
     </table>
   </div>
 
@@ -493,7 +543,7 @@
       <tr><td>T1</td><td>Click "Create Content"</td><td>Create Content sub-menu shows (7 chips)</td><td>instant</td><td><span class="tag green">E2E</span></td></tr>
       <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Propose event calendar"</td><td>Content agent returns 3-month calendar + proposed_events JSON block; "View proposed calendar" chip injected</td><td>&lt;5s cached / &lt;20s cold</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3 🔶</td><td>Click "Blog post"</td><td>Content agent routes request; checks Media Manager for existing blog; renders blog as HTML preview modal</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 🔶</td><td>Click "Blog post"</td><td>Orchestrator routes to Content Agent (never Data Agent, even if existing content present); content agent calls get_ai_content first, then writes or renders existing blog as HTML preview modal</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 🔶</td><td>Click "Social media posts"</td><td>Content agent returns LinkedIn/X/Facebook posts with share links; HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 🔶</td><td>Click "eBook"</td><td>Content agent returns eBook draft as HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 🔶</td><td>Click "Webinar script"</td><td>Content agent returns structured webinar script as HTML preview</td><td>&lt;15s</td><td><span class="tag amber">Regression</span></td></tr>
@@ -514,8 +564,8 @@
       <tr><td>T2</td><td>Click Back</td><td>Home grid restored</td><td>instant</td><td><span class="tag blue">Unit</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Key Takeaways"</td><td>Data agent returns AI-ACE Key Takeaways cards with expand/collapse; type badge shown</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Blog Posts"</td><td>Data agent returns blog post cards; "Open in Media Manager" link per article</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3</td><td>Click "eBooks"</td><td>Data agent returns eBook cards</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
-      <tr><td>T3</td><td>Click "FAQs"</td><td>Data agent returns FAQ cards</td><td>&lt;12s</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "eBooks"</td><td>Data agent returns eBook cards</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
+      <tr><td>T3 ✅</td><td>Click "FAQs"</td><td>Data agent returns FAQ cards</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Follow-up Emails"</td><td>Data agent returns email cards</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
       <tr><td>T3 ✅</td><td>Click "Social Media"</td><td>Data agent returns social media post cards</td><td>&lt;5s cached</td><td><span class="tag amber">Regression</span></td></tr>
     </table>
@@ -546,7 +596,9 @@
       <tr><th>Chip Path</th><th>Method</th><th>Target Latency</th><th>Cache TTL</th></tr>
       <tr><td>Trends → Attendance / Registrations / Engagement over time</td><td>Response cache (full agent response pre-built)</td><td>&lt;1s</td><td>5 min (300s)</td></tr>
       <tr><td>Trends → Top events by engagement</td><td>Response cache pre-built</td><td>&lt;1s</td><td>5 min</td></tr>
+      <tr><td>Trends → Show funnel / Show campaigns / Performance by tags / Poll trends</td><td>Response cache pre-built (added 2026-03-16)</td><td>&lt;1s</td><td>5 min</td></tr>
       <tr><td>Explore Content → Key Takeaways / Blog / Email / Social</td><td>Response cache pre-built</td><td>&lt;1s</td><td>5 min</td></tr>
+      <tr><td>Explore Content → eBooks / FAQs</td><td>Response cache pre-built (added 2026-03-16)</td><td>&lt;1s</td><td>5 min</td></tr>
       <tr><td>How do I...? → all 8 questions</td><td>Response cache (orchestrator+haiku synthesis)</td><td>&lt;2s</td><td>5 min</td></tr>
       <tr><td>Propose event calendar (second+ click)</td><td>Redis prefetch (analytics data, 15 min TTL)</td><td>&lt;8s</td><td>15 min</td></tr>
       <tr><td>Calendar modal (event list)</td><td>/api/calendar — direct DB query, no LLM</td><td>&lt;2s</td><td>none</td></tr>
@@ -578,9 +630,9 @@
       <tr><td><span class="tag green">Done</span></td><td>Calendar analytics pre-cache (propose_content_calendar)</td><td>3 LLM calls → 2 on cache hit</td></tr>
       <tr><td><span class="tag green">Done</span></td><td>Haiku for concierge KB synthesis (was Sonnet)</td><td>–3 s per concierge response</td></tr>
       <tr><td><span class="tag green">Done</span></td><td>prewarm_chip_responses() — all fixed T2/T3 chips</td><td>&lt;1 s for all pre-warmed Tier-2/3 paths</td></tr>
-      <tr><td><span class="tag amber">Planned</span></td><td>Funnel / Campaign / Tags / Poll trends chips — add to pre-warm</td><td>–8–12 s for remaining Trends chips</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Funnel / Campaign / Tags / Poll trends chips — added to pre-warm (2026-03-16)</td><td>–8–12 s for remaining Trends chips</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>eBooks / FAQs — added to Explore Content pre-warm (2026-03-16)</td><td>&lt;1 s for remaining Explore chips</td></tr>
       <tr><td><span class="tag amber">Planned</span></td><td>Parallelize independent tool calls in data_agent</td><td>–2–3 s per multi-tool round</td></tr>
-      <tr><td><span class="tag amber">Planned</span></td><td>eBooks / FAQs — add to Explore Content pre-warm</td><td>&lt;1 s for remaining Explore chips</td></tr>
     </table>
   </div>
 
