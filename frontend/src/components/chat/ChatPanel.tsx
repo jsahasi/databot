@@ -567,7 +567,7 @@ export default function ChatPanel() {
                     { label:'Blog post',           prompt:'Help me write a blog post based on my most recent event' },
                     { label:'Social media posts',  prompt:'Help me create social media posts based on my most recent event' },
                     { label:'eBook',               prompt:'Help me create an eBook based on my most recent event' },
-                    { label:'Webinar script',      prompt:'Help me write a webinar script based on my most recent event' },
+                    { label:'Webinar script',      prompt:'Help me write a webinar script based on my most successful events in the last month, as measured by engagement score' },
                     { label:'Follow-up email',     prompt:'Help me write a follow-up email for my most recent event' },
                   ].map(({ label, prompt }) => (
                     <button key={label}
