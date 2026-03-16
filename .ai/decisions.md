@@ -255,6 +255,11 @@ Implementation:
 **Decision:** Content agent routing (rule 4) now comes before data agent routing (rule 6) in orchestrator. Explicit triggers: "suggest topics", "what topic", "create a script".
 **Rationale:** "Create a script" and "suggest topics" requests were being routed to data agent (which showed raw tables) instead of content agent (which provides creative recommendations). Fixed duplicate rule numbering.
 
+## 2026-03-15: Data Prefetch on Startup
+**Decision:** Warm Redis cache with commonly requested data (recent events, KPIs, AI content, trends) on app startup. Serve via /api/prefetch/* endpoints for instant chip responses.
+**Rationale:** First-click latency was 8-30s because every query required orchestrator LLM routing + agent LLM + DB query. Prefetching eliminates the LLM roundtrip for the most common queries. 15-min TTL ensures freshness. All queries parallelized via asyncio.gather().
+**Consequences:** 3s startup delay while cache warms. Redis required (graceful degradation if unavailable). Frontend can optionally use /api/prefetch/* for chip data instead of chat.
+
 ## 2026-03-15: Switch All Agents to Sonnet (Performance)
 **Decision:** Switched all 4 agents (orchestrator, data, content, admin) from `claude-opus-4-6` to `claude-sonnet-4-6`.
 **Rationale:** Opus was 2-3x slower than Sonnet for first-token latency. CLAUDE.md specifies Sonnet as the main model. Near-identical quality with 40-60% latency reduction. Response cache TTL also increased from 2 to 5 minutes.

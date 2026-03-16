@@ -423,9 +423,11 @@
       <tr><td><span class="tag green">Done</span></td><td>Switch Opus → Sonnet (all 4 agents)</td><td>Deployed</td><td>40-60% latency reduction</td></tr>
       <tr><td><span class="tag green">Done</span></td><td>Response cache TTL 2 min → 5 min</td><td>Deployed</td><td>Fewer redundant LLM calls</td></tr>
       <tr><td><span class="tag green">Done</span></td><td>Prompt caching (cache_control ephemeral)</td><td>Deployed</td><td>90% input token discount</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>Data prefetch on startup (Redis, 15-min TTL)</td><td>Deployed</td><td>Instant first-click for events, AI content, trends</td></tr>
+      <tr><td><span class="tag green">Done</span></td><td>/api/prefetch/* endpoints (no LLM roundtrip)</td><td>Deployed</td><td>~0s for prefetched queries vs 8-30s</td></tr>
+      <tr><td><span class="tag amber">TODO</span></td><td>Frontend: use prefetch endpoints for chip clicks</td><td>Planned</td><td>Eliminate LLM call for first-level chips</td></tr>
       <tr><td><span class="tag amber">TODO</span></td><td>Parallelize independent tool calls</td><td>Deferred</td><td>2-3s per multi-tool round</td></tr>
       <tr><td><span class="tag amber">TODO</span></td><td>Code-based routing for obvious patterns</td><td>Planned</td><td>1-2s for ~20% of requests</td></tr>
-      <tr><td><span class="tag amber">TODO</span></td><td>Cache brand voice per session</td><td>Planned</td><td>1-2s per content request</td></tr>
     </table>
   </div>
 

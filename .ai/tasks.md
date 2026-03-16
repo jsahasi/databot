@@ -378,6 +378,13 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Image support: DOMPurify allows img tags, responsive CSS, sandbox allow-same-origin
 - [x] 287 tests total (25 new: 12 content_html + 8 email + 4 security input + 1 sanitizer)
 
+## Data Prefetch + Performance — COMPLETE (2026-03-15)
+- [x] Data prefetch service: warm Redis cache on startup (15-min TTL)
+- [x] Prefetched: recent 10 events (details + KPIs), Key Takeaways, AI content (6 types), attendance trends
+- [x] All prefetch queries run in parallel via asyncio.gather()
+- [x] /api/prefetch/* endpoints: instant cached data, no LLM roundtrip
+- [x] Response time profiling test suite (8 prompts, severity tracking)
+
 ## Performance + Bug Fixes — COMPLETE (2026-03-15)
 - [x] PERF: Switch all 4 agents from claude-opus-4-6 to claude-sonnet-4-6 (40-60% latency reduction)
 - [x] PERF: Increase response cache TTL from 120s to 300s (5 min)
