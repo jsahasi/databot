@@ -34,7 +34,7 @@ import websockets
 
 WS_URI = "ws://localhost:8000/ws/chat"
 RECV_TIMEOUT = 30  # seconds — hard ceiling per prompt
-INTER_PROMPT_DELAY = 1  # seconds between prompts to avoid rate limiting
+INTER_PROMPT_DELAY = 2  # seconds between prompts to avoid rate limiting
 
 RESULTS_DIR = Path(__file__).parent / "results"
 RESULTS_FILE = RESULTS_DIR / "response_time_results.json"
@@ -44,14 +44,27 @@ RESULTS_FILE = RESULTS_DIR / "response_time_results.json"
 # ---------------------------------------------------------------------------
 
 PROFILING_PROMPTS: list[dict[str, str]] = [
+    # Data Agent — event queries
     {"id": "data_simple", "prompt": "How many events did we have last month?", "agent": "data"},
     {"id": "data_chart", "prompt": "Show attendance trends as a line chart", "agent": "data"},
-    {"id": "concierge_howto", "prompt": "How do I set up a webinar?", "agent": "concierge"},
-    {"id": "concierge_api", "prompt": "What REST API endpoints are available?", "agent": "concierge"},
-    {"id": "content_suggest", "prompt": "Suggest content topics based on my best-performing events", "agent": "content"},
-    {"id": "content_create", "prompt": "Help me write a blog post about our most recent webinar", "agent": "content"},
+    {"id": "data_top_events", "prompt": "Show me top 5 events by attendance", "agent": "data"},
+    {"id": "data_last_event", "prompt": "What was my last event?", "agent": "data"},
+    {"id": "data_companies", "prompt": "Which companies attended the most?", "agent": "data"},
+    # Data Agent — AI content
     {"id": "ai_content_blog", "prompt": "Show me the most recent AI-generated blog posts", "agent": "data"},
     {"id": "ai_content_kt", "prompt": "Show me the most recent AI-generated Key Takeaways", "agent": "data"},
+    {"id": "ai_content_email", "prompt": "Show me the most recent AI-generated follow-up emails", "agent": "data"},
+    {"id": "ai_content_social", "prompt": "Show me the most recent AI-generated social media posts", "agent": "data"},
+    {"id": "ai_content_faq", "prompt": "Show me the most recent AI-generated FAQ articles", "agent": "data"},
+    {"id": "ai_content_ebook", "prompt": "Show me the most recent AI-generated eBooks", "agent": "data"},
+    # Concierge Agent
+    {"id": "concierge_howto", "prompt": "How do I set up a webinar?", "agent": "concierge"},
+    {"id": "concierge_api", "prompt": "What REST API endpoints are available?", "agent": "concierge"},
+    {"id": "concierge_polls", "prompt": "How do I add polls to my webinar?", "agent": "concierge"},
+    # Content Agent
+    {"id": "content_suggest", "prompt": "Suggest content topics based on my best-performing events", "agent": "content"},
+    {"id": "content_create", "prompt": "Help me write a blog post about our most recent webinar", "agent": "content"},
+    {"id": "content_social", "prompt": "Help me create social media posts for my last event", "agent": "content"},
 ]
 
 
@@ -80,33 +93,36 @@ async def _send_and_measure(prompt: str, session_id: str) -> dict[str, Any]:
     response_text = ""
     agent_used = ""
 
-    async with websockets.connect(WS_URI) as ws:
-        await ws.send(json.dumps({
-            "type": "message",
-            "content": prompt,
-            "session_id": session_id,
-            "permissions": [],
-        }))
+    try:
+        async with websockets.connect(WS_URI, open_timeout=10) as ws:
+            await ws.send(json.dumps({
+                "type": "message",
+                "content": prompt,
+                "session_id": session_id,
+                "permissions": [],
+            }))
 
-        # Collect messages until message_complete or error
-        while True:
-            try:
-                msg = await asyncio.wait_for(ws.recv(), timeout=RECV_TIMEOUT)
-                data = json.loads(msg)
-                msg_type = data.get("type", "")
+            # Collect messages until message_complete or error
+            while True:
+                try:
+                    msg = await asyncio.wait_for(ws.recv(), timeout=RECV_TIMEOUT)
+                    data = json.loads(msg)
+                    msg_type = data.get("type", "")
 
-                if msg_type == "text":
-                    response_text += data.get("content", "")
-                elif msg_type == "agent_start":
-                    agent_used = data.get("agent", "")
-                elif msg_type == "message_complete":
+                    if msg_type == "text":
+                        response_text += data.get("content", "")
+                    elif msg_type == "agent_start":
+                        agent_used = data.get("agent", "")
+                    elif msg_type == "message_complete":
+                        break
+                    elif msg_type == "error":
+                        response_text = f"ERROR: {data.get('message', '')}"
+                        break
+                except asyncio.TimeoutError:
+                    response_text = "TIMEOUT (30s)"
                     break
-                elif msg_type == "error":
-                    response_text = f"ERROR: {data.get('message', '')}"
-                    break
-            except asyncio.TimeoutError:
-                response_text = "TIMEOUT (30s)"
-                break
+    except (OSError, websockets.exceptions.WebSocketException) as exc:
+        response_text = f"ERROR: Connection failed — {exc}"
 
     elapsed = time.monotonic() - start
     return {
