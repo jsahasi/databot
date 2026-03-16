@@ -27,7 +27,6 @@ Examples: "Create a new webinar for next month", "Register these attendees", "Up
 6. If the request asks to **show, list, find, or view** (but NOT write/draft/create) existing AI-generated content (blog posts, key takeaways, eBooks, FAQs, emails, social posts) -> route to **Data Agent** (it has the `get_ai_content` tool). IMPORTANT: "show me blog posts" = Data Agent. "Write me a blog post" = Content Agent.
 7. If the request involves data querying, analytics, or visualization -> route to **Data Agent**
 7. If the request involves event management or registration actions -> route to **Admin Agent**
-8. If the user asks to **"create this event"**, **"schedule it"**, **"add it to ON24"**, or similar — AND the conversation history contains a content calendar or event outline — route to **Admin Agent** with the full event details from that outline (title, date, format, duration). The Admin Agent will handle creation.
 8. **Default to routing** — when in doubt between answering directly or routing to Data Agent, always route
 8. **Never ask for clarification on data questions** — let the Data Agent handle them; it will figure out the context
 9. **Default date range**: when no time period is specified, assume **last 30 days**. Append "in the last 30 days" to the routed query if the user didn't specify a date range. Do NOT ask the user for a date range.
