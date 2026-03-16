@@ -255,6 +255,10 @@ Implementation:
 **Decision:** Content agent routing (rule 4) now comes before data agent routing (rule 6) in orchestrator. Explicit triggers: "suggest topics", "what topic", "create a script".
 **Rationale:** "Create a script" and "suggest topics" requests were being routed to data agent (which showed raw tables) instead of content agent (which provides creative recommendations). Fixed duplicate rule numbering.
 
+## 2026-03-15: Switch All Agents to Sonnet (Performance)
+**Decision:** Switched all 4 agents (orchestrator, data, content, admin) from `claude-opus-4-6` to `claude-sonnet-4-6`.
+**Rationale:** Opus was 2-3x slower than Sonnet for first-token latency. CLAUDE.md specifies Sonnet as the main model. Near-identical quality with 40-60% latency reduction. Response cache TTL also increased from 2 to 5 minutes.
+
 ## 2026-03-15: Brand Templates Per-Client Isolation
 **Decision:** Store brand templates in per-client JSON files (`data/brand_templates_{client_id}.json`) rather than a single shared file or database table.
 **Rationale:** Strict tenant isolation — each client's brand templates are completely independent with no risk of cross-client data leakage. File-based storage avoids a migration and keeps templates simple to inspect/debug. The `{client_id}` suffix ensures templates from one client can never be read or modified by another, even if a bug bypasses the API-level client scoping. Default template fallback is also per-client.

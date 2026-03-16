@@ -21,38 +21,38 @@
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
+  <div class="title"><span class="dot green"></span>Performance: Sonnet model + bug fixes</div>
+  <div class="desc">All agents switched from Opus to Sonnet (40-60% faster). Cache TTL 2->5 min. Fixed: AI content routing, deduplication (longest per event), text/card double-render, social media type aliases, Key Takeaways tab selection. "Suggest something" chip in Create Content.</div>
+</div>
+
+<div class="item">
+  <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot amber"></span>Brand templates + social media platform posts</div>
-  <div class="desc">Brand template system (colors, fonts, logos) with CRUD management modal. Templates apply to HTML content preview via Google Fonts. Social media posts now include emojis, hashtags, platform-specific lengths, and compose/share URLs for LinkedIn, X, Facebook.</div>
+  <div class="desc">Per-client brand templates (colors, fonts, logos, banners) with CRUD management. Templates style HTML content preview via Google Fonts. Social media posts: emojis, hashtags, platform-specific lengths, compose/share URLs for LinkedIn, X, Facebook.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
   <div class="title"><span class="dot indigo"></span>Content sharing & approval workflow</div>
-  <div class="desc">Share generated content via signed links (HMAC-SHA256, 7-day expiry). Standalone review page with 5-star rating, thumbs up/down approval, comment thread. "Approved" badge when all recipients approve. Email via SendGrid or Gmail.</div>
+  <div class="desc">Share generated content via HMAC-SHA256 signed links (7-day expiry). Standalone review page: 5-star rating, thumbs up/down approval, comment thread. "Approved" badge when all recipients approve. Email via SendGrid/Gmail.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot pink"></span>HTML content modal + input validation</div>
-  <div class="desc">Content agent wraps generated HTML in fenced blocks; frontend renders in sandboxed iframe modal with copy/print/share icons. nh3 (Rust) HTML sanitization. Client + server-side HTML/JS input rejection. Image support.</div>
+  <div class="title"><span class="dot pink"></span>HTML content modal + nh3 sanitizer</div>
+  <div class="desc">Content agent HTML in sandboxed iframe modal (copy/print/share). nh3 Rust sanitizer replaces regex. Client+server input validation. Image support. A11y: dialog role, aria-modal. Email service + daily improvement digest.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot green"></span>Security: 3 HIGH findings fixed + 305 tests</div>
-  <div class="desc">nh3 replaces regex HTML sanitizer. Email validation prevents header injection. Path traversal guard. API key auth, rate limiting, CORS. 305 backend tests across 15 files, all passing. Welcome admin by first name; "Login as:" label on admin dropdown.</div>
+  <div class="title"><span class="dot green"></span>Security: 3 HIGH findings fixed + 311 tests</div>
+  <div class="desc">Email validation prevents header injection. Path traversal guard. API key auth, rate limiting, CORS. html-docs skill for auto-generating documentation. Welcome admin by name; "Login as:" label. Home tiles grouped by agent.</div>
 </div>
 
 <div class="item">
   <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot blue"></span>Email service + daily improvement digest</div>
-  <div class="desc">SendGrid/Gmail email service. Daily 11:59 PM improvement-inbox digest. html-docs skill for auto-generating documentation from codebase scans.</div>
-</div>
-
-<div class="item">
-  <div class="date">Mar 15, 2026</div>
-  <div class="title"><span class="dot indigo"></span>Multi-step content creation + event tools</div>
-  <div class="desc">Content agent multi-step workflows: event listing, image vision, transcript summarization. PDF attachment fix. Decimal serialization fix. Theme toggle pill in doc-nav.</div>
+  <div class="title"><span class="dot blue"></span>311 backend tests, all passing</div>
+  <div class="desc">15 test files: query tools (53), security (50), accessibility (35), charts (26), ON24 client (21), uploads (18), rate limiter (18), orchestrator (15), content HTML (16), response cache (13), data agent (12), shares (10), brand templates (9), email service (8), API health (3).</div>
 </div>
 
 </body>

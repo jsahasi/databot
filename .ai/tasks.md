@@ -378,6 +378,16 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Image support: DOMPurify allows img tags, responsive CSS, sandbox allow-same-origin
 - [x] 287 tests total (25 new: 12 content_html + 8 email + 4 security input + 1 sanitizer)
 
+## Performance + Bug Fixes — COMPLETE (2026-03-15)
+- [x] PERF: Switch all 4 agents from claude-opus-4-6 to claude-sonnet-4-6 (40-60% latency reduction)
+- [x] PERF: Increase response cache TTL from 120s to 300s (5 min)
+- [x] FIX: Route AI-generated content requests to Data Agent (was rejected as out-of-scope)
+- [x] FIX: Deduplicate AI content — keep longest article per (event_id, content_type)
+- [x] FIX: Suppress AI content text narration — cards render automatically (no duplicate)
+- [x] FIX: Social media content lookup — add 10+ type aliases + normalize input
+- [x] FIX: Key Takeaways tabs — prefer longest KEYTAKEAWAYS article per event
+- [x] "Suggest something" chip + follow-up email added to Create Content menu
+
 ## Welcome Admin UX — COMPLETE (2026-03-15)
 - [x] Welcome admin by first name on home page greeting
 - [x] "Login as:" label added to admin dropdown in TopNav

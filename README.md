@@ -48,7 +48,7 @@ All queries are tenant-scoped: client 10710 + 9 sub-clients via `WHERE client_id
 
 | Suite | Tests | Lines | Status |
 |-------|------:|------:|--------|
-| Backend unit (pytest) | 305 | 5,200 | All pass |
+| Backend unit (pytest) | 311 | 5,500 | All pass |
 | Frontend Vitest (components) | 23 | 145 | All pass |
 | Frontend Playwright (E2E) | 8 | 93 | All pass |
 | Regression prompts (core) | 26 | 554 | All pass |
@@ -109,7 +109,7 @@ All docs support dark/light theme via `?theme=dark` URL parameter. Generated and
 ```bash
 # Backend
 cd backend && pip install -e ".[dev]"
-pytest tests/ -v                              # 305 tests
+pytest tests/ -v                              # 311 tests
 pytest tests/ --cov=app --cov-report=term     # With coverage
 ruff check app/ && ruff format app/
 
