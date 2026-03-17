@@ -12,6 +12,8 @@ variables:
 lint:backend:
   stage: lint
   image: python:3.12-slim
+  tags:
+    - docker-gcp
   script:
     - cd backend
     - pip install ruff mypy
@@ -24,6 +26,8 @@ lint:backend:
 lint:frontend:
   stage: lint
   image: node:20-alpine
+  tags:
+    - docker-gcp
   script:
     - cd frontend
     - npm ci
@@ -36,6 +40,8 @@ lint:frontend:
 test:backend:
   stage: test
   image: python:3.12-slim
+  tags:
+    - docker-gcp
   services:
     - postgres:16-alpine
   variables:
@@ -56,6 +62,8 @@ test:backend:
 test:frontend:
   stage: test
   image: node:20-alpine
+  tags:
+    - docker-gcp
   script:
     - cd frontend
     - npm ci
@@ -67,6 +75,8 @@ test:frontend:
 build:backend:
   stage: build
   image: docker:24
+  tags:
+    - docker-gcp
   services:
     - docker:24-dind
   script:
@@ -79,6 +89,8 @@ build:backend:
 build:frontend:
   stage: build
   image: docker:24
+  tags:
+    - docker-gcp
   services:
     - docker:24-dind
   script:
@@ -91,6 +103,8 @@ build:frontend:
 deploy:staging:
   stage: deploy
   image: alpine:latest
+  tags:
+    - docker-gcp
   script:
     - echo "Deploy to staging environment"
   environment:
