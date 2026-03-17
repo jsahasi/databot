@@ -66,7 +66,11 @@ async function postFeedback(payload: {
   })
 }
 
-const POLL_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6']
+const POLL_COLORS = [
+  'var(--color-chart-1)', 'var(--color-chart-2)', 'var(--color-chart-3)',
+  'var(--color-chart-4)', 'var(--color-chart-5)', 'var(--color-chart-6)',
+  'var(--color-chart-7)', 'var(--color-chart-8)',
+]
 
 function PollCardsInline({ polls }: { polls: any[] }) {
   if (!polls?.length) return null
@@ -155,7 +159,7 @@ function EventCardInline({ card }: { card: any }) {
       marginTop: '0.75rem', borderRadius: 10, border: '1px solid var(--color-border)',
       background: 'var(--color-card)', overflow: 'hidden', maxWidth: 420,
     }}>
-      <div style={{ height: 4, background: '#4f46e5' }} />
+      <div style={{ height: 4, background: 'var(--color-primary)' }} />
       <div style={{ padding: '0.75rem 1rem' }}>
         <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.15rem' }}>
           Event {card.event_id}{card.event_type ? ` · ${card.event_type}` : ''}
@@ -334,7 +338,7 @@ function EventCardsGrid({ cards }: { cards: any[] }) {
           borderRadius: 10, border: '1px solid var(--color-border)',
           background: 'var(--color-card)', overflow: 'hidden',
         }}>
-          <div style={{ height: 4, background: '#4f46e5' }} />
+          <div style={{ height: 4, background: 'var(--color-primary)' }} />
           <div style={{ padding: '0.65rem 0.85rem' }}>
             <div style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.15rem' }}>
               Event {card.event_id}{card.event_type ? ` · ${card.event_type}` : ''}
@@ -803,7 +807,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
           wordBreak: 'break-word',
         }}>
           {message.isLoading ? (
-            <span role="status" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
+            <span role="status" aria-live="polite" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
               <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0s' }}>.</span>
               <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.2s' }}>.</span>
               <span aria-hidden="true" style={{ animation: 'bounce 1s infinite 0.4s' }}>.</span>
@@ -834,7 +838,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
               title="Good response"
               onClick={handleThumbsUp}
               style={{
-                width: 24, height: 24,
+                width: 44, height: 44,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'transparent',
                 border: '1px solid var(--color-border)',
@@ -844,7 +848,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
                 padding: 0,
                 transition: 'color 0.12s, border-color 0.12s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#10b981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10b981' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-success)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-success)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
             >
               <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -857,7 +861,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
               title="Something's wrong"
               onClick={handleThumbsDown}
               style={{
-                width: 24, height: 24,
+                width: 44, height: 44,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'transparent',
                 border: '1px solid var(--color-border)',
@@ -867,7 +871,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
                 padding: 0,
                 transition: 'color 0.12s, border-color 0.12s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#ef4444' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-danger)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-danger)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
             >
               <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
