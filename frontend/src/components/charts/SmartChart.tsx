@@ -24,7 +24,7 @@ const Plot = lazy(() => import('react-plotly.js'))
 /* ---------- palette ---------- */
 
 // Nivo/SVG requires raw hex — these mirror --color-chart-1 through --color-chart-10
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6', '#f97316', '#64748b']
+const COLORS = ['#2563EB', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0284c7', '#db2777', '#0d9488', '#ea580c', '#475569']
 
 /* ---------- axis label formatting ---------- */
 

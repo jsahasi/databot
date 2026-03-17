@@ -1,65 +1,71 @@
 :root {
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-sidebar: #1a1f36;
-  --color-sidebar-text: #a0aec0;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1d4ed8;
+  --color-cta: #F97316;
+  --color-cta-hover: #ea580c;
+  --color-sidebar: #1e293b;
+  --color-sidebar-text: #94a3b8;
   --color-sidebar-active: #ffffff;
-  --color-bg: #f7f8fc;
+  --color-bg: #F8FAFC;
   --color-card: #ffffff;
-  --color-text: #1a202c;
+  --color-text: #1E293B;
   --color-text-secondary: #64748b;
   --color-border: #e2e8f0;
-  --color-success: #48bb78;
-  --color-warning: #ed8936;
-  --color-danger: #f56565;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
   --color-chip-bg: #ffffff;
-  --color-chip-border: #c7d2fe;
-  --color-chip-text: #4338ca;
-  --color-chip-hover-bg: #eef2ff;
+  --color-chip-border: #93c5fd;
+  --color-chip-text: #1d4ed8;
+  --color-chip-hover-bg: #eff6ff;
   --color-danger-bg: #fef2f2;
   --color-success-bg: #f0fdf4;
   --color-warning-bg: #fffbeb;
-  --color-agent-data: #6366f1;
+  --color-agent-data: #2563EB;
   --color-agent-concierge: #f59e0b;
-  --color-agent-config: #10b981;
-  --color-agent-calendar: #8b5cf6;
-  --color-agent-content: #ec4899;
-  --color-chart-1: #6366f1;
-  --color-chart-2: #10b981;
-  --color-chart-3: #f59e0b;
-  --color-chart-4: #ef4444;
-  --color-chart-5: #8b5cf6;
-  --color-chart-6: #0ea5e9;
-  --color-chart-7: #ec4899;
-  --color-chart-8: #14b8a6;
-  --color-chart-9: #f97316;
-  --color-chart-10: #64748b;
+  --color-agent-config: #059669;
+  --color-agent-calendar: #7c3aed;
+  --color-agent-content: #db2777;
+  --color-chart-1: #2563EB;
+  --color-chart-2: #059669;
+  --color-chart-3: #d97706;
+  --color-chart-4: #dc2626;
+  --color-chart-5: #7c3aed;
+  --color-chart-6: #0284c7;
+  --color-chart-7: #db2777;
+  --color-chart-8: #0d9488;
+  --color-chart-9: #ea580c;
+  --color-chart-10: #475569;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
   --radius: 8px;
   --min-touch: 44px;
+  --font-sans: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Fira Code', 'Cascadia Code', monospace;
 }
 
 [data-theme="dark"] {
-  --color-primary: #a5b4fc;
-  --color-primary-hover: #c7d2fe;
-  --color-sidebar: #0f1117;
-  --color-sidebar-text: #8b92a5;
-  --color-sidebar-active: #c9cfe0;
-  --color-bg: #0f1117;
-  --color-card: #1a1f2e;
-  --color-text: #c9cfe0;
-  --color-text-secondary: #94a0b8;
-  --color-border: #2d3748;
-  --color-success: #6ee7b7;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #93c5fd;
+  --color-cta: #fb923c;
+  --color-cta-hover: #f97316;
+  --color-sidebar: #0f172a;
+  --color-sidebar-text: #94a3b8;
+  --color-sidebar-active: #e2e8f0;
+  --color-bg: #0f172a;
+  --color-card: #1e293b;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
+  --color-success: #34d399;
   --color-warning: #fbbf24;
   --color-danger: #f87171;
-  --color-chip-bg: #1e2435;
-  --color-chip-border: #3a4060;
-  --color-chip-text: #c7d2fe;
-  --color-chip-hover-bg: #252d45;
-  --color-danger-bg: rgba(239,68,68,0.15);
-  --color-success-bg: rgba(16,185,129,0.15);
-  --color-warning-bg: rgba(245,158,11,0.15);
+  --color-chip-bg: #1e293b;
+  --color-chip-border: #334155;
+  --color-chip-text: #93c5fd;
+  --color-chip-hover-bg: #1e3a5f;
+  --color-danger-bg: rgba(220,38,38,0.15);
+  --color-success-bg: rgba(5,150,105,0.15);
+  --color-warning-bg: rgba(217,119,6,0.15);
   --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
 }
 
@@ -72,12 +78,16 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
   background: var(--color-bg);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+code, pre, .mono {
+  font-family: var(--font-mono);
 }
 
 a {
