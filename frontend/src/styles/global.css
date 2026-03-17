@@ -7,7 +7,7 @@
   --color-bg: #f7f8fc;
   --color-card: #ffffff;
   --color-text: #1a202c;
-  --color-text-secondary: #718096;
+  --color-text-secondary: #64748b;
   --color-border: #e2e8f0;
   --color-success: #48bb78;
   --color-warning: #ed8936;
@@ -16,8 +16,27 @@
   --color-chip-border: #c7d2fe;
   --color-chip-text: #4338ca;
   --color-chip-hover-bg: #eef2ff;
+  --color-danger-bg: #fef2f2;
+  --color-success-bg: #f0fdf4;
+  --color-warning-bg: #fffbeb;
+  --color-agent-data: #6366f1;
+  --color-agent-concierge: #f59e0b;
+  --color-agent-config: #10b981;
+  --color-agent-calendar: #8b5cf6;
+  --color-agent-content: #ec4899;
+  --color-chart-1: #6366f1;
+  --color-chart-2: #10b981;
+  --color-chart-3: #f59e0b;
+  --color-chart-4: #ef4444;
+  --color-chart-5: #8b5cf6;
+  --color-chart-6: #0ea5e9;
+  --color-chart-7: #ec4899;
+  --color-chart-8: #14b8a6;
+  --color-chart-9: #f97316;
+  --color-chart-10: #64748b;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
   --radius: 8px;
+  --min-touch: 44px;
 }
 
 [data-theme="dark"] {
@@ -38,6 +57,9 @@
   --color-chip-border: #3a4060;
   --color-chip-text: #c7d2fe;
   --color-chip-hover-bg: #252d45;
+  --color-danger-bg: rgba(239,68,68,0.15);
+  --color-success-bg: rgba(16,185,129,0.15);
+  --color-warning-bg: rgba(245,158,11,0.15);
   --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
 }
 
@@ -100,6 +122,11 @@ a:focus-visible,
 
 button:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Responsive — mobile-first breakpoints */
+@media (max-width: 767px) {
+  body { font-size: 14px; }
 }
 
 /* Reduced motion — disable animations for users who prefer it */
