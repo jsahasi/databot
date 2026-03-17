@@ -8,6 +8,13 @@ variables:
   POSTGRES_DB: databot_test
   POSTGRES_USER: test
   POSTGRES_PASSWORD: test
+  NEXUS_REGISTRY: nexus.on24.com:8890
+  IMAGE_BACKEND: $NEXUS_REGISTRY/gcp/backend
+  IMAGE_FRONTEND: $NEXUS_REGISTRY/gcp/frontend
+  IMAGE_MCP: $NEXUS_REGISTRY/gcp/on24-mcp
+  DEPLOY_HOST: p-nexus.on24.com
+  DEPLOY_USER: admin
+  DEPLOY_DIR: /opt/apps/$CI_PROJECT_NAME
 
 lint:backend:
   stage: lint
@@ -72,43 +79,65 @@ test:frontend:
     - changes:
         - frontend/**/*
 
-build:backend:
+.build-common: &build-common
   stage: build
-  image: docker:24
+  image: p-eng05.on24.com:8888/gcp/gitlab-builder:latest
   tags:
     - docker-gcp
-  services:
-    - docker:24-dind
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA ./backend
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "dev"
+  before_script:
+    - echo "$NEXUS_PASSWORD" | docker login $NEXUS_REGISTRY -u "$NEXUS_USER" --password-stdin
+  after_script:
+    - docker logout $NEXUS_REGISTRY
+
+build:backend:
+  <<: *build-common
+  script:
+    - docker build -t $IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
+    - docker push $IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA
 
 build:frontend:
-  stage: build
-  image: docker:24
-  tags:
-    - docker-gcp
-  services:
-    - docker:24-dind
+  <<: *build-common
   script:
-    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA ./frontend
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - docker build -t $IMAGE_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
+    - docker push $IMAGE_FRONTEND:$CI_COMMIT_SHORT_SHA
 
-deploy:staging:
+build:mcp:
+  <<: *build-common
+  script:
+    - docker build -t $IMAGE_MCP:$CI_COMMIT_SHORT_SHA ./on24-mcp
+    - docker push $IMAGE_MCP:$CI_COMMIT_SHORT_SHA
+
+deploy:dev:
   stage: deploy
-  image: alpine:latest
+  image: p-eng05.on24.com:8888/gcp/gitlab-builder:latest
   tags:
     - docker-gcp
-  script:
-    - echo "Deploy to staging environment"
-  environment:
-    name: staging
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
+    - if: $CI_COMMIT_BRANCH == "dev"
+  environment:
+    name: dev
+    url: http://$DEPLOY_HOST:3001
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq openssh-client
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -i ~/.ssh/id_ed25519 $DEPLOY_USER@$DEPLOY_HOST "
+        set -e
+        mkdir -p $DEPLOY_DIR
+        echo '$NEXUS_PASSWORD' | docker login $NEXUS_REGISTRY -u '$NEXUS_USER' --password-stdin
+        cd $DEPLOY_DIR
+        export IMAGE_BACKEND=\"$IMAGE_BACKEND\"
+        export IMAGE_FRONTEND=\"$IMAGE_FRONTEND\"
+        export IMAGE_MCP=\"$IMAGE_MCP\"
+        export IMAGE_TAG=\"$CI_COMMIT_SHORT_SHA\"
+        docker-compose pull
+        docker-compose up -d --remove-orphans
+        docker image prune -f
+        docker logout $NEXUS_REGISTRY
+      "
