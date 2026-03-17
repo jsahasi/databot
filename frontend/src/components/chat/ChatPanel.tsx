@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useChatContext } from '../../context/ChatContext'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 import ChatMessage from './ChatMessage'
 import AgentIndicator from './AgentIndicator'
 import BrandTemplateManager from './BrandTemplateManager'
@@ -7,11 +8,11 @@ import BrandTemplateManager from './BrandTemplateManager'
 type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'content' | 'neutral'
 
 const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: string; hoverBorder: string }> = {
-  data:      { border: '#6366f1', bg: 'rgba(99,102,241,0.07)',  hoverBg: 'rgba(99,102,241,0.13)',  hoverBorder: '#6366f1' },
-  concierge: { border: '#f59e0b', bg: 'rgba(245,158,11,0.07)',  hoverBg: 'rgba(245,158,11,0.13)',  hoverBorder: '#f59e0b' },
-  config:    { border: '#10b981', bg: 'rgba(16,185,129,0.07)',  hoverBg: 'rgba(16,185,129,0.13)',  hoverBorder: '#10b981' },
-  calendar:  { border: '#8b5cf6', bg: 'rgba(139,92,246,0.07)', hoverBg: 'rgba(139,92,246,0.13)',  hoverBorder: '#8b5cf6' },
-  content:   { border: '#ec4899', bg: 'rgba(236,72,153,0.07)', hoverBg: 'rgba(236,72,153,0.13)',  hoverBorder: '#ec4899' },
+  data:      { border: 'var(--color-agent-data)', bg: 'rgba(99,102,241,0.07)',  hoverBg: 'rgba(99,102,241,0.13)',  hoverBorder: 'var(--color-agent-data)' },
+  concierge: { border: 'var(--color-agent-concierge)', bg: 'rgba(245,158,11,0.07)',  hoverBg: 'rgba(245,158,11,0.13)',  hoverBorder: 'var(--color-agent-concierge)' },
+  config:    { border: 'var(--color-agent-config)', bg: 'rgba(16,185,129,0.07)',  hoverBg: 'rgba(16,185,129,0.13)',  hoverBorder: 'var(--color-agent-config)' },
+  calendar:  { border: 'var(--color-agent-calendar)', bg: 'rgba(139,92,246,0.07)', hoverBg: 'rgba(139,92,246,0.13)',  hoverBorder: 'var(--color-agent-calendar)' },
+  content:   { border: 'var(--color-agent-content)', bg: 'rgba(236,72,153,0.07)', hoverBg: 'rgba(236,72,153,0.13)',  hoverBorder: 'var(--color-agent-content)' },
   neutral:   { border: 'var(--color-border)', bg: 'var(--color-card)', hoverBg: 'var(--color-chip-hover-bg)', hoverBorder: 'var(--color-border)' },
 }
 
@@ -71,6 +72,7 @@ function filterByPermissions<T extends { label: string }>(items: T[], perms: str
 
 export default function ChatPanel() {
   const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, setProposedEvents, resetChat } = useChatContext()
+  const isMobile = useIsMobile()
   const [input, setInput] = useState('')
   const [techContacts, setTechContacts] = useState<string[]>([])
 
@@ -267,7 +269,7 @@ export default function ChatPanel() {
             <h2 style={{
               fontSize: '1.25rem',
               fontWeight: 700,
-              color: '#111827',
+              color: 'var(--color-text)',
               marginBottom: '2rem',
               textAlign: 'center',
             }}>
@@ -279,7 +281,7 @@ export default function ChatPanel() {
               <>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
                 gap: '0.625rem',
                 width: '100%',
                 maxWidth: 680,
@@ -405,7 +407,7 @@ export default function ChatPanel() {
                   </svg>
                   Back
                 </button>
-                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.75rem' }}>
                   Which ON24 experience?
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
@@ -457,7 +459,7 @@ export default function ChatPanel() {
                   </svg>
                   Back
                 </button>
-                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.75rem' }}>
                   What would you like to configure?
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
@@ -633,7 +635,7 @@ export default function ChatPanel() {
                   </svg>
                   Back
                 </button>
-                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.75rem' }}>
                   What would you like help with?
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
@@ -748,10 +750,10 @@ export default function ChatPanel() {
           </p>
         )}
         {attachment && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem', fontSize: '0.75rem', color: '#6366f1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem', fontSize: '0.75rem', color: 'var(--color-primary)' }}>
             <span style={{ background: 'rgba(99,102,241,0.1)', padding: '0.2rem 0.6rem', borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
               {attachment.name}
-              <button onClick={() => setAttachment(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', fontSize: '0.85rem', padding: 0, lineHeight: 1 }}>&times;</button>
+              <button onClick={() => setAttachment(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.85rem', padding: 0, lineHeight: 1 }}>&times;</button>
             </span>
           </div>
         )}
@@ -770,12 +772,12 @@ export default function ChatPanel() {
             disabled={uploading}
             style={{
               flexShrink: 0,
-              width: 36, height: 36,
+              width: 44, height: 44,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent',
               border: 'none',
               cursor: uploading ? 'wait' : 'pointer',
-              color: attachment ? '#6366f1' : '#9ca3af',
+              color: attachment ? 'var(--color-primary)' : 'var(--color-text-secondary)',
               borderRadius: 6,
               opacity: uploading ? 0.5 : 1,
             }}
@@ -822,9 +824,9 @@ export default function ChatPanel() {
             aria-label="Send message"
             style={{
               flexShrink: 0,
-              width: 36, height: 36,
+              width: 44, height: 44,
               borderRadius: '50%',
-              background: input.trim() ? 'var(--color-primary)' : '#e5e7eb',
+              background: input.trim() ? 'var(--color-primary)' : 'var(--color-border)',
               color: '#fff',
               border: 'none',
               cursor: input.trim() ? 'pointer' : 'not-allowed',
