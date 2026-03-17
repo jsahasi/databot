@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { useChatContext } from '../../context/ChatContext'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 
 const DOC_BASES = [
   { label: 'Market Requirements', path: '/docs/mrd.html' },
@@ -14,7 +15,12 @@ const DOC_BASES = [
   { label: 'API vs DB Benchmark', path: '/docs/api-vs-db-benchmark.html' },
 ]
 
-export default function ChatSidebar() {
+interface ChatSidebarProps {
+  onClose?: () => void
+}
+
+export default function ChatSidebar({ onClose }: ChatSidebarProps) {
+  const isMobile = useIsMobile()
   const { resetChat } = useChatContext()
   const navigate = useNavigate()
   const location = useLocation()
@@ -50,11 +56,11 @@ export default function ChatSidebar() {
     if (location.pathname !== '/') navigate('/')
   }
 
-  return (
+  const sidebarContent = (
     <aside
       aria-label="Chat history"
       style={{
-        width: 200,
+        width: isMobile ? 260 : 200,
         flexShrink: 0,
         height: '100%',
         background: 'var(--color-card)',
@@ -64,6 +70,7 @@ export default function ChatSidebar() {
         padding: '0.875rem 0.75rem',
         gap: '1.25rem',
         overflowY: 'auto',
+        ...(isMobile ? { position: 'fixed' as const, left: 0, top: 52, bottom: 0, zIndex: 30 } : {}),
       }}
     >
       {/* New Chat button + toggle */}
@@ -92,7 +99,7 @@ export default function ChatSidebar() {
         <button
           aria-label="View all chats"
           style={{
-            width: 34, height: 34, flexShrink: 0,
+            width: 44, height: 44, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent',
             border: '1px solid var(--color-border)',
@@ -112,6 +119,16 @@ export default function ChatSidebar() {
       <div ref={docsRef} style={{ position: 'relative' }}>
         <button
           onClick={() => setDocsOpen(o => !o)}
+          aria-expanded={docsOpen}
+          aria-haspopup="menu"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setDocsOpen(o => !o)
+            } else if (e.key === 'Escape') {
+              setDocsOpen(false)
+            }
+          }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             width: '100%',
@@ -140,30 +157,40 @@ export default function ChatSidebar() {
           </svg>
         </button>
         {docsOpen && (
-          <div style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 8,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-            padding: '0.3rem 0',
-            maxHeight: 280,
-            overflowY: 'auto',
-          }}>
+          <div
+            role="menu"
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 4px)',
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              background: 'var(--color-card)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 8,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              padding: '0.3rem 0',
+              maxHeight: 280,
+              overflowY: 'auto',
+            }}
+          >
             {docLinks.map(({ label, href }) => (
               <a
                 key={href}
                 href={href}
                 target="_blank"
                 rel="noreferrer"
+                role="menuitem"
                 onClick={() => setDocsOpen(false)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.preventDefault()
+                    setDocsOpen(false)
+                  }
+                }}
                 style={{
                   display: 'block',
-                  padding: '0.4rem 0.75rem',
+                  padding: '0.625rem 0.75rem',
                   fontSize: '0.775rem',
                   color: 'var(--color-text-secondary)',
                   textDecoration: 'none',
@@ -202,4 +229,15 @@ export default function ChatSidebar() {
       )}
     </aside>
   )
+
+  if (isMobile) {
+    return (
+      <>
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 29 }} />
+        {sidebarContent}
+      </>
+    )
+  }
+
+  return sidebarContent
 }
