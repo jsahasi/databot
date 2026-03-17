@@ -23,6 +23,7 @@ const Plot = lazy(() => import('react-plotly.js'))
 
 /* ---------- palette ---------- */
 
+// Nivo/SVG requires raw hex — these mirror --color-chart-1 through --color-chart-10
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#ec4899', '#14b8a6', '#f97316', '#64748b']
 
 /* ---------- axis label formatting ---------- */
@@ -71,19 +72,28 @@ function tickInterval(count: number): number | undefined {
   return Math.floor(count / 10)
 }
 
-/* ---------- Nivo dark theme ---------- */
+/* ---------- Nivo theme (dark/light aware) ---------- */
 
-const NIVO_THEME = {
-  text: { fill: '#94a3b8' },
-  axis: {
-    ticks: { text: { fill: '#94a3b8', fontSize: 11 } },
-    legend: { text: { fill: '#94a3b8', fontSize: 12 } },
-  },
-  grid: { line: { stroke: '#1e293b' } },
-  legends: { text: { fill: '#94a3b8', fontSize: 11 } },
-  tooltip: {
-    container: { background: '#1e293b', color: '#e2e8f0', fontSize: 12, borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' },
-  },
+function getNivoTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+  return {
+    text: { fill: isDark ? '#94a3b8' : '#64748b' },
+    axis: {
+      ticks: { text: { fill: isDark ? '#94a3b8' : '#64748b', fontSize: 11 } },
+      legend: { text: { fill: isDark ? '#94a3b8' : '#64748b', fontSize: 12 } },
+    },
+    grid: { line: { stroke: isDark ? '#1e293b' : '#e2e8f0' } },
+    legends: { text: { fill: isDark ? '#94a3b8' : '#64748b', fontSize: 11 } },
+    tooltip: {
+      container: {
+        background: isDark ? '#1e293b' : '#ffffff',
+        color: isDark ? '#e2e8f0' : '#1e293b',
+        fontSize: 12,
+        borderRadius: 6,
+        border: `1px solid ${isDark ? '#2d3748' : '#e2e8f0'}`,
+      },
+    },
+  }
 }
 
 /* ---------- chart type definitions ---------- */
@@ -99,7 +109,7 @@ export interface SmartChartData {
 }
 
 const ChartLoading = () => (
-  <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+  <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>
     Loading chart...
   </div>
 )
@@ -125,7 +135,7 @@ function NivoBar({ data, xKey, yKeys, groupMode = 'grouped' }: { data: any[]; xK
           padding={0.3}
           colors={COLORS}
           borderRadius={groupMode === 'stacked' ? 0 : 3}
-          theme={NIVO_THEME}
+          theme={getNivoTheme()}
           axisBottom={{
             tickSize: 0,
             tickPadding: 8,
@@ -183,7 +193,7 @@ function NivoPie({ data }: { data: any[] }) {
           cornerRadius={4}
           colors={COLORS}
           borderWidth={0}
-          theme={NIVO_THEME}
+          theme={getNivoTheme()}
           arcLinkLabelsSkipAngle={12}
           arcLinkLabelsTextColor="#94a3b8"
           arcLinkLabelsThickness={1.5}
@@ -214,7 +224,7 @@ function NivoRadar({ data, xKey, yKeys }: { data: any[]; xKey: string; yKeys: st
           dotColor={{ theme: 'background' }}
           dotBorderWidth={2}
           dotBorderColor={{ from: 'color' }}
-          theme={NIVO_THEME}
+          theme={getNivoTheme()}
           gridShape="circular"
           animate
           motionConfig="gentle"
@@ -506,8 +516,11 @@ export default function SmartChart({ data: chartData }: { data: SmartChartData }
       aria-label={title ? `Chart: ${title}` : 'Chart'}
       style={{ marginTop: '0.75rem', width: '100%', maxWidth: 580 }}
     >
+      <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+        {title ? `${type} chart: ${title}` : `${type} chart`}
+      </span>
       {title && (
-        <p aria-hidden="true" style={{ fontSize: '0.78rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.5rem' }}>
+        <p aria-hidden="true" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
           {title}
         </p>
       )}

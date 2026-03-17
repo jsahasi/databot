@@ -1,3 +1,5 @@
+import { AlertCircle } from 'lucide-react'
+
 interface ErrorStateProps {
   message?: string
   onRetry?: () => void
@@ -25,17 +27,14 @@ export default function ErrorState({
           width: 48,
           height: 48,
           borderRadius: '50%',
-          background: '#fff5f5',
+          background: 'var(--color-danger-bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '1.5rem',
           marginBottom: '1rem',
-          color: 'var(--color-danger)',
-          fontWeight: 700,
         }}
       >
-        !
+        <AlertCircle size={24} color="var(--color-danger)" aria-hidden="true" />
       </div>
       <p style={{ fontSize: '0.875rem', marginBottom: '1rem', textAlign: 'center' }}>{message}</p>
       {onRetry && (
