@@ -399,6 +399,20 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Welcome admin by first name on home page greeting
 - [x] "Login as:" label added to admin dropdown in TopNav
 
+## UI/UX Audit + Design System Overhaul — COMPLETE (2026-03-17)
+- [x] UI/UX Pro Max audit: 77 issues identified (15 critical, 14 high, 31 medium, 17 low)
+- [x] Foundation: lucide-react, 20+ CSS variables, contrast fix, useMediaQuery hook
+- [x] Design system: primary #4f46e5→#2563EB, Fira Sans/Code fonts, CTA orange, slate dark mode
+- [x] TopNav: 44px touch targets, Sun/Moon SVG, responsive (hide admin on mobile)
+- [x] ChatSidebar: collapsible mobile overlay, keyboard nav, 44px targets
+- [x] ChatPanel: zero hardcoded colors, responsive grid, 44px send/attach buttons
+- [x] ChatMessage: thumbs 44px, POLL_COLORS→CSS vars, aria-live loading
+- [x] EventCalendar: 9 emoji→SVG, dialog a11y, responsive fullscreen, 44px nav
+- [x] SmartChart: getNivoTheme() light/dark, sr-only descriptions, updated palette
+- [x] ErrorState: AlertCircle SVG icon, var(--color-danger-bg)
+- [x] Tests: 23/23 passing, TypeScript clean
+- [x] Tags: pre-ui-checkpoint → post-ui-checkpoint
+
 ## Backlog / Next Steps
 
 ## Content Calendar Pre-Cache + Resilience — COMPLETE (2026-03-16, commit 514b91b)
