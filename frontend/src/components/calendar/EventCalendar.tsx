@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import DOMPurify from 'dompurify'
+import { Users, CheckCircle, TrendingUp, Zap, BarChart3, ClipboardList, ArrowDown, Calendar as CalendarIcon, Clock } from 'lucide-react'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,7 +52,11 @@ interface Props {
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 
-const EVENT_COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899']
+const EVENT_COLORS = [
+  'var(--color-chart-1)', 'var(--color-chart-2)', 'var(--color-chart-3)',
+  'var(--color-chart-4)', 'var(--color-chart-5)', 'var(--color-chart-6)',
+  'var(--color-chart-7)',
+]
 const PROPOSED_COLOR = '#a78bfa'  // lighter purple for proposed events
 function eventColor(id: number) { return id < 0 ? PROPOSED_COLOR : EVENT_COLORS[id % EVENT_COLORS.length] }
 function isProposed(ev: CalendarEvent) { return ev.event_id < 0 }
@@ -103,8 +109,9 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
           left: pos.x,
           top: pos.y - 4,
           transform: 'translate(-50%, -100%)',
-          background: 'rgba(15,23,42,0.92)',
-          color: '#f1f5f9',
+          background: 'var(--color-card)',
+          color: 'var(--color-text)',
+          border: '1px solid var(--color-border)',
           padding: '5px 10px',
           borderRadius: 6,
           fontSize: '0.7rem',
@@ -244,7 +251,7 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
 }
 
 function PerformanceSection({ kpis, loadingDetail, defaultCollapsed }: {
-  kpis: { label: string; value: string; icon: string }[]
+  kpis: { label: string; value: string; icon: React.ReactNode }[]
   loadingDetail: boolean
   defaultCollapsed: boolean
 }) {
@@ -300,7 +307,7 @@ function PerformanceSection({ kpis, loadingDetail, defaultCollapsed }: {
   )
 }
 
-function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClose: () => void }) {
+function EventDetail({ event: initial, onClose, isMobile }: { event: CalendarEvent; onClose: () => void; isMobile: boolean }) {
   const [event, setEvent] = useState<CalendarEvent>(initial)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const color = eventColor(event.event_id)
@@ -321,27 +328,28 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
 
   // KPI tiles — always show registrants + attendees for past events (even if 0)
   const proposed = isProposed(event)
-  const kpis: { label: string; value: string; icon: string }[] = []
+  const kpis: { label: string; value: string; icon: React.ReactNode }[] = []
   if (proposed) {
     // Show proposed event metadata instead of KPIs
     const anyEv = event as any
-    if (anyEv._funnel_stage) kpis.push({ label: 'Funnel Stage', value: anyEv._funnel_stage, icon: '🎯' })
-    if (anyEv._theme) kpis.push({ label: 'Campaign Theme', value: anyEv._theme, icon: '📣' })
-    if (anyEv._topic) kpis.push({ label: 'Topic', value: anyEv._topic, icon: '💡' })
+    if (anyEv._funnel_stage) kpis.push({ label: 'Funnel Stage', value: anyEv._funnel_stage, icon: <Zap size={14} aria-hidden="true" /> })
+    if (anyEv._theme) kpis.push({ label: 'Campaign Theme', value: anyEv._theme, icon: <TrendingUp size={14} aria-hidden="true" /> })
+    if (anyEv._topic) kpis.push({ label: 'Topic', value: anyEv._topic, icon: <ClipboardList size={14} aria-hidden="true" /> })
   } else if (!event.is_future) {
-    kpis.push({ label: 'Registrants', value: (event.registrant_count ?? 0).toLocaleString(), icon: '👥' })
-    kpis.push({ label: 'Attendees', value: (event.attendee_count ?? 0).toLocaleString(), icon: '✅' })
-    if (event.conversion_rate) kpis.push({ label: 'Conversion', value: `${event.conversion_rate}%`, icon: '📈' })
-    if (event.avg_engagement_score != null) kpis.push({ label: 'Avg Engagement', value: event.avg_engagement_score.toFixed(1), icon: '⚡' })
-    if (event.poll_response_count) kpis.push({ label: 'Poll Responses', value: event.poll_response_count.toLocaleString(), icon: '📊' })
-    if (event.survey_response_count) kpis.push({ label: 'Survey Responses', value: event.survey_response_count.toLocaleString(), icon: '📋' })
-    if (event.resource_download_count) kpis.push({ label: 'Resource Downloads', value: event.resource_download_count.toLocaleString(), icon: '⬇️' })
+    kpis.push({ label: 'Registrants', value: (event.registrant_count ?? 0).toLocaleString(), icon: <Users size={14} aria-hidden="true" /> })
+    kpis.push({ label: 'Attendees', value: (event.attendee_count ?? 0).toLocaleString(), icon: <CheckCircle size={14} aria-hidden="true" /> })
+    if (event.conversion_rate) kpis.push({ label: 'Conversion', value: `${event.conversion_rate}%`, icon: <TrendingUp size={14} aria-hidden="true" /> })
+    if (event.avg_engagement_score != null) kpis.push({ label: 'Avg Engagement', value: event.avg_engagement_score.toFixed(1), icon: <Zap size={14} aria-hidden="true" /> })
+    if (event.poll_response_count) kpis.push({ label: 'Poll Responses', value: event.poll_response_count.toLocaleString(), icon: <BarChart3 size={14} aria-hidden="true" /> })
+    if (event.survey_response_count) kpis.push({ label: 'Survey Responses', value: event.survey_response_count.toLocaleString(), icon: <ClipboardList size={14} aria-hidden="true" /> })
+    if (event.resource_download_count) kpis.push({ label: 'Resource Downloads', value: event.resource_download_count.toLocaleString(), icon: <ArrowDown size={14} aria-hidden="true" /> })
   }
 
   return (
     <div style={{
-      width: 360, flexShrink: 0,
-      borderLeft: '1px solid var(--color-border)',
+      ...(isMobile
+        ? { position: 'absolute' as const, bottom: 0, left: 0, right: 0, maxHeight: '60vh', borderTop: '1px solid var(--color-border)', borderRadius: '12px 12px 0 0', zIndex: 10 }
+        : { width: 360, flexShrink: 0, borderLeft: '1px solid var(--color-border)' }),
       background: 'var(--color-bg)',
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
@@ -368,7 +376,7 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
         }}>×</button>
       </div>
 
-      <div style={{ padding: '0.75rem 1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ padding: '0.75rem 1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
 
         {/* Title card */}
         <div style={{
@@ -385,12 +393,12 @@ function EventDetail({ event: initial, onClose }: { event: CalendarEvent; onClos
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ opacity: 0.5 }}>📅</span>
+              <span style={{ opacity: 0.5 }}><CalendarIcon size={14} aria-hidden="true" /></span>
               {fmtDate(start)}
             </div>
             {start && (
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ opacity: 0.5 }}>🕐</span>
+                <span style={{ opacity: 0.5 }}><Clock size={14} aria-hidden="true" /></span>
                 {fmtTime(start)}{end ? ` – ${fmtTime(end)}` : ''}
               </div>
             )}
@@ -802,6 +810,7 @@ function DayView({
 // ─── Main Calendar ────────────────────────────────────────────────────────────
 
 export default function EventCalendar({ isOpen, onClose, onEventToChat, proposedMode = false, proposedEvents = [] }: Props) {
+  const isMobile = useIsMobile()
   const today = new Date()
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [dayDate, setDayDate] = useState(today)
@@ -993,15 +1002,20 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
       background: 'rgba(0,0,0,0.5)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={{
-        width: '96vw', maxWidth: 1600,
-        height: '95vh',
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="calendar-dialog-title"
+        style={{
+        width: isMobile ? '100vw' : '96vw', maxWidth: 1600,
+        height: isMobile ? '100vh' : '95vh',
         background: 'var(--color-card)',
-        borderRadius: 12,
+        borderRadius: isMobile ? 0 : 12,
         boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden',
       }}>
+        <h2 id="calendar-dialog-title" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Event Calendar</h2>
         {/* ── Toolbar ── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -1113,7 +1127,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
         </div>
 
         {/* ── Body ── */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
           {view === 'month'
             ? <MonthView year={year} month={month} events={filteredEvents} onSelectEvent={setSelectedEvent} onDoubleClickEvent={onEventToChat} />
             : view === 'week'
@@ -1122,7 +1136,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
           }
 
           {selectedEvent && (
-            <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+            <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} isMobile={isMobile} />
           )}
         </div>
       </div>
@@ -1131,7 +1145,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
 }
 
 const navBtnStyle: React.CSSProperties = {
-  width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
   background: 'var(--color-bg)', border: '1px solid var(--color-border)',
   borderRadius: 6, cursor: 'pointer', color: 'var(--color-text)',
 }
