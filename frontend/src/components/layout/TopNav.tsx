@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Sun, Moon } from 'lucide-react'
 import { useChatContext } from '../../context/ChatContext'
 import { useClientContext } from '../../context/ClientContext'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 
 interface AdminUser {
   admin_id: number
@@ -18,6 +20,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
   const [switching, setSwitching] = useState(false)
   const [admins, setAdmins] = useState<AdminUser[]>([])
   const [selectedAdmin, setSelectedAdmin] = useState<string>('')
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
@@ -59,8 +62,8 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
         borderBottom: '1px solid var(--color-border)',
         display: 'flex',
         alignItems: 'center',
-        paddingLeft: '1.25rem',
-        paddingRight: '1.25rem',
+        paddingLeft: isMobile ? '0.75rem' : '1.25rem',
+        paddingRight: isMobile ? '0.75rem' : '1.25rem',
         gap: '2rem',
         zIndex: 20,
       }}
@@ -85,7 +88,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
       <div style={{ flex: 1 }} />
 
       {/* Simulated Admin dropdown */}
-      {admins.length > 0 && (
+      {!isMobile && admins.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
           <label htmlFor="admin-select" style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
             Login as:
@@ -139,8 +142,8 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           aria-pressed={dark}
           title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           style={{
-            width: 36, height: 20,
-            borderRadius: 10,
+            width: 48, height: 26,
+            borderRadius: 13,
             background: dark ? 'var(--color-primary)' : '#d1d5db',
             border: 'none',
             cursor: 'pointer',
@@ -151,15 +154,15 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
         >
           <span aria-hidden="true" style={{
             position: 'absolute',
-            top: 2, left: dark ? 18 : 2,
-            width: 16, height: 16,
+            top: 3, left: dark ? 24 : 3,
+            width: 20, height: 20,
             borderRadius: '50%',
             background: '#fff',
             transition: 'left 0.2s',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '0.6rem',
           }}>
-            {dark ? '🌙' : '☀️'}
+            {dark ? <Moon size={10} /> : <Sun size={10} />}
           </span>
         </button>
 
@@ -168,7 +171,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
             aria-hidden="true"
             style={{
               width: 6, height: 6, borderRadius: '50%',
-              background: isConnected ? '#10b981' : '#ef4444',
+              background: isConnected ? 'var(--color-success)' : 'var(--color-danger)',
             }}
           />
           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
@@ -192,8 +195,8 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
                 fontWeight: 600,
                 padding: '0.1rem 0.4rem',
                 borderRadius: 4,
-                background: dbEnv === 'PROD' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                color: dbEnv === 'PROD' ? '#10b981' : '#f59e0b',
+                background: dbEnv === 'PROD' ? 'var(--color-success-bg)' : 'var(--color-warning-bg)',
+                color: dbEnv === 'PROD' ? 'var(--color-success)' : 'var(--color-warning)',
                 letterSpacing: '0.03em',
                 border: 'none',
                 cursor: qaAvailable ? 'pointer' : 'default',
@@ -209,8 +212,8 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
               fontWeight: 600,
               padding: '0.1rem 0.4rem',
               borderRadius: 4,
-              background: 'rgba(239,68,68,0.15)',
-              color: '#ef4444',
+              background: 'var(--color-danger-bg)',
+              color: 'var(--color-danger)',
             }}>
               DB offline
             </span>
@@ -222,7 +225,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           aria-label="Open event calendar"
           title="Event Calendar"
           style={{
-            width: 32, height: 32,
+            width: 44, height: 44,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent',
             border: '1px solid var(--color-border)',
@@ -239,6 +242,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           </svg>
         </button>
 
+        {!isMobile && (
         <button style={{
           padding: '0.3rem 0.75rem',
           fontSize: '0.775rem',
@@ -250,13 +254,14 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
         }}>
           Get Help
         </button>
+        )}
         <button
-          aria-label="User menu — Jayesh Sahasi"
+          aria-label={`User menu${selectedAdmin ? ` — ${admins.find(a => a.email === selectedAdmin)?.name || selectedAdmin}` : ''}`}
           style={{
-            width: 30, height: 30, borderRadius: '50%',
+            width: 44, height: 44, borderRadius: '50%',
             background: 'var(--color-border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75rem', color: 'var(--color-text)', fontWeight: 600,
+            fontSize: '0.85rem', color: 'var(--color-text)', fontWeight: 600,
             cursor: 'pointer', border: 'none',
           }}
         >
