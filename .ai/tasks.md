@@ -413,7 +413,19 @@ Built-in ON24 reporting — agent directs users to these as jumping-off points:
 - [x] Tests: 23/23 passing, TypeScript clean
 - [x] Tags: pre-ui-checkpoint → post-ui-checkpoint
 
+## Design System V2 + Event Card Enhancements + Elite Deep Links — COMPLETE (2026-03-18)
+- [x] Design system V2: deep navy #1E40AF primary, slate #F1F5F9 bg, #CBD5E1 borders, 3-tier shadow system (card/elevated/dropdown), 10/6/14px radius scale, Fira Sans/Code fonts. Dark mode properly paired. ~65 hardcoded hex colors migrated to CSS variables across 14 components.
+- [x] Agent suggestion buttons redesigned: 4 distinct agent colors with category labels (Analytics=blue, Help=amber, Configure=green, Content=pink), hover lift effect, bold left accent stripe.
+- [x] DeliveryChip component: extracts Live/Simulive/Sim2Live/On Demand from event_type string. Colored pill badges shown on calendar preview cards and chat event cards.
+- [x] Chat event card enhancements: event type pill + delivery chip in header. Collapsible "Engagement" section (open for past events, hidden for future/empty). New KPIs: Q&A count, Chat Messages, Avg Minutes, Resource Downloads.
+- [x] Backend get_engagement_counts(): fetches poll, survey, Q&A, chat, resource download counts per event from ON24 DB. Added to event card payload.
+- [x] Elite deep link action chips: event cards show contextual action buttons deep-linking into ON24 Elite React app (wcc.on24.com). Past events: Overview, Archive, AI Content, Manage Reg. Future events: Overview, Registration, Console, Share Event.
+- [x] CI/CD fixes: eslint.config.js for ESLint 9 flat config. Pinned @eslint/js@^9, @vitest/coverage-v8@^2.1.0. Ruff lint+format auto-fixed 286 issues, relaxed line-length to 160. KB data files baked into backend Docker image.
+- [x] Elite React route map: explored on24/elite/elite-react GitLab repo. Mapped all routes, required params, navigation structure.
+
 ## Backlog / Next Steps
+- [ ] Layer 2 concierge contextual deep-linking (concierge agent generates Elite deep links based on how-to answers)
+- [ ] Nexus registry auth fix (npm registry authentication for internal packages)
 
 ## Content Calendar Pre-Cache + Resilience — COMPLETE (2026-03-16, commit 514b91b)
 - [x] prefetch_calendar_data(): 3-month trends + top 20 events by engagement → Redis (15-min TTL)

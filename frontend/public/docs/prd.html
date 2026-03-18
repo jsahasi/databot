@@ -312,7 +312,15 @@
     </tbody>
   </table>
 
-  <h2>7. Out of Scope</h2>
+  <h2>7. Elite Deep Linking</h2>
+  <p>Event cards displayed in chat include contextual action buttons that deep-link directly into the ON24 Elite React application. This allows users to jump from an analytics insight to the relevant Elite workflow in one click.</p>
+  <ul>
+    <li><strong>Past events:</strong> Overview, Archive, AI Content, Manage Registration</li>
+    <li><strong>Future events:</strong> Overview, Registration, Console, Share Event</li>
+  </ul>
+  <p>Links are constructed on the frontend using event_id and client_id. No authentication handoff is required — the user's existing ON24 session is used. All links open in new browser tabs.</p>
+
+  <h2>8. Out of Scope</h2>
   <ul>
     <li>Per-speaker performance metrics (not tracked at speaker level in ON24 DB)</li>
     <li>Geographic / regional audience breakdown</li>

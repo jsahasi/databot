@@ -331,7 +331,36 @@
   <h4>Key Takeaways Parsing</h4>
   <p>ON24 key takeaways HTML is parsed server-side by <code>_parse_kt_sections()</code> in <code>calendar.py</code>. Section headings are identified by <code>font-size: 18px</code> spans with text length &lt; 80 chars (length guard prevents quote content from being misdetected as a heading). Sections map to: <code>summary</code>, <code>takeaways</code>, <code>quote</code>, <code>other</code>.</p>
 
-  <h2>9. Frontend Architecture</h2>
+  <h2>9. Elite Deep Links Integration</h2>
+  <p>Event cards in chat include contextual action chips that deep-link into the ON24 Elite React application at <code>wcc.on24.com</code>. Links are generated on the frontend using <code>event_id</code> and <code>client_id</code> — no backend round-trip required.</p>
+  <h4>Action Chips by Event State</h4>
+  <table>
+    <thead><tr><th>Event State</th><th>Actions</th></tr></thead>
+    <tbody>
+      <tr><td>Past events</td><td>Overview, Archive, AI Content, Manage Registration</td></tr>
+      <tr><td>Future events</td><td>Overview, Registration, Console, Share Event</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Route map derived from the <code>on24/elite/elite-react</code> GitLab repository. All links open in new tabs. Layer 2 (planned): concierge agent generates contextual deep links based on how-to answers.</div>
+
+  <h2>10. DeliveryChip Component</h2>
+  <p>The <code>DeliveryChip</code> component extracts the delivery format (Live, Simulive, Sim2Live, On Demand) from the ON24 <code>event_type</code> string and renders it as a colored pill badge. Used in both calendar preview cards and chat event cards.</p>
+  <ul>
+    <li>Client-side string parsing — no new backend field required</li>
+    <li>4 delivery types with distinct colors for quick visual scanning</li>
+    <li>Gracefully hidden when delivery format cannot be determined</li>
+  </ul>
+
+  <h2>11. Engagement Counts (Backend)</h2>
+  <p>The <code>get_engagement_counts()</code> function in the backend fetches per-event engagement metrics directly from the ON24 master database:</p>
+  <ul>
+    <li>Poll response count, Survey response count</li>
+    <li>Q&amp;A question count, Chat message count</li>
+    <li>Average attendance minutes, Resource download count</li>
+  </ul>
+  <p>These counts are included in the event card payload sent over WebSocket, enabling the collapsible "Engagement" section on chat event cards. The section is open by default for past events and hidden for future events or when all counts are zero.</p>
+
+  <h2>12. Frontend Architecture</h2>
   <h4>Key Components</h4>
   <table>
     <thead><tr><th>Component</th><th>Path</th><th>Responsibility</th></tr></thead>
@@ -352,7 +381,7 @@
     <li>Theme: <code>data-theme="dark"</code> on <code>&lt;html&gt;</code>; CSS variables in <code>global.css</code></li>
   </ul>
 
-  <h2>10. Deployment</h2>
+  <h2>13. Deployment</h2>
   <pre><code>docker compose up --build  # builds and starts all 4 containers
 
 # Services:
@@ -379,7 +408,7 @@ USE_MCP               # Y/N — route through MCP server or direct API
 USE_MCP_BLOCKLIST     # Comma-separated write tool names to block
 MCP_SERVER_URL        # MCP endpoint (default: http://on24-mcp:8001/mcp)</code></pre>
 
-  <h2>11. Security</h2>
+  <h2>14. Security</h2>
   <ul>
     <li>Tenant isolation: all queries parameterized with server-side client_id array; never from user input</li>
     <li>Input validation: message length capped at 4,000 chars; session IDs sanitized (alphanumeric + hyphen)</li>

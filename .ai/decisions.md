@@ -279,6 +279,27 @@ Implementation:
 **Rationale:** Current two-step flow (orchestrator → data agent → content agent) requires 3 sequential Anthropic API calls. `httpx.ConnectTimeout` on any call kills the entire flow with a generic error. Pre-caching eliminates the data agent step for the content calendar, reducing the chain to 2 calls and halving timeout exposure. Same Redis + 15-min TTL pattern as existing prefetch service.
 **Consequences:** Content calendar uses slightly stale data (up to 15 min) — acceptable for "best-performing events" analysis. Fallback to real-time if cache miss.
 
+## 2026-03-18: Design System V2 — Deep Navy Primary
+**Decision:** Changed primary color from blue #2563EB to deep navy #1E40AF. New palette: slate #F1F5F9 background, #CBD5E1 borders, 3-tier shadow system (card/elevated/dropdown), 10/6/14px border-radius scale.
+**Rationale:** Deep navy provides stronger visual hierarchy for data-dense dashboards. Slate background reduces eye strain during long analytics sessions. 3-tier shadows create clear depth layering between cards, popovers, and dropdowns.
+
+## 2026-03-18: DeliveryChip Component — Client-Side Extraction
+**Decision:** Extract delivery format (Live/Simulive/Sim2Live/On Demand) from the event_type string on the frontend rather than adding a new DB column or backend field.
+**Rationale:** ON24 event_type stores both the experience type and delivery format in a single string (e.g., "Elite - Simulive"). Parsing on the frontend avoids a backend change and works with existing data. DeliveryChip renders as a colored pill badge on calendar preview cards and chat event cards.
+
+## 2026-03-18: Event Card Engagement Section — Collapsible
+**Decision:** Event card engagement metrics (Q&A, Chat, Avg Minutes, Resource Downloads) are in a collapsible section. Open by default for past events, hidden for future events or when all counts are zero.
+**Rationale:** Future events have no engagement data. Showing empty metrics wastes space and confuses users. Collapsible pattern keeps the card compact while making data discoverable for past events.
+
+## 2026-03-18: Elite Deep Links — Layer 1 Frontend-Only Strategy
+**Decision:** Deep links to ON24 Elite React app are generated entirely on the frontend using event_id and client_id. No backend routing or URL validation. Links open in new tabs.
+**Options considered:** (1) Backend generates URLs with validation, (2) Frontend generates URLs statically, (3) MCP server resolves URLs. Chose option 2.
+**Rationale:** Elite React routes are deterministic (event_id + client_id → URL). No need for backend round-trip. Layer 1 = frontend action chips on event cards. Layer 2 (future) = concierge agent contextual deep links based on how-to answers.
+
+## 2026-03-18: Ruff Line-Length Relaxation (88 → 160)
+**Decision:** Relaxed ruff line-length from default 88 to 160 characters.
+**Rationale:** Auto-fix run touched 286 issues across the codebase. Many were long SQL strings and prompt templates that read better on one line. 160 is wide enough to avoid breaking readable code while still catching truly excessive lines.
+
 ## 2026-03-13: Suggestion Chip Structure (2+2+1)
 **Decision:** Every response generates exactly 5 chips: 2 LLM-generated context chips + 2 fixed agent-switch chips + 1 "Home" chip.
 **Rationale:** Users need a clear path back to home and to switch agents without hunting through menus. Fixed slots ensure navigation is always predictable regardless of what the agent said.
