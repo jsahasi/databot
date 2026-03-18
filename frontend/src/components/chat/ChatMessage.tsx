@@ -144,6 +144,53 @@ function PollCardsInline({ polls }: { polls: any[] }) {
   )
 }
 
+// ─── Elite Deep Links ────────────────────────────────────────────────────────
+
+const ELITE_BASE = 'https://wcc.on24.com'
+
+const ELITE_ACTIONS: { key: string; label: string; path: (id: number) => string; when: 'past' | 'future' | 'always' }[] = [
+  { key: 'overview',     label: 'Overview',      path: id => `/webcast/update/${id}`,         when: 'always' },
+  { key: 'registration', label: 'Registration',  path: id => `/webcast/registration/${id}`,   when: 'future' },
+  { key: 'console',      label: 'Console',       path: id => `/webcast/html5console/${id}`,   when: 'future' },
+  { key: 'archive',      label: 'Archive',       path: id => `/webcast/archive/${id}`,        when: 'past' },
+  { key: 'aicontent',    label: 'AI Content',    path: id => `/webcast/aicontent/${id}`,      when: 'past' },
+  { key: 'managereg',    label: 'Manage Reg',    path: id => `/webcast/managereg/${id}`,      when: 'past' },
+  { key: 'share',        label: 'Share Event',   path: id => `/webcast/eventadmin/${id}`,     when: 'future' },
+]
+
+function EventActionChips({ eventId, isFuture }: { eventId: number; isFuture: boolean }) {
+  const actions = ELITE_ACTIONS.filter(a => a.when === 'always' || (isFuture ? a.when === 'future' : a.when === 'past'))
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
+      {actions.map(a => (
+        <a
+          key={a.key}
+          href={`${ELITE_BASE}${a.path(eventId)}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.2rem',
+            padding: '0.25rem 0.6rem',
+            borderRadius: 999,
+            fontSize: '0.65rem', fontWeight: 600,
+            color: 'var(--color-primary)',
+            background: 'var(--color-primary-light)',
+            border: '1px solid var(--color-chip-border)',
+            textDecoration: 'none',
+            transition: 'background 0.12s, box-shadow 0.12s',
+            cursor: 'pointer',
+            lineHeight: 1.3,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-chip-hover-bg)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.08)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-primary-light)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          {a.label} <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>{'\u2197'}</span>
+        </a>
+      ))}
+    </div>
+  )
+}
+
 function EngagementSection({ kpis, defaultOpen }: { kpis: { label: string; value: string }[]; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   if (kpis.length === 0 && !defaultOpen) return null
@@ -276,6 +323,11 @@ function EventCardInline({ card }: { card: any }) {
             </div>
           )
         })()}
+
+        {/* Elite deep link action chips */}
+        {card.event_id && (
+          <EventActionChips eventId={card.event_id} isFuture={!!isFuture} />
+        )}
       </div>
     </div>
   )
@@ -417,8 +469,20 @@ function EventCardsGrid({ cards }: { cards: any[] }) {
               {card.title}
             </div>
             {card.start_time && (
-              <div style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)' }}>
+              <div style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', marginBottom: '0.3rem' }}>
                 {new Date(card.start_time).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+            )}
+            {card.event_id && (
+              <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                <a href={`${ELITE_BASE}/webcast/update/${card.event_id}`} target="_blank" rel="noreferrer"
+                  style={{ padding: '0.15rem 0.45rem', borderRadius: 999, fontSize: '0.58rem', fontWeight: 600, color: 'var(--color-primary)', background: 'var(--color-primary-light)', border: '1px solid var(--color-chip-border)', textDecoration: 'none' }}>
+                  Overview {'\u2197'}
+                </a>
+                <a href={`${ELITE_BASE}/webcast/${card.start_time && new Date(card.start_time) > new Date() ? 'registration' : 'archive'}/${card.event_id}`} target="_blank" rel="noreferrer"
+                  style={{ padding: '0.15rem 0.45rem', borderRadius: 999, fontSize: '0.58rem', fontWeight: 600, color: 'var(--color-primary)', background: 'var(--color-primary-light)', border: '1px solid var(--color-chip-border)', textDecoration: 'none' }}>
+                  {card.start_time && new Date(card.start_time) > new Date() ? 'Registration' : 'Archive'} {'\u2197'}
+                </a>
               </div>
             )}
           </div>
