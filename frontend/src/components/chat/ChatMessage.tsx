@@ -239,7 +239,9 @@ function EngagementSection({ kpis, defaultOpen }: { kpis: { label: string; value
 
 const AI_TYPE_LABELS: Record<string, string> = {
   KEYTAKEAWAYS: 'Key Takeaways', BLOG: 'Blog Post', EBOOK: 'eBook',
-  FAQ: 'FAQ', FOLLOWUPEMAIL: 'Follow-up Email', SOCIALMEDIAPOST: 'Social Media', TRANSCRIPT: 'Transcript',
+  FAQ: 'FAQ', FOLLOWUPEMAIL: 'Follow-up Email', FOLLOWUPEMAI: 'Follow-up Email',
+  SOCIALMEDIAPOST: 'Social Media Post', SOCIALMEDIAP: 'Social Media Post',
+  TRANSCRIPT: 'Transcript',
 }
 const KT_TAB_LABELS: Record<string, string> = {
   summary: 'Summary', takeaways: 'Takeaways', quote: 'Key Quote', other: 'Details',
