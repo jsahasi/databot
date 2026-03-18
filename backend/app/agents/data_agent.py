@@ -169,6 +169,13 @@ class DataAgent:
                                         kpi_data = await _compute_kpis(eid_detail) or {}
                                     except Exception:
                                         pass
+                                    # Fetch engagement counts (polls, surveys, resources)
+                                    eng_counts: dict = {}
+                                    try:
+                                        from app.agents.tools.on24_query_tools import get_engagement_counts as _get_eng
+                                        eng_counts = await _get_eng(eid_detail) or {}
+                                    except Exception:
+                                        pass
                                     event_card = {
                                         "event_id": eid_detail,
                                         "title": result.get("description") or result.get("title") or "",
@@ -179,6 +186,12 @@ class DataAgent:
                                         "attendee_count": _num(kpi_data.get("total_attendees")),
                                         "conversion_rate": _num(kpi_data.get("conversion_rate")),
                                         "engagement_score_avg": _num(kpi_data.get("avg_engagement")),
+                                        "avg_live_minutes": _num(kpi_data.get("avg_live_minutes")),
+                                        "poll_response_count": _num(eng_counts.get("poll_response_count")),
+                                        "survey_response_count": _num(eng_counts.get("survey_response_count")),
+                                        "resource_download_count": _num(eng_counts.get("resource_download_count")),
+                                        "qa_count": _num(eng_counts.get("qa_count")),
+                                        "chat_message_count": _num(eng_counts.get("chat_message_count")),
                                     }
 
                                 if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
@@ -187,6 +200,12 @@ class DataAgent:
                                         from app.agents.tools.on24_query_tools import get_event_detail
                                         detail = await get_event_detail(eid)
                                         if detail:
+                                            eng_counts2: dict = {}
+                                            try:
+                                                from app.agents.tools.on24_query_tools import get_engagement_counts as _get_eng2
+                                                eng_counts2 = await _get_eng2(eid) or {}
+                                            except Exception:
+                                                pass
                                             event_card = {
                                                 "event_id": eid,
                                                 "title": detail.get("description") or detail.get("title") or "",
@@ -197,6 +216,12 @@ class DataAgent:
                                                 "attendee_count": _num(result.get("total_attendees")),
                                                 "conversion_rate": _num(result.get("conversion_rate")),
                                                 "engagement_score_avg": _num(result.get("avg_engagement")),
+                                                "avg_live_minutes": _num(result.get("avg_live_minutes")),
+                                                "poll_response_count": _num(eng_counts2.get("poll_response_count")),
+                                                "survey_response_count": _num(eng_counts2.get("survey_response_count")),
+                                                "resource_download_count": _num(eng_counts2.get("resource_download_count")),
+                                                "qa_count": _num(eng_counts2.get("qa_count")),
+                                                "chat_message_count": _num(eng_counts2.get("chat_message_count")),
                                             }
                                     except Exception:
                                         pass  # event card is best-effort

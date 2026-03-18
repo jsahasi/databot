@@ -43,7 +43,7 @@ const inputStyle: CSSProperties = {
   border: '1px solid var(--color-border)',
   borderRadius: 'var(--radius)',
   color: 'var(--color-text)',
-  background: '#f9f9fb',
+  background: 'var(--color-bg)',
   boxSizing: 'border-box',
   cursor: 'not-allowed',
   opacity: 0.7,
@@ -82,13 +82,13 @@ export default function Settings() {
 
         {/* Info banner */}
         <div style={{
-          background: '#eff6ff',
-          border: '1px solid #bfdbfe',
+          background: 'var(--color-info-bg)',
+          border: '1px solid var(--color-info-border)',
           borderRadius: 'var(--radius)',
           padding: '0.75rem 1rem',
           marginBottom: '1.25rem',
           fontSize: '0.8rem',
-          color: '#1e40af',
+          color: 'var(--color-primary)',
           display: 'flex',
           gap: '0.5rem',
           alignItems: 'flex-start',
@@ -108,22 +108,22 @@ export default function Settings() {
           ) : connectionStatus === 'connected' ? (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-              fontSize: '0.8rem', fontWeight: 500, color: '#15803d',
+              fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-success)',
             }}>
               <span aria-hidden="true" style={{
                 width: 8, height: 8, borderRadius: '50%',
-                background: '#22c55e', display: 'inline-block',
+                background: 'var(--color-success)', display: 'inline-block',
               }} />
               Connected
             </span>
           ) : (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-              fontSize: '0.8rem', fontWeight: 500, color: '#b91c1c',
+              fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-danger)',
             }}>
               <span aria-hidden="true" style={{
                 width: 8, height: 8, borderRadius: '50%',
-                background: '#ef4444', display: 'inline-block',
+                background: 'var(--color-danger)', display: 'inline-block',
               }} />
               Disconnected
             </span>
@@ -218,7 +218,7 @@ export default function Settings() {
 
         {/* Current sync status card */}
         <div style={{
-          background: '#f9f9fb',
+          background: 'var(--color-bg)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius)',
           padding: '1rem',
@@ -233,8 +233,8 @@ export default function Settings() {
                 <span style={{ color: 'var(--color-text-secondary)' }}>Status</span>
                 <span style={{
                   fontWeight: 500,
-                  color: latestSync.status === 'completed' ? '#15803d'
-                    : latestSync.status === 'failed' ? '#b91c1c'
+                  color: latestSync.status === 'completed' ? 'var(--color-success)'
+                    : latestSync.status === 'failed' ? 'var(--color-danger)'
                     : 'var(--color-primary)',
                 }}>
                   {latestSync.status.charAt(0).toUpperCase() + latestSync.status.slice(1)}
@@ -257,7 +257,7 @@ export default function Settings() {
                 </div>
               )}
               {latestSync.error_message && (
-                <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fef2f2', borderRadius: 4, fontSize: '0.75rem', color: '#b91c1c' }}>
+                <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--color-danger-bg)', borderRadius: 4, fontSize: '0.75rem', color: 'var(--color-danger)' }}>
                   {latestSync.error_message}
                 </div>
               )}
@@ -275,7 +275,7 @@ export default function Settings() {
             padding: '0.5rem 1.25rem',
             fontSize: '0.875rem',
             background: isSyncing || syncMutation.isPending ? 'var(--color-border)' : 'var(--color-primary)',
-            color: '#fff',
+            color: 'var(--color-card)',
             border: 'none',
             borderRadius: 'var(--radius)',
             cursor: isSyncing || syncMutation.isPending ? 'not-allowed' : 'pointer',

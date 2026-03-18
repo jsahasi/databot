@@ -38,8 +38,8 @@ function formatDate(dateStr: string | null): string {
 
 function EngagementBadge({ score }: { score: number | null }) {
   if (score == null) return <span style={{ color: 'var(--color-text-secondary)' }}>-</span>
-  const bg = score > 70 ? '#c6f6d5' : score >= 40 ? '#fefcbf' : '#fed7d7'
-  const color = score > 70 ? '#22543d' : score >= 40 ? '#744210' : '#9b2c2c'
+  const bg = score > 70 ? 'var(--color-success-light)' : score >= 40 ? 'var(--color-warning-bg)' : 'var(--color-danger-bg)'
+  const color = score > 70 ? 'var(--color-success-text)' : score >= 40 ? 'var(--color-warning-text)' : 'var(--color-danger-text)'
   return (
     <span
       style={{
@@ -214,8 +214,8 @@ export default function EventDetail() {
                     borderRadius: '9999px',
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    background: '#ebf4ff',
-                    color: '#3182ce',
+                    background: 'var(--color-info-bg)',
+                    color: 'var(--color-primary)',
                   }}
                 >
                   {event.event_type}
@@ -234,8 +234,8 @@ export default function EventDetail() {
               borderRadius: '9999px',
               fontSize: '0.8rem',
               fontWeight: 600,
-              background: event.is_active ? '#c6f6d5' : '#e2e8f0',
-              color: event.is_active ? '#22543d' : '#4a5568',
+              background: event.is_active ? 'var(--color-success-light)' : 'var(--color-border)',
+              color: event.is_active ? 'var(--color-success-text)' : 'var(--color-text-secondary)',
             }}
           >
             {event.is_active ? 'Active' : 'Inactive'}

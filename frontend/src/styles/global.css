@@ -1,74 +1,139 @@
+/* ═══════════════════════════════════════════════════════════════
+   ON24 Nexus — Design System Tokens
+   Analytics Dashboard palette: deep navy + bright blue primary,
+   amber CTA, semantic status colors. Fira Sans/Code typography.
+   ═══════════════════════════════════════════════════════════════ */
+
 :root {
-  --color-primary: #2563EB;
-  --color-primary-hover: #1d4ed8;
-  --color-cta: #F97316;
-  --color-cta-hover: #ea580c;
-  --color-sidebar: #1e293b;
+  /* ── Core brand ── */
+  --color-primary: #1E40AF;
+  --color-primary-hover: #1e3a8a;
+  --color-primary-light: #DBEAFE;
+  --color-cta: #EA580C;
+  --color-cta-hover: #c2410c;
+
+  /* ── Surfaces ── */
+  --color-sidebar: #0F172A;
   --color-sidebar-text: #94a3b8;
   --color-sidebar-active: #ffffff;
-  --color-bg: #F8FAFC;
+  --color-bg: #F1F5F9;
   --color-card: #ffffff;
-  --color-text: #1E293B;
+  --color-muted: #E9EEF6;
+
+  /* ── Text ── */
+  --color-text: #0F172A;
   --color-text-secondary: #64748b;
-  --color-border: #e2e8f0;
+
+  /* ── Borders ── */
+  --color-border: #CBD5E1;
+
+  /* ── Status ── */
   --color-success: #059669;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --color-chip-bg: #ffffff;
-  --color-chip-border: #93c5fd;
-  --color-chip-text: #1d4ed8;
-  --color-chip-hover-bg: #eff6ff;
-  --color-danger-bg: #fef2f2;
-  --color-success-bg: #f0fdf4;
-  --color-warning-bg: #fffbeb;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-success-bg: #ECFDF5;
+  --color-warning-bg: #FFFBEB;
+  --color-danger-bg: #FEF2F2;
+  --color-success-light: #A7F3D0;
+  --color-success-text: #065F46;
+  --color-warning-text: #92400E;
+  --color-danger-text: #991B1B;
+  --color-info-bg: #EFF6FF;
+  --color-info-border: #BFDBFE;
+
+  /* ── Chips ── */
+  --color-chip-bg: #EFF6FF;
+  --color-chip-border: #93C5FD;
+  --color-chip-text: #1E40AF;
+  --color-chip-hover-bg: #DBEAFE;
+
+  /* ── Accent ── */
+  --color-accent: #6366F1;
+  --color-toggle-bg: #CBD5E1;
+
+  /* ── Agent colors (vibrant & distinct) ── */
   --color-agent-data: #2563EB;
-  --color-agent-concierge: #f59e0b;
+  --color-agent-concierge: #D97706;
   --color-agent-config: #059669;
-  --color-agent-calendar: #7c3aed;
-  --color-agent-content: #db2777;
+  --color-agent-calendar: #7C3AED;
+  --color-agent-content: #DB2777;
+
+  /* ── Chart palette ── */
   --color-chart-1: #2563EB;
   --color-chart-2: #059669;
-  --color-chart-3: #d97706;
-  --color-chart-4: #dc2626;
-  --color-chart-5: #7c3aed;
-  --color-chart-6: #0284c7;
-  --color-chart-7: #db2777;
-  --color-chart-8: #0d9488;
-  --color-chart-9: #ea580c;
+  --color-chart-3: #D97706;
+  --color-chart-4: #DC2626;
+  --color-chart-5: #7C3AED;
+  --color-chart-6: #0284C7;
+  --color-chart-7: #DB2777;
+  --color-chart-8: #0D9488;
+  --color-chart-9: #EA580C;
   --color-chart-10: #475569;
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --radius: 8px;
+
+  /* ── Elevation ── */
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 4px 12px rgba(15, 23, 42, 0.1), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-dropdown: 0 8px 24px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
+
+  /* ── Shape & sizing ── */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
   --min-touch: 44px;
+
+  /* ── Typography ── */
   --font-sans: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Fira Code', 'Cascadia Code', monospace;
 }
 
+/* ── Dark mode ── */
 [data-theme="dark"] {
-  --color-primary: #60a5fa;
-  --color-primary-hover: #93c5fd;
-  --color-cta: #fb923c;
-  --color-cta-hover: #f97316;
-  --color-sidebar: #0f172a;
+  --color-primary: #60A5FA;
+  --color-primary-hover: #93C5FD;
+  --color-primary-light: #1E3A5F;
+  --color-cta: #FB923C;
+  --color-cta-hover: #F97316;
+
+  --color-sidebar: #020617;
   --color-sidebar-text: #94a3b8;
-  --color-sidebar-active: #e2e8f0;
-  --color-bg: #0f172a;
-  --color-card: #1e293b;
-  --color-text: #e2e8f0;
-  --color-text-secondary: #94a3b8;
+  --color-sidebar-active: #F1F5F9;
+  --color-bg: #0F172A;
+  --color-card: #1E293B;
+  --color-muted: #1A2332;
+
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+
   --color-border: #334155;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-  --color-chip-bg: #1e293b;
+
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+  --color-success-bg: rgba(5, 150, 105, 0.15);
+  --color-warning-bg: rgba(217, 119, 6, 0.15);
+  --color-danger-bg: rgba(220, 38, 38, 0.15);
+  --color-success-light: rgba(5, 150, 105, 0.25);
+  --color-success-text: #6EE7B7;
+  --color-warning-text: #FCD34D;
+  --color-danger-text: #FCA5A5;
+  --color-info-bg: rgba(37, 99, 235, 0.15);
+  --color-info-border: #1E3A5F;
+
+  --color-chip-bg: #1E293B;
   --color-chip-border: #334155;
-  --color-chip-text: #93c5fd;
-  --color-chip-hover-bg: #1e3a5f;
-  --color-danger-bg: rgba(220,38,38,0.15);
-  --color-success-bg: rgba(5,150,105,0.15);
-  --color-warning-bg: rgba(217,119,6,0.15);
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --color-chip-text: #93C5FD;
+  --color-chip-hover-bg: #1E3A5F;
+
+  --color-accent: #818CF8;
+  --color-toggle-bg: #475569;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
+/* ── Reset ── */
 *,
 *::before,
 *::after {
@@ -77,6 +142,7 @@
   padding: 0;
 }
 
+/* ── Base ── */
 body {
   font-family: var(--font-sans);
   color: var(--color-text);
@@ -103,7 +169,7 @@ button {
   font-family: inherit;
 }
 
-/* Utility classes */
+/* ── Utility classes ── */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -122,7 +188,7 @@ button {
   white-space: nowrap;
 }
 
-/* Focus indicators — visible keyboard focus for all interactive elements */
+/* ── Focus indicators ── */
 button:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
@@ -134,12 +200,12 @@ button:focus:not(:focus-visible) {
   outline: none;
 }
 
-/* Responsive — mobile-first breakpoints */
+/* ── Responsive ── */
 @media (max-width: 767px) {
   body { font-size: 14px; }
 }
 
-/* Reduced motion — disable animations for users who prefer it */
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

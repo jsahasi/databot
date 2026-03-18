@@ -82,7 +82,7 @@ export default function ChatSidebar({ onClose }: ChatSidebarProps) {
             display: 'flex', alignItems: 'center', gap: '0.5rem',
             padding: '0.5rem 0.75rem',
             background: 'var(--color-primary)',
-            color: '#fff',
+            color: 'var(--color-card)',
             border: 'none',
             borderRadius: 8,
             fontSize: '0.8rem',

@@ -17,8 +17,8 @@ function formatDate(dateStr: string | null): string {
 
 function EngagementBadge({ score }: { score: number | null }) {
   if (score == null) return <span style={{ color: 'var(--color-text-secondary)' }}>-</span>
-  const bg = score > 70 ? '#c6f6d5' : score >= 40 ? '#fefcbf' : '#fed7d7'
-  const color = score > 70 ? '#22543d' : score >= 40 ? '#744210' : '#9b2c2c'
+  const bg = score > 70 ? 'var(--color-success-light)' : score >= 40 ? 'var(--color-warning-bg)' : 'var(--color-danger-bg)'
+  const color = score > 70 ? 'var(--color-success-text)' : score >= 40 ? 'var(--color-warning-text)' : 'var(--color-danger-text)'
   return (
     <span
       style={{
@@ -45,8 +45,8 @@ function StatusBadge({ active }: { active: boolean }) {
         borderRadius: '9999px',
         fontSize: '0.75rem',
         fontWeight: 600,
-        background: active ? '#c6f6d5' : '#e2e8f0',
-        color: active ? '#22543d' : '#4a5568',
+        background: active ? 'var(--color-success-light)' : 'var(--color-border)',
+        color: active ? 'var(--color-success-text)' : 'var(--color-text-secondary)',
       }}
     >
       {active ? 'Active' : 'Inactive'}
@@ -191,7 +191,7 @@ export default function Events() {
           style={{
             padding: '0.5rem 1.25rem',
             background: 'var(--color-primary)',
-            color: '#fff',
+            color: 'var(--color-card)',
             border: 'none',
             borderRadius: 'var(--radius)',
             fontSize: '0.875rem',

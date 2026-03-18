@@ -42,6 +42,45 @@ interface ProposedEvent {
   topic?: string
 }
 
+// ─── Delivery Format Chip ────────────────────────────────────────────────────
+// Extracts Live / Simulive / Sim2Live / On Demand from event_type string
+
+const DELIVERY_FORMATS: { match: RegExp; label: string; color: string; bg: string }[] = [
+  { match: /sim2live/i,   label: 'Sim2Live',  color: '#7C3AED', bg: '#F5F3FF' },
+  { match: /simulive/i,   label: 'Simulive',  color: '#D97706', bg: '#FFFBEB' },
+  { match: /on[- ]?demand|recorded/i, label: 'On Demand', color: '#64748B', bg: '#F1F5F9' },
+  { match: /live/i,       label: 'Live',       color: '#059669', bg: '#ECFDF5' },
+]
+
+function getDeliveryFormat(eventType: string | null | undefined): { label: string; color: string; bg: string } | null {
+  if (!eventType) return null
+  for (const fmt of DELIVERY_FORMATS) {
+    if (fmt.match.test(eventType)) return { label: fmt.label, color: fmt.color, bg: fmt.bg }
+  }
+  return null
+}
+
+export function DeliveryChip({ eventType }: { eventType: string | null | undefined }) {
+  const fmt = getDeliveryFormat(eventType)
+  if (!fmt) return null
+  return (
+    <span style={{
+      display: 'inline-block',
+      padding: '0.15rem 0.5rem',
+      borderRadius: 999,
+      fontSize: '0.6rem',
+      fontWeight: 700,
+      letterSpacing: '0.03em',
+      color: fmt.color,
+      background: fmt.bg,
+      border: `1px solid ${fmt.color}30`,
+      lineHeight: 1.4,
+    }}>
+      {fmt.label}
+    </span>
+  )
+}
+
 interface Props {
   isOpen: boolean
   onClose: () => void
@@ -187,7 +226,7 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
           AI-ACE Content
         </span>
         <a href={mmUrl} target="_blank" rel="noreferrer"
-          style={{ fontSize: '0.6rem', fontWeight: 600, color: '#10b981', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--color-success)', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Media Manager ↗
         </a>
       </div>
@@ -203,7 +242,7 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
           fontSize: '0.75rem', fontWeight: 500,
           padding: '0.3rem 0.5rem', borderRadius: 6,
           border: '1px solid rgba(16,185,129,0.4)',
-          background: 'rgba(16,185,129,0.08)', color: '#10b981',
+          background: 'rgba(16,185,129,0.08)', color: 'var(--color-success)',
           cursor: 'pointer', outline: 'none',
         }}
       >
@@ -220,10 +259,10 @@ function KeyTakeawaysTile({ ai }: { ai: AiContent }) {
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
               fontSize: '0.7rem', fontWeight: activeTab === tab ? 600 : 400,
               padding: '0.3rem 0.65rem',
-              border: 'none', borderBottom: activeTab === tab ? '2px solid #10b981' : '2px solid transparent',
+              border: 'none', borderBottom: activeTab === tab ? '2px solid var(--color-success)' : '2px solid transparent',
               marginBottom: -2,
               background: 'transparent',
-              color: activeTab === tab ? '#10b981' : 'var(--color-text-secondary)',
+              color: activeTab === tab ? 'var(--color-success)' : 'var(--color-text-secondary)',
               cursor: 'pointer', whiteSpace: 'nowrap',
             }}>{KT_TAB_LABELS[tab] ?? tab}</button>
           ))}
@@ -357,19 +396,22 @@ function EventDetail({ event: initial, onClose, isMobile }: { event: CalendarEve
       {/* Colour bar header */}
       <div style={{ height: 4, background: color, flexShrink: 0 }} />
 
-      {/* Close + type badge */}
+      {/* Close + type badge + delivery chip */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0.75rem 1rem 0',
       }}>
-        <span style={{
-          padding: '0.2rem 0.6rem',
-          background: color + '20', color,
-          borderRadius: 20, fontSize: '0.65rem', fontWeight: 700,
-          letterSpacing: '0.03em',
-        }}>
-          {event.event_type || 'Event'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          <span style={{
+            padding: '0.2rem 0.6rem',
+            background: color + '20', color,
+            borderRadius: 20, fontSize: '0.65rem', fontWeight: 700,
+            letterSpacing: '0.03em',
+          }}>
+            {event.event_type || 'Event'}
+          </span>
+          <DeliveryChip eventType={event.event_type} />
+        </div>
         <button onClick={onClose} aria-label="Close" style={{
           background: 'none', border: 'none', cursor: 'pointer',
           color: 'var(--color-text-secondary)', fontSize: '1.1rem', lineHeight: 1, padding: 0,
@@ -510,7 +552,7 @@ function MonthView({
                 <>
                   <div style={{
                     fontSize: '0.7rem', fontWeight: isToday ? 700 : 400,
-                    color: isToday ? '#fff' : 'var(--color-text)',
+                    color: isToday ? 'var(--color-card)' : 'var(--color-text)',
                     background: isToday ? 'var(--color-primary)' : 'transparent',
                     width: 20, height: 20, borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -528,7 +570,7 @@ function MonthView({
                               display: 'block', width: '100%', textAlign: 'left',
                               padding: '0px 3px', borderRadius: 3,
                               background: proposed ? 'transparent' : eventColor(ev.event_id),
-                              color: proposed ? PROPOSED_COLOR : '#fff',
+                              color: proposed ? PROPOSED_COLOR : 'var(--color-card)',
                               fontSize: '0.6rem', fontWeight: 500,
                               border: proposed ? `1.5px dashed ${PROPOSED_COLOR}` : 'none',
                               cursor: 'pointer',
@@ -615,7 +657,7 @@ function WeekView({
               </div>
               <div style={{
                 fontSize: '1.1rem', fontWeight: 700,
-                color: isToday ? '#fff' : 'var(--color-text)',
+                color: isToday ? 'var(--color-card)' : 'var(--color-text)',
                 background: isToday ? 'var(--color-primary)' : 'transparent',
                 width: 32, height: 32, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -676,7 +718,7 @@ function WeekView({
                       left: 2, right: 2,
                       height: eventHeight(ev),
                       background: proposed ? 'rgba(167, 139, 250, 0.1)' : eventColor(ev.event_id),
-                      color: proposed ? PROPOSED_COLOR : '#fff',
+                      color: proposed ? PROPOSED_COLOR : 'var(--color-card)',
                       fontSize: '0.65rem', fontWeight: 500,
                       borderRadius: 4, padding: '3px 5px',
                       border: proposed ? `1.5px dashed ${PROPOSED_COLOR}` : 'none',
@@ -780,7 +822,7 @@ function DayView({
                     left: 4, right: 4,
                     height: eventHeight(ev),
                     background: proposed ? 'rgba(167, 139, 250, 0.1)' : eventColor(ev.event_id),
-                    color: proposed ? PROPOSED_COLOR : '#fff',
+                    color: proposed ? PROPOSED_COLOR : 'var(--color-card)',
                     fontSize: '0.8rem', fontWeight: 500,
                     borderRadius: 6, padding: '4px 10px',
                     border: proposed ? `1.5px dashed ${PROPOSED_COLOR}` : 'none',
@@ -1068,7 +1110,7 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
 
           {proposedMode && (
             <>
-              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#8b5cf6', background: 'rgba(139,92,246,0.1)', padding: '0.2rem 0.6rem', borderRadius: 4 }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-agent-calendar)', background: 'rgba(139,92,246,0.1)', padding: '0.2rem 0.6rem', borderRadius: 4 }}>
                 Proposed Calendar{proposedEvents.length > 0 ? ` (${proposedEvents.length} events)` : ''}
               </span>
               <button
@@ -1079,18 +1121,18 @@ export default function EventCalendar({ isOpen, onClose, onEventToChat, proposed
                   display: 'flex', alignItems: 'center', gap: '0.4rem',
                   padding: '0.25rem 0.75rem', fontSize: '0.775rem',
                   background: showExistingEvents ? 'rgba(139,92,246,0.15)' : 'transparent',
-                  border: `1px solid ${showExistingEvents ? '#8b5cf6' : 'var(--color-border)'}`,
+                  border: `1px solid ${showExistingEvents ? 'var(--color-agent-calendar)' : 'var(--color-border)'}`,
                   borderRadius: 6, cursor: 'pointer',
-                  color: showExistingEvents ? '#8b5cf6' : 'var(--color-text-secondary)',
+                  color: showExistingEvents ? 'var(--color-agent-calendar)' : 'var(--color-text-secondary)',
                 }}
               >
                 <span style={{
                   width: 28, height: 16, borderRadius: 8, display: 'inline-flex', alignItems: 'center',
-                  background: showExistingEvents ? '#8b5cf6' : 'var(--color-border)',
+                  background: showExistingEvents ? 'var(--color-agent-calendar)' : 'var(--color-border)',
                   transition: 'background 0.15s', flexShrink: 0,
                 }}>
                   <span style={{
-                    width: 12, height: 12, borderRadius: '50%', background: '#fff',
+                    width: 12, height: 12, borderRadius: '50%', background: 'var(--color-card)',
                     marginLeft: showExistingEvents ? 14 : 2, transition: 'margin 0.15s',
                   }} />
                 </span>

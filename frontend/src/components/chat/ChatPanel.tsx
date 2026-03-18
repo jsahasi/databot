@@ -7,13 +7,13 @@ import BrandTemplateManager from './BrandTemplateManager'
 
 type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'content' | 'neutral'
 
-const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: string; hoverBorder: string }> = {
-  data:      { border: 'var(--color-agent-data)', bg: 'rgba(99,102,241,0.07)',  hoverBg: 'rgba(99,102,241,0.13)',  hoverBorder: 'var(--color-agent-data)' },
-  concierge: { border: 'var(--color-agent-concierge)', bg: 'rgba(245,158,11,0.07)',  hoverBg: 'rgba(245,158,11,0.13)',  hoverBorder: 'var(--color-agent-concierge)' },
-  config:    { border: 'var(--color-agent-config)', bg: 'rgba(16,185,129,0.07)',  hoverBg: 'rgba(16,185,129,0.13)',  hoverBorder: 'var(--color-agent-config)' },
-  calendar:  { border: 'var(--color-agent-calendar)', bg: 'rgba(139,92,246,0.07)', hoverBg: 'rgba(139,92,246,0.13)',  hoverBorder: 'var(--color-agent-calendar)' },
-  content:   { border: 'var(--color-agent-content)', bg: 'rgba(236,72,153,0.07)', hoverBg: 'rgba(236,72,153,0.13)',  hoverBorder: 'var(--color-agent-content)' },
-  neutral:   { border: 'var(--color-border)', bg: 'var(--color-card)', hoverBg: 'var(--color-chip-hover-bg)', hoverBorder: 'var(--color-border)' },
+const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: string; hoverBorder: string; accent: string; label: string }> = {
+  data:      { border: '#2563EB', bg: '#EFF6FF', hoverBg: '#DBEAFE', hoverBorder: '#2563EB', accent: '#2563EB', label: 'Analytics' },
+  concierge: { border: '#D97706', bg: '#FFFBEB', hoverBg: '#FEF3C7', hoverBorder: '#D97706', accent: '#D97706', label: 'Help' },
+  config:    { border: '#059669', bg: '#ECFDF5', hoverBg: '#D1FAE5', hoverBorder: '#059669', accent: '#059669', label: 'Configure' },
+  calendar:  { border: '#7C3AED', bg: '#F5F3FF', hoverBg: '#EDE9FE', hoverBorder: '#7C3AED', accent: '#7C3AED', label: 'Calendar' },
+  content:   { border: '#DB2777', bg: '#FDF2F8', hoverBg: '#FCE7F3', hoverBorder: '#DB2777', accent: '#DB2777', label: 'Content' },
+  neutral:   { border: 'var(--color-border)', bg: 'var(--color-card)', hoverBg: 'var(--color-chip-hover-bg)', hoverBorder: 'var(--color-border)', accent: 'var(--color-text-secondary)', label: '' },
 }
 
 const SMART_TIPS_URL = 'https://wcc.on24.com/webcast/keyinsightssummary'
@@ -305,28 +305,39 @@ export default function ChatPanel() {
                         else { sendMessage(s); setInput('') }
                       }}
                       style={{
-                        padding: '0.875rem 1rem',
+                        position: 'relative',
+                        padding: '0.875rem 1rem 0.875rem 1.125rem',
                         background: c.bg,
-                        border: `1px solid ${c.border}`,
-                        borderLeft: `3px solid ${c.border}`,
-                        borderRadius: 8,
-                        color: 'var(--color-chip-text)',
-                        fontSize: '0.825rem',
-                        fontWeight: 500,
+                        border: `1.5px solid ${c.border}`,
+                        borderLeft: `4px solid ${c.accent}`,
+                        borderRadius: 12,
+                        color: 'var(--color-text)',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
                         textAlign: 'left',
                         cursor: 'pointer',
                         lineHeight: 1.4,
-                        transition: 'border-color 0.12s, background 0.12s',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        transition: 'all 0.15s ease',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.2rem',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = c.hoverBg
+                        const el = e.currentTarget as HTMLButtonElement
+                        el.style.background = c.hoverBg
+                        el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+                        el.style.transform = 'translateY(-1px)'
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = c.bg
+                        const el = e.currentTarget as HTMLButtonElement
+                        el.style.background = c.bg
+                        el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'
+                        el.style.transform = 'translateY(0)'
                       }}
                     >
-                      {s}{href ? ' ↗' : ''}
+                      {c.label && <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: c.accent, lineHeight: 1 }}>{c.label}</span>}
+                      <span>{s}{href ? ' \u2197' : ''}</span>
                     </button>
                   )
                 })}
@@ -827,7 +838,7 @@ export default function ChatPanel() {
               width: 44, height: 44,
               borderRadius: '50%',
               background: input.trim() ? 'var(--color-primary)' : 'var(--color-border)',
-              color: '#fff',
+              color: 'var(--color-card)',
               border: 'none',
               cursor: input.trim() ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

@@ -29,15 +29,15 @@ interface ShareData {
 }
 
 const COLORS = {
-  bg: '#f8f9fc',
-  card: '#ffffff',
-  border: '#e2e6ef',
-  primary: '#4f46e5',
+  bg: 'var(--color-bg)',
+  card: 'var(--color-card)',
+  border: 'var(--color-border)',
+  primary: 'var(--color-primary)',
   green: '#059669',
   red: '#dc2626',
-  amber: '#d97706',
+  amber: 'var(--color-warning)',
   gold: '#f59e0b',
-  text: '#1a1d2e',
+  text: 'var(--color-text)',
   secondary: '#6b7280',
 }
 
@@ -411,8 +411,8 @@ export default function ShareReview() {
                 padding: '0.5rem 1rem',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                background: commentText.trim() && !submitting ? COLORS.primary : '#e5e7eb',
-                color: '#fff',
+                background: commentText.trim() && !submitting ? COLORS.primary : 'var(--color-border)',
+                color: 'var(--color-card)',
                 border: 'none',
                 borderRadius: 8,
                 cursor: commentText.trim() && !submitting ? 'pointer' : 'not-allowed',

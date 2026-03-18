@@ -74,7 +74,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           width: 28, height: 28, borderRadius: 6,
           background: 'var(--color-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '-0.02em',
+          color: 'var(--color-card)', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '-0.02em',
         }}>ON24</div>
         <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
           ON24 Nexus
@@ -144,7 +144,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
           style={{
             width: 48, height: 26,
             borderRadius: 13,
-            background: dark ? 'var(--color-primary)' : '#d1d5db',
+            background: dark ? 'var(--color-primary)' : 'var(--color-toggle-bg)',
             border: 'none',
             cursor: 'pointer',
             position: 'relative',
@@ -157,7 +157,7 @@ export default function TopNav({ breadcrumb }: { breadcrumb?: ReactNode }) {
             top: 3, left: dark ? 24 : 3,
             width: 20, height: 20,
             borderRadius: '50%',
-            background: '#fff',
+            background: 'var(--color-card)',
             transition: 'left 0.2s',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '0.6rem',

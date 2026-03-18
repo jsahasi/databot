@@ -185,7 +185,7 @@ export default function BrandTemplateManager({ open, onClose }: Props) {
               onClick={handleNew}
               style={{
                 padding: '0.3rem 0.75rem', fontSize: '0.75rem', fontWeight: 600,
-                background: 'var(--color-primary)', color: '#fff', border: 'none',
+                background: 'var(--color-primary)', color: 'var(--color-card)', border: 'none',
                 borderRadius: 6, cursor: 'pointer',
               }}
             >
@@ -309,8 +309,8 @@ export default function BrandTemplateManager({ open, onClose }: Props) {
                   disabled={saving || !form.name.trim()}
                   style={{
                     padding: '0.35rem 0.75rem', fontSize: '0.75rem', fontWeight: 600,
-                    background: form.name.trim() && !saving ? 'var(--color-primary)' : '#e5e7eb',
-                    color: '#fff', border: 'none', borderRadius: 6,
+                    background: form.name.trim() && !saving ? 'var(--color-primary)' : 'var(--color-border)',
+                    color: 'var(--color-card)', border: 'none', borderRadius: 6,
                     cursor: form.name.trim() && !saving ? 'pointer' : 'not-allowed',
                   }}
                 >
@@ -350,7 +350,7 @@ export default function BrandTemplateManager({ open, onClose }: Props) {
                       {t.isDefault && (
                         <span style={{
                           marginLeft: '0.4rem', fontSize: '0.6rem', fontWeight: 700,
-                          color: '#10b981', background: 'rgba(16,185,129,0.1)',
+                          color: 'var(--color-success)', background: 'rgba(16,185,129,0.1)',
                           padding: '0.1rem 0.35rem', borderRadius: 3, textTransform: 'uppercase',
                         }}>
                           Default
@@ -380,7 +380,7 @@ export default function BrandTemplateManager({ open, onClose }: Props) {
                     style={{
                       padding: '0.25rem 0.5rem', fontSize: '0.7rem', fontWeight: 500,
                       background: 'transparent', border: '1px solid var(--color-border)',
-                      borderRadius: 5, cursor: 'pointer', color: '#ef4444',
+                      borderRadius: 5, cursor: 'pointer', color: 'var(--color-danger)',
                     }}
                   >
                     Delete

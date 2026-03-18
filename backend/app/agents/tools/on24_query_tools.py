@@ -213,6 +213,37 @@ async def compute_event_kpis(event_id: int) -> dict:
     return result
 
 
+async def get_engagement_counts(event_id: int) -> dict:
+    """Fetch poll, survey, Q&A, chat, and resource download counts for an event."""
+    client_ids = await get_tenant_client_ids()
+    pool = await get_pool()
+
+    sql = f"""
+        SELECT
+            (SELECT COUNT(*) FROM on24master.poll_response pr
+             JOIN on24master.event e ON e.event_id = pr.event_id AND e.client_id = ANY($2::bigint[])
+             WHERE pr.event_id = $1 {_EXCL_TEST})               AS poll_response_count,
+            (SELECT COUNT(*) FROM on24master.survey_response sr
+             JOIN on24master.event e ON e.event_id = sr.event_id AND e.client_id = ANY($2::bigint[])
+             WHERE sr.event_id = $1 {_EXCL_TEST})               AS survey_response_count,
+            (SELECT COUNT(*) FROM on24master.resource_download rd
+             JOIN on24master.event e ON e.event_id = rd.event_id AND e.client_id = ANY($2::bigint[])
+             WHERE rd.event_id = $1 {_EXCL_TEST})               AS resource_download_count,
+            (SELECT COUNT(*) FROM on24master.qa_response qa
+             JOIN on24master.event e ON e.event_id = qa.event_id AND e.client_id = ANY($2::bigint[])
+             WHERE qa.event_id = $1 {_EXCL_TEST})               AS qa_count,
+            (SELECT COUNT(*) FROM on24master.group_chat gc
+             JOIN on24master.event e ON e.event_id = gc.event_id AND e.client_id = ANY($2::bigint[])
+             WHERE gc.event_id = $1 {_EXCL_TEST})               AS chat_message_count
+    """
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(sql, event_id, client_ids, timeout=_QUERY_TIMEOUT)
+
+    if row is None:
+        return {}
+    return {k: int(v) if v is not None else 0 for k, v in dict(row).items()}
+
+
 async def compute_client_kpis(months: int = 1) -> dict:
     """Compute platform-wide KPIs. Default window: last 1 month. Max: 24 months.
 

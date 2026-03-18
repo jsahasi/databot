@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import SmartChart from '../charts/SmartChart'
+import { DeliveryChip } from '../calendar/EventCalendar'
 import type { ChatMessage as ChatMessageType } from '../../hooks/useChat'
 
 interface ChatMessageProps {
@@ -143,6 +144,52 @@ function PollCardsInline({ polls }: { polls: any[] }) {
   )
 }
 
+function EngagementSection({ kpis, defaultOpen }: { kpis: { label: string; value: string }[]; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  if (kpis.length === 0 && !defaultOpen) return null
+  return (
+    <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-label={open ? 'Collapse engagement section' : 'Expand engagement section'}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0.3rem', width: '100%',
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          marginBottom: open ? '0.5rem' : 0,
+        }}
+      >
+        <span style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Engagement
+        </span>
+        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s', marginTop: 1 }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        kpis.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.4rem' }}>
+            {kpis.map(k => (
+              <div key={k.label} style={{
+                background: 'var(--color-bg)', borderRadius: 'var(--radius-sm)', padding: '0.4rem 0.6rem',
+                border: '1px solid var(--color-border)',
+              }}>
+                <div style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>{k.label}</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>{k.value}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', fontStyle: 'italic', margin: 0 }}>
+            No engagement data available yet.
+          </p>
+        )
+      )}
+    </div>
+  )
+}
+
 function EventCardInline({ card }: { card: any }) {
   if (!card) return null
   const kpis: { label: string; value: string }[] = []
@@ -150,57 +197,76 @@ function EventCardInline({ card }: { card: any }) {
   if (card.attendee_count) kpis.push({ label: 'Attendees', value: Number(card.attendee_count).toLocaleString() })
   if (card.conversion_rate) kpis.push({ label: 'Conversion', value: `${card.conversion_rate}%` })
   if (card.engagement_score_avg) kpis.push({ label: 'Avg Engagement', value: String(card.engagement_score_avg) })
+  if (card.avg_live_minutes) kpis.push({ label: 'Avg Minutes', value: String(card.avg_live_minutes) })
   if (card.poll_response_count) kpis.push({ label: 'Poll Responses', value: Number(card.poll_response_count).toLocaleString() })
   if (card.survey_response_count) kpis.push({ label: 'Survey Responses', value: Number(card.survey_response_count).toLocaleString() })
+  if (card.qa_count) kpis.push({ label: 'Q&A', value: Number(card.qa_count).toLocaleString() })
+  if (card.chat_message_count) kpis.push({ label: 'Chat Messages', value: Number(card.chat_message_count).toLocaleString() })
   if (card.resource_download_count) kpis.push({ label: 'Downloads', value: Number(card.resource_download_count).toLocaleString() })
+
+  // Past events with engagement data → open by default; future/empty → hidden
+  const isFuture = card.is_future || (card.start_time && new Date(card.start_time) > new Date())
+  const hasEngagement = kpis.length > 0
+  const showEngagement = hasEngagement || !isFuture
 
   return (
     <div style={{
-      marginTop: '0.75rem', borderRadius: 10, border: '1px solid var(--color-border)',
-      background: 'var(--color-card)', overflow: 'hidden', maxWidth: 420,
+      marginTop: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)',
+      background: 'var(--color-card)', overflow: 'hidden', maxWidth: 440,
+      boxShadow: 'var(--shadow-card)',
     }}>
       <div style={{ height: 4, background: 'var(--color-primary)' }} />
       <div style={{ padding: '0.75rem 1rem' }}>
-        <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.15rem' }}>
-          Event {card.event_id}{card.event_type ? ` · ${card.event_type}` : ''}
+        {/* Type badges + delivery chip */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Event {card.event_id}
+          </span>
+          {card.event_type && (
+            <span style={{
+              padding: '0.1rem 0.45rem', borderRadius: 999,
+              fontSize: '0.58rem', fontWeight: 700,
+              background: 'var(--color-primary-light)', color: 'var(--color-primary)',
+              border: '1px solid var(--color-chip-border)',
+            }}>
+              {card.event_type}
+            </span>
+          )}
+          <DeliveryChip eventType={card.event_type} />
         </div>
-        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35, marginBottom: '0.4rem' }}>
+        <div style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35, marginBottom: '0.4rem' }}>
           {card.title}
         </div>
         {card.start_time && (
-          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
             {new Date(card.start_time).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-            {' '}
+            {' · '}
             {new Date(card.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             {card.end_time ? ` – ${new Date(card.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
           </div>
         )}
-        {kpis.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.4rem' }}>
-            {kpis.map(k => (
-              <div key={k.label} style={{
-                background: 'var(--color-bg)', borderRadius: 6, padding: '0.4rem 0.6rem',
-                border: '1px solid var(--color-border)',
-              }}>
-                <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)' }}>{k.label}</div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text)' }}>{k.value}</div>
-              </div>
-            ))}
-          </div>
+
+        {/* Collapsible Engagement section */}
+        {showEngagement && (
+          <EngagementSection kpis={kpis} defaultOpen={hasEngagement} />
         )}
+
         {card.ai_content && (() => {
           const { count, client_id, event_id: eid } = card.ai_content
           const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${eid ?? card.event_id}`
           return (
             <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
-              <div style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
+              <div style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
                 AI-ACE Content
               </div>
               <a
                 href={mmUrl}
                 target="_blank"
                 rel="noreferrer"
-                style={{ fontSize: '0.78rem', fontWeight: 600, color: '#10b981', textDecoration: 'none' }}
+                style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-success)', textDecoration: 'none' }}
               >
                 Key Takeaways ↗
               </a>
@@ -226,13 +292,13 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
 }
 
 const CONTENT_TYPE_COLORS: Record<string, string> = {
-  BLOG: '#4f46e5',
-  KEYTAKEAWAYS: '#10b981',
-  EBOOK: '#f59e0b',
-  FAQ: '#0ea5e9',
-  FOLLOWUPEMAIL: '#8b5cf6',
-  SOCIALMEDIA: '#ec4899',
-  TRANSCRIPT: '#6b7280',
+  BLOG: 'var(--color-primary)',
+  KEYTAKEAWAYS: 'var(--color-success)',
+  EBOOK: 'var(--color-warning)',
+  FAQ: 'var(--color-primary)',
+  FOLLOWUPEMAIL: 'var(--color-agent-calendar)',
+  SOCIALMEDIA: 'var(--color-agent-content)',
+  TRANSCRIPT: 'var(--color-text-secondary)',
 }
 
 function ContentArticlesInline({ articles }: { articles: any[] }) {
@@ -243,7 +309,7 @@ function ContentArticlesInline({ articles }: { articles: any[] }) {
       {articles.map((article: any, idx: number) => {
         const typeKey = (article.content_type || '').toUpperCase()
         const typeLabel = CONTENT_TYPE_LABELS[typeKey] || typeKey
-        const accentColor = CONTENT_TYPE_COLORS[typeKey] || '#4f46e5'
+        const accentColor = CONTENT_TYPE_COLORS[typeKey] || 'var(--color-primary)'
         const isExpanded = expandedIdx === idx
         const dateStr = article.created_at
           ? new Date(article.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
@@ -278,7 +344,7 @@ function ContentArticlesInline({ articles }: { articles: any[] }) {
                   href={mmUrl}
                   target="_blank"
                   rel="noreferrer"
-                  style={{ fontSize: '0.65rem', color: '#10b981', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
+                  style={{ fontSize: '0.65rem', color: 'var(--color-success)', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
                   Open in Media Manager ↗
                 </a>
@@ -331,17 +397,21 @@ function EventCardsGrid({ cards }: { cards: any[] }) {
       display: 'grid',
       gridTemplateColumns: cards.length === 1 ? '1fr' : 'repeat(2, 1fr)',
       gap: 20,
-      maxWidth: cards.length === 1 ? 420 : 860,
+      maxWidth: cards.length === 1 ? 440 : 880,
     }}>
       {cards.map((card: any, i: number) => (
         <div key={card.event_id || i} style={{
-          borderRadius: 10, border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius)', border: '1px solid var(--color-border)',
           background: 'var(--color-card)', overflow: 'hidden',
+          boxShadow: 'var(--shadow-card)',
         }}>
           <div style={{ height: 4, background: 'var(--color-primary)' }} />
           <div style={{ padding: '0.65rem 0.85rem' }}>
-            <div style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.15rem' }}>
-              Event {card.event_id}{card.event_type ? ` · ${card.event_type}` : ''}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.55rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Event {card.event_id}
+              </span>
+              <DeliveryChip eventType={card.event_type} />
             </div>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35, marginBottom: '0.3rem' }}>
               {card.title}
@@ -591,7 +661,7 @@ function ContentHtmlPreview({ html }: { html: string }) {
                   onClick={handleCopy}
                   title={copied ? 'Copied!' : 'Copy HTML'}
                   aria-label="Copy HTML to clipboard"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--color-text-secondary)', padding: 4, display: 'flex', borderRadius: 4 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--color-success)' : 'var(--color-text-secondary)', padding: 4, display: 'flex', borderRadius: 4 }}
                 >
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -646,7 +716,7 @@ function ContentHtmlPreview({ html }: { html: string }) {
                 background: 'var(--color-bg)',
               }}>
                 {shareStatus === 'sent' ? (
-                  <div style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     Link sent!
                   </div>
@@ -681,8 +751,8 @@ function ContentHtmlPreview({ html }: { html: string }) {
                           padding: '0.4rem 0.85rem',
                           fontSize: '0.78rem',
                           fontWeight: 600,
-                          background: shareEmails.trim() && shareStatus !== 'sending' ? 'var(--color-primary)' : '#e5e7eb',
-                          color: '#fff',
+                          background: shareEmails.trim() && shareStatus !== 'sending' ? 'var(--color-primary)' : 'var(--color-border)',
+                          color: 'var(--color-card)',
                           border: 'none',
                           borderRadius: 6,
                           cursor: shareEmails.trim() && shareStatus !== 'sending' ? 'pointer' : 'not-allowed',
@@ -707,7 +777,7 @@ function ContentHtmlPreview({ html }: { html: string }) {
                       </button>
                     </div>
                     {shareStatus === 'error' && (
-                      <div style={{ fontSize: '0.72rem', color: '#ef4444', marginTop: '0.35rem' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--color-danger)', marginTop: '0.35rem' }}>
                         Failed to send. Please try again.
                       </div>
                     )}
@@ -802,7 +872,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
           padding: '0.625rem 0.875rem',
           borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
           background: isUser ? 'var(--color-primary)' : 'var(--color-card)',
-          color: isUser ? '#fff' : 'var(--color-text)',
+          color: isUser ? 'var(--color-card)' : 'var(--color-text)',
           fontSize: '0.85rem', lineHeight: 1.5,
           wordBreak: 'break-word',
         }}>
@@ -903,7 +973,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
 
       {/* Thumbs-up confirmation */}
       {!isUser && feedbackState === 'thumbs_up' && (
-        <span style={{ fontSize: '0.65rem', color: '#10b981', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>
+        <span style={{ fontSize: '0.65rem', color: 'var(--color-success)', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>
           Thanks for the feedback!
         </span>
       )}
@@ -971,11 +1041,11 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
               style={{
                 padding: '0.3rem 0.75rem',
                 fontSize: '0.75rem',
-                background: feedbackText.trim() ? 'var(--color-primary)' : '#e5e7eb',
+                background: feedbackText.trim() ? 'var(--color-primary)' : 'var(--color-border)',
                 border: 'none',
                 borderRadius: 6,
                 cursor: feedbackText.trim() ? 'pointer' : 'not-allowed',
-                color: '#fff',
+                color: 'var(--color-card)',
                 fontWeight: 500,
               }}
             >

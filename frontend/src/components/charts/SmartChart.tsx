@@ -163,9 +163,9 @@ function NivoBar({ data, xKey, yKeys, groupMode = 'grouped' }: { data: any[]; xK
             symbolShape: 'circle',
           }] : []}
           tooltip={({ id, value, indexValue }) => (
-            <div style={{ background: '#1e293b', color: '#e2e8f0', padding: '6px 10px', borderRadius: 6, fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+            <div style={{ background: 'var(--color-text)', color: 'var(--color-border)', padding: '6px 10px', borderRadius: 6, fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
               <strong>{formatKeyLabel(String(id))}</strong>: {typeof value === 'number' && value >= 1000 ? value.toLocaleString() : value}
-              <br /><span style={{ color: '#94a3b8' }}>{indexValue}</span>
+              <br /><span style={{ color: 'var(--color-text-secondary)' }}>{indexValue}</span>
             </div>
           )}
         />
@@ -266,15 +266,15 @@ function FunnelChart({ data, xKey }: { data: any[]; xKey: string }) {
                 position: 'relative',
               }}
             >
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ color: 'var(--color-card)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {stage.label}
               </span>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 600, marginLeft: 12 }}>
+              <span style={{ color: 'var(--color-card)', fontSize: 13, fontWeight: 600, marginLeft: 12 }}>
                 {stage.value.toLocaleString()}
               </span>
             </div>
             {i > 0 && dropoff > 0 && (
-              <span style={{ fontSize: 10, color: '#ef4444', marginTop: -2, marginBottom: -2 }}>
+              <span style={{ fontSize: 10, color: 'var(--color-danger)', marginTop: -2, marginBottom: -2 }}>
                 ▼ {dropoff.toFixed(1)}% drop-off
               </span>
             )}

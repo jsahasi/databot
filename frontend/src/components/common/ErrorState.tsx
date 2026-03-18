@@ -44,7 +44,7 @@ export default function ErrorState({
             padding: '0.5rem 1.25rem',
             fontSize: '0.8rem',
             background: 'var(--color-primary)',
-            color: '#fff',
+            color: 'var(--color-card)',
             border: 'none',
             borderRadius: 'var(--radius)',
             cursor: 'pointer',

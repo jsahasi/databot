@@ -4,10 +4,10 @@ interface AgentIndicatorProps {
 }
 
 const AGENT_LABELS: Record<string, { label: string; color: string }> = {
-  orchestrator: { label: 'Thinking', color: '#8b5cf6' },
-  data_agent: { label: 'Analyzing Data', color: '#3b82f6' },
-  content_agent: { label: 'Content Analysis', color: '#10b981' },
-  admin_agent: { label: 'Admin Action', color: '#f59e0b' },
+  orchestrator: { label: 'Thinking', color: 'var(--color-agent-calendar)' },
+  data_agent: { label: 'Analyzing Data', color: 'var(--color-agent-data)' },
+  content_agent: { label: 'Content Analysis', color: 'var(--color-agent-config)' },
+  admin_agent: { label: 'Admin Action', color: 'var(--color-agent-concierge)' },
 }
 
 export default function AgentIndicator({ agent, isProcessing }: AgentIndicatorProps) {

@@ -12,6 +12,7 @@ export default function KPICard({ title, value, subtitle, icon }: KPICardProps) 
         background: 'var(--color-card)',
         borderRadius: 'var(--radius)',
         boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--color-border)',
         padding: '1.25rem 1.5rem',
         display: 'flex',
         flexDirection: 'column',
