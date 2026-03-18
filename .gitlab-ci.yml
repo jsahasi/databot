@@ -113,7 +113,7 @@ deploy:dev:
   stage: deploy
   image: p-eng05.on24.com:8888/gcp/gitlab-builder:latest
   tags:
-    - docker-gcp
+    - docker
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
   environment:
