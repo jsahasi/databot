@@ -17,16 +17,15 @@ FUTURE multi-client support (when needed):
 
 import asyncio
 import contextvars
+import logging
+import os
 import shutil
 import ssl
 import tempfile
-import os
 
 import asyncpg
 
 from app.config import settings
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +35,7 @@ _tenant_ids_cache: dict[int, list[int]] = {}
 _tenant_ids_lock = asyncio.Lock()
 
 # Per-request client override (set in WebSocket handler, never from agents/tools)
-_request_client_id: contextvars.ContextVar[int | None] = contextvars.ContextVar(
-    "_request_client_id", default=None
-)
+_request_client_id: contextvars.ContextVar[int | None] = contextvars.ContextVar("_request_client_id", default=None)
 
 
 def set_request_client_id(client_id: int | None) -> None:
@@ -68,9 +65,12 @@ def _build_ssl_context() -> ssl.SSLContext | None:
         cert_path = os.path.join(tmp_dir, "client.crt")
         key_path = os.path.join(tmp_dir, "client.key")
 
-        with open(ca_path, "w", newline="\n") as f: f.write(ca)
-        with open(cert_path, "w", newline="\n") as f: f.write(cert)
-        with open(key_path, "w", newline="\n") as f: f.write(key)
+        with open(ca_path, "w", newline="\n") as f:
+            f.write(ca)
+        with open(cert_path, "w", newline="\n") as f:
+            f.write(cert)
+        with open(key_path, "w", newline="\n") as f:
+            f.write(key)
 
         ctx.load_verify_locations(ca_path)
         ctx.load_cert_chain(cert_path, key_path)
@@ -101,9 +101,12 @@ def _build_ssl_context_qa() -> ssl.SSLContext | None:
         ca_path = os.path.join(tmp_dir, "ca.pem")
         cert_path = os.path.join(tmp_dir, "client.crt")
         key_path = os.path.join(tmp_dir, "client.key")
-        with open(ca_path, "w", newline="\n") as f: f.write(unescape(ca_content))
-        with open(cert_path, "w", newline="\n") as f: f.write(unescape(cert_content))
-        with open(key_path, "w", newline="\n") as f: f.write(unescape(key_content))
+        with open(ca_path, "w", newline="\n") as f:
+            f.write(unescape(ca_content))
+        with open(cert_path, "w", newline="\n") as f:
+            f.write(unescape(cert_content))
+        with open(key_path, "w", newline="\n") as f:
+            f.write(unescape(key_content))
         ctx.load_verify_locations(ca_path)
         ctx.load_cert_chain(cert_path, key_path)
     finally:

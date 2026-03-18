@@ -24,13 +24,13 @@ def _extract_chart(text: str) -> tuple[str, dict | None]:
     Returns (cleaned_text, chart_dict_or_None).
     The chart block is removed from the text so it's not shown as raw JSON.
     """
-    pattern = re.compile(r'```chart\s*\n(.*?)\n```', re.DOTALL)
+    pattern = re.compile(r"```chart\s*\n(.*?)\n```", re.DOTALL)
     match = pattern.search(text)
     if not match:
         return text, None
     try:
         chart = json.loads(match.group(1))
-        cleaned = (text[:match.start()].rstrip() + "\n" + text[match.end():].lstrip()).strip()
+        cleaned = (text[: match.start()].rstrip() + "\n" + text[match.end() :].lstrip()).strip()
         return cleaned, chart
     except Exception:
         return text, None
@@ -78,7 +78,9 @@ class DataAgent:
         except Exception:
             logger.exception("Failed to write agent audit log")
 
-    async def run(self, user_message: str, conversation_history: list[dict] | None = None, session_id: str = "", restriction_context: str = "") -> dict[str, Any]:
+    async def run(
+        self, user_message: str, conversation_history: list[dict] | None = None, session_id: str = "", restriction_context: str = ""
+    ) -> dict[str, Any]:
         """Process a user message and return a response with optional chart data.
 
         Returns:
@@ -94,7 +96,7 @@ class DataAgent:
         chart_data = None
         event_card = None
         poll_cards = None
-        event_cards = None   # 2–4 events → tiled cards
+        event_cards = None  # 2–4 events → tiled cards
         content_articles = None
         tool_calls_made = []
 
@@ -165,14 +167,20 @@ class DataAgent:
                                     eid_detail = result["event_id"]
                                     kpi_data: dict = {}
                                     try:
-                                        from app.agents.tools.on24_query_tools import compute_event_kpis as _compute_kpis
+                                        from app.agents.tools.on24_query_tools import (
+                                            compute_event_kpis as _compute_kpis,
+                                        )
+
                                         kpi_data = await _compute_kpis(eid_detail) or {}
                                     except Exception:
                                         pass
                                     # Fetch engagement counts (polls, surveys, resources)
                                     eng_counts: dict = {}
                                     try:
-                                        from app.agents.tools.on24_query_tools import get_engagement_counts as _get_eng
+                                        from app.agents.tools.on24_query_tools import (
+                                            get_engagement_counts as _get_eng,
+                                        )
+
                                         eng_counts = await _get_eng(eid_detail) or {}
                                     except Exception:
                                         pass
@@ -197,12 +205,18 @@ class DataAgent:
                                 if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
                                     eid = result["event_id"]
                                     try:
-                                        from app.agents.tools.on24_query_tools import get_event_detail
+                                        from app.agents.tools.on24_query_tools import (
+                                            get_event_detail,
+                                        )
+
                                         detail = await get_event_detail(eid)
                                         if detail:
                                             eng_counts2: dict = {}
                                             try:
-                                                from app.agents.tools.on24_query_tools import get_engagement_counts as _get_eng2
+                                                from app.agents.tools.on24_query_tools import (
+                                                    get_engagement_counts as _get_eng2,
+                                                )
+
                                                 eng_counts2 = await _get_eng2(eid) or {}
                                             except Exception:
                                                 pass
@@ -226,33 +240,35 @@ class DataAgent:
                                     except Exception:
                                         pass  # event card is best-effort
 
-                                asyncio.create_task(
-                                    self._write_audit_log(session_id, tool_name, tool_input, result)
-                                )
+                                asyncio.create_task(self._write_audit_log(session_id, tool_name, tool_input, result))
 
-                                tool_results.append({
-                                    "type": "tool_result",
-                                    "tool_use_id": block.id,
-                                    "content": json.dumps(result, default=str),
-                                })
+                                tool_results.append(
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(result, default=str),
+                                    }
+                                )
                             except Exception as e:
                                 logger.error(f"Tool {tool_name} failed: {e}")
-                                asyncio.create_task(
-                                    self._write_audit_log(session_id, tool_name, tool_input, None, error=str(e))
+                                asyncio.create_task(self._write_audit_log(session_id, tool_name, tool_input, None, error=str(e)))
+                                tool_results.append(
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps({"error": str(e)}),
+                                        "is_error": True,
+                                    }
                                 )
-                                tool_results.append({
+                        else:
+                            tool_results.append(
+                                {
                                     "type": "tool_result",
                                     "tool_use_id": block.id,
-                                    "content": json.dumps({"error": str(e)}),
+                                    "content": json.dumps({"error": f"Unknown tool: {tool_name}"}),
                                     "is_error": True,
-                                })
-                        else:
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({"error": f"Unknown tool: {tool_name}"}),
-                                "is_error": True,
-                            })
+                                }
+                            )
 
                 if tool_results:
                     messages.append({"role": "user", "content": tool_results})
@@ -266,10 +282,7 @@ class DataAgent:
                 cleaned_text, extracted_chart = _extract_chart(raw_text)
                 # Discard event_cards if agent went on to call more tools after list_events
                 # (it was an intermediate lookup, not the final answer)
-                final_event_cards = event_cards if not any(
-                    t["tool"] not in ("list_events", "generate_chart_data")
-                    for t in tool_calls_made
-                ) else None
+                final_event_cards = event_cards if not any(t["tool"] not in ("list_events", "generate_chart_data") for t in tool_calls_made) else None
                 # Only show content_articles if they match the specific event being discussed.
                 # Suppress unrelated articles (e.g. get_ai_content returned content from other
                 # events while the user asked about a specific one).
@@ -291,10 +304,12 @@ class DataAgent:
                 }
 
         # Hit max rounds — force a final text response with tool_choice=none
-        messages.append({
-            "role": "user",
-            "content": "Summarize the data you have gathered and give a final answer. Do not call any more tools.",
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": "Summarize the data you have gathered and give a final answer. Do not call any more tools.",
+            }
+        )
         final = await self.client.messages.create(
             model=self.model,
             max_tokens=2048,

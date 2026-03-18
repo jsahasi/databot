@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import BigInteger, Boolean, DateTime, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -14,45 +14,29 @@ class Event(Base, TimestampMixin, SyncedMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     on24_event_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    client_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    client_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     # Core metadata
     title: Mapped[str] = mapped_column(String(500))
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    event_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    content_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    language: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
-    timezone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    event_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    content_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    language: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    timezone: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     registration_required: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # Timestamps from ON24
-    live_start: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
-    )
-    live_end: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    archive_start: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    archive_end: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    start_time: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    end_time: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    on24_created: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    on24_last_modified: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    live_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    live_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archive_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archive_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    on24_created: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    on24_last_modified: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Analytics summary (from event metadata endpoint)
     total_registrants: Mapped[int] = mapped_column(Integer, default=0)
@@ -60,19 +44,17 @@ class Event(Base, TimestampMixin, SyncedMixin):
     live_attendees: Mapped[int] = mapped_column(Integer, default=0)
     on_demand_attendees: Mapped[int] = mapped_column(Integer, default=0)
     no_show_count: Mapped[int] = mapped_column(Integer, default=0)
-    engagement_score: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(8, 2), nullable=True
-    )
+    engagement_score: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
 
     # URLs
-    audience_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    report_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    audience_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    report_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Tags and custom fields
-    tags: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    tags: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # Full ON24 API response for future-proofing
-    raw_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {

@@ -1,21 +1,31 @@
 """ETL sync service: pulls data from ON24 API and upserts into PostgreSQL."""
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import async_session_factory
-from app.models import Attendee, CTAClick, EngagementProfile, Event, PollResponse, Registrant, ResourceViewed, SurveyResponse, SyncLog
+from app.models import (
+    Attendee,
+    CTAClick,
+    EngagementProfile,
+    Event,
+    PollResponse,
+    Registrant,
+    ResourceViewed,
+    SurveyResponse,
+    SyncLog,
+)
 from app.services.on24_client import ON24APIError, ON24Client
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_datetime(value: Any) -> Optional[datetime]:
+def _parse_datetime(value: Any) -> datetime | None:
     """Parse ON24 datetime strings to timezone-aware datetime.
 
     ON24 returns dates in several formats depending on the field.
@@ -24,7 +34,7 @@ def _parse_datetime(value: Any) -> Optional[datetime]:
     if not value:
         return None
     if isinstance(value, datetime):
-        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return value if value.tzinfo else value.replace(tzinfo=UTC)
     for fmt in (
         "%Y-%m-%dT%H:%M:%S%z",
         "%Y-%m-%dT%H:%M:%S.%f%z",
@@ -36,7 +46,7 @@ def _parse_datetime(value: Any) -> Optional[datetime]:
         try:
             dt = datetime.strptime(str(value), fmt)
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+                dt = dt.replace(tzinfo=UTC)
             return dt
         except ValueError:
             continue
@@ -87,7 +97,7 @@ class SyncService:
     ) -> None:
         sync_log.status = "failed" if error else "completed"
         sync_log.records_synced = records
-        sync_log.completed_at = datetime.now(timezone.utc)
+        sync_log.completed_at = datetime.now(UTC)
         sync_log.error_message = error
 
     # ── Events ───────────────────────────────────────────────────────
@@ -101,12 +111,10 @@ class SyncService:
         async with async_session_factory() as session:
             sync_log = await self._create_sync_log(session, "events")
             try:
-                events_data = await self.client.paginate(
-                    "event", items_key="events", items_per_page=100
-                )
+                events_data = await self.client.paginate("event", items_key="events", items_per_page=100)
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for ev in events_data:
                     analytics = ev.get("eventanalytics") or {}
                     values = {
@@ -141,11 +149,7 @@ class SyncService:
                         "synced_at": now,
                     }
 
-                    update_values = {
-                        k: v
-                        for k, v in values.items()
-                        if k not in ("on24_event_id", "client_id")
-                    }
+                    update_values = {k: v for k, v in values.items() if k not in ("on24_event_id", "client_id")}
 
                     stmt = (
                         pg_insert(Event)
@@ -195,7 +199,7 @@ class SyncService:
                 )
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for att in attendees_data:
                     values = {
                         "on24_attendee_id": att.get("eventuserid"),
@@ -208,12 +212,8 @@ class SyncService:
                         "leave_time": _parse_datetime(att.get("leavetime")),
                         "live_minutes": _safe_int(att.get("liveminutes"), 0),
                         "archive_minutes": _safe_int(att.get("archiveminutes"), 0),
-                        "cumulative_live_minutes": _safe_int(
-                            att.get("cumulativeliveminutes"), 0
-                        ),
-                        "cumulative_archive_minutes": _safe_int(
-                            att.get("cumulativearchiveminutes"), 0
-                        ),
+                        "cumulative_live_minutes": _safe_int(att.get("cumulativeliveminutes"), 0),
+                        "cumulative_archive_minutes": _safe_int(att.get("cumulativearchiveminutes"), 0),
                         "engagement_score": att.get("engagementscore"),
                         "asked_questions": _safe_int(att.get("askedquestions")),
                         "resources_downloaded": _safe_int(att.get("resourcesdownloaded")),
@@ -230,11 +230,7 @@ class SyncService:
                     }
 
                     # Fields to update on conflict (everything except the unique key pair)
-                    update_values = {
-                        k: v
-                        for k, v in values.items()
-                        if k not in ("on24_attendee_id", "on24_event_id")
-                    }
+                    update_values = {k: v for k, v in values.items() if k not in ("on24_attendee_id", "on24_event_id")}
 
                     stmt = (
                         pg_insert(Attendee)
@@ -255,9 +251,7 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync attendees for event %d: %s", event_id, exc
-                )
+                logger.error("Failed to sync attendees for event %d: %s", event_id, exc)
                 raise
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
@@ -290,7 +284,7 @@ class SyncService:
                 )
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for reg in registrants_data:
                     # Collect ON24 standard custom fields (std1-std10) into JSONB
                     custom_fields: dict[str, Any] = {}
@@ -320,9 +314,7 @@ class SyncService:
                         "company_size": reg.get("companysize"),
                         "partner_ref": reg.get("partnerref"),
                         "registration_status": reg.get("registrationstatus"),
-                        "registration_date": _parse_datetime(
-                            reg.get("registrationdate")
-                        ),
+                        "registration_date": _parse_datetime(reg.get("registrationdate")),
                         "last_activity": _parse_datetime(reg.get("lastactivity")),
                         "utm_source": reg.get("utmsource"),
                         "utm_medium": reg.get("utmmedium"),
@@ -332,11 +324,7 @@ class SyncService:
                         "synced_at": now,
                     }
 
-                    update_values = {
-                        k: v
-                        for k, v in values.items()
-                        if k not in ("on24_registrant_id", "on24_event_id")
-                    }
+                    update_values = {k: v for k, v in values.items() if k not in ("on24_registrant_id", "on24_event_id")}
 
                     stmt = (
                         pg_insert(Registrant)
@@ -357,9 +345,7 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync registrants for event %d: %s", event_id, exc
-                )
+                logger.error("Failed to sync registrants for event %d: %s", event_id, exc)
                 raise
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
@@ -392,7 +378,7 @@ class SyncService:
                 polls_data = response.get("polls", [])
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for poll in polls_data:
                     poll_id = poll.get("pollid")
                     question = poll.get("question")
@@ -408,11 +394,7 @@ class SyncService:
                             "raw_json": answer_item,
                             "synced_at": now,
                         }
-                        stmt = (
-                            pg_insert(PollResponse)
-                            .values(**values)
-                            .on_conflict_do_nothing()
-                        )
+                        stmt = pg_insert(PollResponse).values(**values).on_conflict_do_nothing()
                         await session.execute(stmt)
                         count += 1
 
@@ -424,16 +406,12 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync polls for event %d: %s", event_id, exc
-                )
+                logger.error("Failed to sync polls for event %d: %s", event_id, exc)
                 raise
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Unexpected error syncing polls for event %d: %s", event_id, exc
-                )
+                logger.error("Unexpected error syncing polls for event %d: %s", event_id, exc)
                 raise
 
     # ── Survey responses ─────────────────────────────────────────────
@@ -457,7 +435,7 @@ class SyncService:
                 surveys_data = response.get("surveys", [])
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for survey in surveys_data:
                     survey_id = survey.get("survey_id")
                     question = survey.get("question")
@@ -473,11 +451,7 @@ class SyncService:
                             "raw_json": answer_item,
                             "synced_at": now,
                         }
-                        stmt = (
-                            pg_insert(SurveyResponse)
-                            .values(**values)
-                            .on_conflict_do_nothing()
-                        )
+                        stmt = pg_insert(SurveyResponse).values(**values).on_conflict_do_nothing()
                         await session.execute(stmt)
                         count += 1
 
@@ -489,16 +463,12 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync surveys for event %d: %s", event_id, exc
-                )
+                logger.error("Failed to sync surveys for event %d: %s", event_id, exc)
                 raise
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Unexpected error syncing surveys for event %d: %s", event_id, exc
-                )
+                logger.error("Unexpected error syncing surveys for event %d: %s", event_id, exc)
                 raise
 
     # ── Resources viewed ─────────────────────────────────────────────
@@ -519,7 +489,7 @@ class SyncService:
                 resources_data = response.get("resources", [])
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for resource in resources_data:
                     values = {
                         "on24_event_id": event_id,
@@ -530,11 +500,7 @@ class SyncService:
                         "raw_json": resource,
                         "synced_at": now,
                     }
-                    stmt = (
-                        pg_insert(ResourceViewed)
-                        .values(**values)
-                        .on_conflict_do_nothing()
-                    )
+                    stmt = pg_insert(ResourceViewed).values(**values).on_conflict_do_nothing()
                     await session.execute(stmt)
                     count += 1
 
@@ -546,16 +512,12 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync resources for event %d: %s", event_id, exc
-                )
+                logger.error("Failed to sync resources for event %d: %s", event_id, exc)
                 raise
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Unexpected error syncing resources for event %d: %s", event_id, exc
-                )
+                logger.error("Unexpected error syncing resources for event %d: %s", event_id, exc)
                 raise
 
     # ── CTA clicks ───────────────────────────────────────────────────
@@ -578,7 +540,7 @@ class SyncService:
                 ctas_data = response.get("ctas") or response.get("calltoactions", [])
 
                 count = 0
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 for cta in ctas_data:
                     values = {
                         "on24_event_id": event_id,
@@ -589,11 +551,7 @@ class SyncService:
                         "raw_json": cta,
                         "synced_at": now,
                     }
-                    stmt = (
-                        pg_insert(CTAClick)
-                        .values(**values)
-                        .on_conflict_do_nothing()
-                    )
+                    stmt = pg_insert(CTAClick).values(**values).on_conflict_do_nothing()
                     await session.execute(stmt)
                     count += 1
 
@@ -605,16 +563,12 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync CTAs for event %d: %s", event_id, exc
-                )
+                logger.error("Failed to sync CTAs for event %d: %s", event_id, exc)
                 raise
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Unexpected error syncing CTAs for event %d: %s", event_id, exc
-                )
+                logger.error("Unexpected error syncing CTAs for event %d: %s", event_id, exc)
                 raise
 
     # ── Engagement profile (PEP) ─────────────────────────────────────
@@ -633,13 +587,11 @@ class SyncService:
             try:
                 pep_data = await self.client.get_pep(email)
 
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 values = {
                     "email": email,
                     "company": pep_data.get("company"),
-                    "total_events_attended": _safe_int(
-                        pep_data.get("totaleventsattended"), 0
-                    ),
+                    "total_events_attended": _safe_int(pep_data.get("totaleventsattended"), 0),
                     "total_engagement_score": pep_data.get("totalengagementscore"),
                     "last_event_date": _parse_datetime(pep_data.get("lasteventdate")),
                     "pep_data": pep_data,
@@ -665,16 +617,12 @@ class SyncService:
             except ON24APIError as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Failed to sync engagement profile for %s: %s", email, exc
-                )
+                logger.error("Failed to sync engagement profile for %s: %s", email, exc)
                 return False
             except Exception as exc:
                 await self._complete_sync_log(session, sync_log, 0, str(exc))
                 await session.commit()
-                logger.error(
-                    "Unexpected error syncing engagement profile for %s: %s", email, exc
-                )
+                logger.error("Unexpected error syncing engagement profile for %s: %s", email, exc)
                 return False
 
     # ── Full sync orchestrator ───────────────────────────────────────
@@ -704,9 +652,7 @@ class SyncService:
 
         # 2. Fetch active event IDs from the database
         async with async_session_factory() as session:
-            result = await session.execute(
-                select(Event.on24_event_id).where(Event.is_active.is_(True))
-            )
+            result = await session.execute(select(Event.on24_event_id).where(Event.is_active.is_(True)))
             event_ids: list[int] = [row[0] for row in result.fetchall()]
 
         # 3. Sync per-event data for each active event

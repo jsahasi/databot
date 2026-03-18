@@ -8,7 +8,6 @@ import re
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
 
 import anthropic
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
@@ -16,8 +15,8 @@ from pydantic import BaseModel, field_validator
 
 from app.agents.orchestrator import OrchestratorAgent
 from app.config import settings
-from app.db.on24_db import set_request_client_id, get_client_id, get_pool, get_tenant_client_ids
-from app.services.response_cache import get_cached_response, cache_response
+from app.db.on24_db import get_client_id, get_pool, get_tenant_client_ids, set_request_client_id
+from app.services.response_cache import cache_response, get_cached_response
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +40,7 @@ def _check_ws_rate(client_ip: str) -> bool:
         return False
     _ws_rate[client_ip].append(now)
     return True
+
 
 # Permission → product name mapping for restriction context
 _PERM_PRODUCT_MAP = {
@@ -82,7 +82,7 @@ async def _get_admin_contacts() -> str:
         """
         async with pool.acquire() as conn:
             rows = await conn.fetch(sql, client_ids, timeout=5.0)
-        names = [f"{r['firstname']} {r['lastname']}".strip() for r in rows if r['firstname']]
+        names = [f"{r['firstname']} {r['lastname']}".strip() for r in rows if r["firstname"]]
         result = " or ".join(names) if names else ""
         _admin_contacts_cache[cache_key] = result
         return result
@@ -112,9 +112,9 @@ async def _build_restriction_context(permissions: list[str]) -> str:
         "- Do NOT mention, link to, or suggest these products in your response.\n"
         "- Do NOT show deep links to restricted products.\n"
         "- If the user asks about a restricted product, respond: "
-        f"\"That feature requires additional access. To enable it, {contact}.\"\n"
+        f'"That feature requires additional access. To enable it, {contact}."\n'
         "- You may mention restricted products ONLY in the context of an upsell opportunity, "
-        f"framed as: \"To unlock [product], {contact}.\"\n"
+        f'framed as: "To unlock [product], {contact}."\n'
     )
 
 
@@ -130,26 +130,26 @@ def _extract_inline_options(text: str) -> list[str] | None:
     else None.
     """
     # Strip trailing proposed_events / quick_replies blocks
-    clean = re.sub(r'```\w*[\s\S]*?```', '', text).strip()
+    clean = re.sub(r"```\w*[\s\S]*?```", "", text).strip()
     lines = clean.splitlines()
     items: list[str] = []
     for line in reversed(lines):
         stripped = line.strip()
-        m = re.match(r'^(?:[-•*]|\*\*[-•*]\*\*|\d+[.)]\s*(?:\*\*)?)\s*(.+)', stripped)
+        m = re.match(r"^(?:[-•*]|\*\*[-•*]\*\*|\d+[.)]\s*(?:\*\*)?)\s*(.+)", stripped)
         if m:
-            label = m.group(1).strip().rstrip('*')
+            label = m.group(1).strip().rstrip("*")
             # Use only the part before ' — ' or ' - ' (the short version)
-            for sep in (' — ', ' – ', ' - '):
+            for sep in (" — ", " – ", " - "):
                 if sep in label:
                     label = label.split(sep)[0].strip()
                     break
             else:
                 # Fallback: first 6 words
                 words = label.split()
-                label = ' '.join(words[:6]) + ('…' if len(words) > 6 else '')
+                label = " ".join(words[:6]) + ("…" if len(words) > 6 else "")
             if label:
                 items.insert(0, label)
-        elif stripped == '' or re.match(r'^[A-Z*#]', stripped):
+        elif stripped == "" or re.match(r"^[A-Z*#]", stripped):
             # Blank line or new section heading — stop scanning upward
             if items:
                 break
@@ -204,11 +204,11 @@ async def generate_suggestions(
     # Fixed agent-switch chips appended after LLM context chips.
     # Keys = agent that just answered; values = switch chips for the other agents.
     _AGENT_SWITCHES: dict[str | None, list[str]] = {
-        "concierge":     ["Explore my event data", "Content performance insights"],
-        "data_agent":    ["How do I...?",           "Content performance insights"],
-        "content_agent": ["Explore my event data",  "How do I...?"],
-        "admin_agent":   ["Explore my event data",  "How do I...?"],
-        None:            ["Explore my event data",  "How do I...?"],
+        "concierge": ["Explore my event data", "Content performance insights"],
+        "data_agent": ["How do I...?", "Content performance insights"],
+        "content_agent": ["Explore my event data", "How do I...?"],
+        "admin_agent": ["Explore my event data", "How do I...?"],
+        None: ["Explore my event data", "How do I...?"],
     }
     switch_chips = _AGENT_SWITCHES.get(agent_used, _AGENT_SWITCHES[None])
 
@@ -229,12 +229,16 @@ async def generate_suggestions(
             kw in response_text.lower() for kw in ("tofu", "mofu", "bofu", "content calendar", "proposed event", "apr ", "may ", "jun ", "jul ", "aug ")
         )
         calendar_rule = (
-            "\n\nThe response was a PROPOSED CONTENT CALENDAR. "
-            "Suggest 2 things the user can do next:\n"
-            "- Ask for a deeper dive on one of the proposed events (suggest one by its actual title, e.g. 'Tell me more about [Event Title]')\n"
-            "- Refine the calendar (extend the horizon, shift funnel weighting, focus on a theme)\n"
-            "Do NOT use event IDs or numbers. Reference events by their title only."
-        ) if is_calendar else ""
+            (
+                "\n\nThe response was a PROPOSED CONTENT CALENDAR. "
+                "Suggest 2 things the user can do next:\n"
+                "- Ask for a deeper dive on one of the proposed events (suggest one by its actual title, e.g. 'Tell me more about [Event Title]')\n"
+                "- Refine the calendar (extend the horizon, shift funnel weighting, focus on a theme)\n"
+                "Do NOT use event IDs or numbers. Reference events by their title only."
+            )
+            if is_calendar
+            else ""
+        )
         system_prompt = (
             "You anticipate the next 2 questions a user would naturally ask next in a "
             "webinar analytics chatbot conversation. Think ahead: if they just saw one event, "
@@ -272,7 +276,7 @@ async def generate_suggestions(
         messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in response.content if hasattr(b, "text"))
-    match = re.search(r'\[.*\]', text, re.DOTALL)
+    match = re.search(r"\[.*\]", text, re.DOTALL)
     raw = match.group() if match else text
     try:
         context_chips: list[str] = json.loads(raw)[:2]
@@ -280,7 +284,7 @@ async def generate_suggestions(
         context_chips = []  # Always return switch chips + Home even if LLM output is malformed
 
     # Strip markdown bold/italic markers that may leak from response text into chip labels
-    context_chips = [re.sub(r'\*+', '', c).strip() for c in context_chips if c.strip()]
+    context_chips = [re.sub(r"\*+", "", c).strip() for c in context_chips if c.strip()]
 
     return context_chips + switch_chips + ["Home"]
 
@@ -333,7 +337,8 @@ async def websocket_chat(websocket: WebSocket):
                         root = int(settings.on24_client_id)
                         # Only allow if it's the root or a known sub-client.
                         # We use the cached hierarchy (cheap after first call).
-                        from app.db.on24_db import get_tenant_client_ids, set_request_client_id as _set
+                        from app.db.on24_db import get_tenant_client_ids
+
                         # Temporarily set to root to get full list
                         set_request_client_id(root)
                         allowed = set(await get_tenant_client_ids())
@@ -352,25 +357,27 @@ async def websocket_chat(websocket: WebSocket):
 
                 # Strip null bytes and ASCII control characters to prevent prompt-injection
                 # payloads that embed hidden instructions via non-printing characters (A03).
-                content = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content).strip()
+                content = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", content).strip()
                 if not content:
                     await websocket.send_json({"type": "error", "message": "Empty message"})
                     continue
 
                 # Reject messages containing script tags or javascript: protocol
-                if re.search(r'<script[\s>]|javascript\s*:', content, re.I):
+                if re.search(r"<script[\s>]|javascript\s*:", content, re.I):
                     await websocket.send_json({"type": "error", "message": "HTML and JavaScript are not allowed in messages."})
                     continue
 
                 # Strip any HTML tags from user input (preserves text content between tags)
-                content = re.sub(r'</?[a-z][^>]*>', '', content, flags=re.I).strip()
+                content = re.sub(r"</?[a-z][^>]*>", "", content, flags=re.I).strip()
                 if not content:
                     await websocket.send_json({"type": "error", "message": "Please enter a text message."})
                     continue
 
                 # SEC-02: Rate limit WebSocket messages per IP
                 if not _check_ws_rate(client_ip):
-                    await websocket.send_json({"type": "error", "message": f"Rate limit exceeded ({settings.rate_limit_per_minute} messages/min). Please slow down."})
+                    await websocket.send_json(
+                        {"type": "error", "message": f"Rate limit exceeded ({settings.rate_limit_per_minute} messages/min). Please slow down."}
+                    )
                     continue
 
                 # Bound message length to prevent prompt-stuffing and resource exhaustion (A03).
@@ -382,7 +389,7 @@ async def websocket_chat(websocket: WebSocket):
 
                 # Sanitise session_id: accept only alphanumeric/hyphen/underscore to prevent
                 # session-ID-based injection or path traversal in future storage backends (A01).
-                if not re.match(r'^[\w\-]{1,128}$', session_id):
+                if not re.match(r"^[\w\-]{1,128}$", session_id):
                     session_id = "default"
 
                 agent = _get_or_create_agent(session_id)
@@ -400,15 +407,16 @@ async def websocket_chat(websocket: WebSocket):
                 if raw_image_url and isinstance(raw_image_url, str):
                     try:
                         from app.api.upload import UPLOAD_DIR
+
                         fname = Path(raw_image_url).name
                         # Sanitise filename — alphanumeric + dots + hyphens only
-                        if re.match(r'^[\w\-.]+$', fname):
+                        if re.match(r"^[\w\-.]+$", fname):
                             fpath = UPLOAD_DIR / fname
                             if fpath.exists() and fpath.stat().st_size < 5_000_000:
                                 b64 = base64.standard_b64encode(fpath.read_bytes()).decode()
-                                ext = fpath.suffix.lower().lstrip('.')
-                                media_map = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp'}
-                                media_type = media_map.get(ext, 'image/png')
+                                ext = fpath.suffix.lower().lstrip(".")
+                                media_map = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
+                                media_type = media_map.get(ext, "image/png")
                                 image_block = {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}}
                                 logger.info(f"Loaded image for vision: {fname} ({fpath.stat().st_size} bytes)")
                     except Exception as e:
@@ -432,80 +440,102 @@ async def websocket_chat(websocket: WebSocket):
 
                     # Send agent routing info
                     if result.get("agent_used"):
-                        await websocket.send_json({
-                            "type": "agent_routing",
-                            "target": result["agent_used"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "agent_routing",
+                                "target": result["agent_used"],
+                            }
+                        )
 
                     # Send text response
-                    await websocket.send_json({
-                        "type": "text",
-                        "content": result.get("text", ""),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "text",
+                            "content": result.get("text", ""),
+                        }
+                    )
 
                     # Send chart data if available
                     if result.get("chart_data"):
-                        await websocket.send_json({
-                            "type": "chart_data",
-                            "data": result["chart_data"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "chart_data",
+                                "data": result["chart_data"],
+                            }
+                        )
 
                     # Send event card if available
                     if result.get("event_card"):
-                        await websocket.send_json({
-                            "type": "event_card",
-                            "data": result["event_card"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "event_card",
+                                "data": result["event_card"],
+                            }
+                        )
 
                     # Send event cards grid (2–4 events)
                     if result.get("event_cards"):
-                        await websocket.send_json({
-                            "type": "event_cards",
-                            "data": result["event_cards"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "event_cards",
+                                "data": result["event_cards"],
+                            }
+                        )
 
                     # Send poll cards only if no chart is already being shown
                     # (chart takes precedence — avoids duplicate rendering when user asks "show as pie chart")
                     if result.get("poll_cards") and not result.get("chart_data"):
-                        await websocket.send_json({
-                            "type": "poll_cards",
-                            "data": result["poll_cards"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "poll_cards",
+                                "data": result["poll_cards"],
+                            }
+                        )
 
                     # Send AI content articles if available
                     if result.get("content_articles"):
-                        await websocket.send_json({
-                            "type": "content_articles",
-                            "data": result["content_articles"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "content_articles",
+                                "data": result["content_articles"],
+                            }
+                        )
 
                     # Send rendered HTML content for preview modal
                     if result.get("content_html"):
-                        await websocket.send_json({
-                            "type": "content_html",
-                            "data": result["content_html"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "content_html",
+                                "data": result["content_html"],
+                            }
+                        )
 
                     # Send proposed calendar events if available
                     if result.get("proposed_events"):
-                        await websocket.send_json({
-                            "type": "proposed_events",
-                            "data": result["proposed_events"],
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "proposed_events",
+                                "data": result["proposed_events"],
+                            }
+                        )
 
                     # Send confirmation request if a destructive operation is pending
                     if result.get("requires_confirmation"):
-                        await websocket.send_json({
-                            "type": "confirmation_required",
-                            "confirmation_summary": result.get("confirmation_summary"),
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "confirmation_required",
+                                "confirmation_summary": result.get("confirmation_summary"),
+                            }
+                        )
 
                     # Signal completion
-                    await websocket.send_json({
-                        "type": "message_complete",
-                        "agent_used": result.get("agent_used"),
-                        "requires_confirmation": result.get("requires_confirmation", False),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "message_complete",
+                            "agent_used": result.get("agent_used"),
+                            "requires_confirmation": result.get("requires_confirmation", False),
+                        }
+                    )
 
                     # Cache the response for data/concierge queries (not admin/content creation)
                     if not cached_result:
@@ -520,12 +550,17 @@ async def websocket_chat(websocket: WebSocket):
                     _response_text = result.get("text", "")
                     # Strip proposed_events JSON block before passing to Haiku — it contains
                     # negative placeholder IDs that cause chips like "Tell me about event -1"
-                    _suggestions_text = re.sub(r'```proposed_events[\s\S]*?```', '', _response_text).strip()
+                    _suggestions_text = re.sub(r"```proposed_events[\s\S]*?```", "", _response_text).strip()
                     _has_table = "|" in _response_text and "---" in _response_text
 
                     async def _send_suggestions(
-                        ws: WebSocket, user_msg: str, text: str, agent: str | None,
-                        has_chart: bool, has_table: bool, chart_type: str | None,
+                        ws: WebSocket,
+                        user_msg: str,
+                        text: str,
+                        agent: str | None,
+                        has_chart: bool,
+                        has_table: bool,
+                        chart_type: str | None,
                     ) -> None:
                         try:
                             # If the response presents ≤5 inline options, promote them to chips directly
@@ -534,8 +569,8 @@ async def websocket_chat(websocket: WebSocket):
                                 # Always append agent-switch + Home after the inline options
                                 _AGENT_SWITCHES_LOCAL: dict[str | None, list[str]] = {
                                     "content_agent": ["Explore my event data", "How do I...?"],
-                                    "data_agent":    ["How do I...?", "Content performance insights"],
-                                    None:            ["Explore my event data", "How do I...?"],
+                                    "data_agent": ["How do I...?", "Content performance insights"],
+                                    None: ["Explore my event data", "How do I...?"],
                                 }
                                 tail = _AGENT_SWITCHES_LOCAL.get(agent, _AGENT_SWITCHES_LOCAL[None])
                                 suggestions = inline_opts + [t for t in tail if t not in inline_opts] + ["Home"]
@@ -579,15 +614,17 @@ async def websocket_chat(websocket: WebSocket):
                         except Exception:
                             pass  # Suggestions are best-effort; never block the user
 
-                    asyncio.create_task(_send_suggestions(
-                        websocket,
-                        content,
-                        _suggestions_text,
-                        result.get("agent_used"),
-                        _has_chart,
-                        _has_table,
-                        _chart_type,
-                    ))
+                    asyncio.create_task(
+                        _send_suggestions(
+                            websocket,
+                            content,
+                            _suggestions_text,
+                            result.get("agent_used"),
+                            _has_chart,
+                            _has_table,
+                            _chart_type,
+                        )
+                    )
 
                 except Exception as e:
                     # Log full detail server-side; send only a safe message to the client
@@ -598,10 +635,12 @@ async def websocket_chat(websocket: WebSocket):
                         _user_msg = "Network timeout connecting to AI service. Please try again."
                     else:
                         _user_msg = "An error occurred processing your request. Please try again."
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": _user_msg,
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "message": _user_msg,
+                        }
+                    )
 
             elif data.get("type") == "reset":
                 session_id = data.get("session_id", "default")
@@ -629,15 +668,15 @@ class ChatRequest(BaseModel):
     @classmethod
     def _message_length(cls, v: str) -> str:
         # Strip null bytes and control characters (matches WS handler)
-        v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v)
+        v = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", v)
         limit = 16000 if "[Attached" in v else 4000
         if len(v) > limit:
             raise ValueError(f"Message too long (max {limit} characters).")
         # Reject script tags and javascript: protocol
-        if re.search(r'<script[\s>]|javascript\s*:', v, re.I):
+        if re.search(r"<script[\s>]|javascript\s*:", v, re.I):
             raise ValueError("HTML and JavaScript are not allowed in messages.")
         # Strip HTML tags from input (only if there are tags to strip)
-        stripped = re.sub(r'</?[a-z][^>]*>', '', v, flags=re.I).strip()
+        stripped = re.sub(r"</?[a-z][^>]*>", "", v, flags=re.I).strip()
         if v.strip() and not stripped:
             raise ValueError("Please enter a text message.")
         return stripped if stripped else v
@@ -653,7 +692,7 @@ class ChatResponse(BaseModel):
 async def chat_http(request: ChatRequest):
     """HTTP fallback for agent conversations (non-streaming)."""
     # Sanitise session_id (A01) — same rule as the WebSocket handler.
-    session_id = request.session_id if re.match(r'^[\w\-]{1,128}$', request.session_id) else "default"
+    session_id = request.session_id if re.match(r"^[\w\-]{1,128}$", request.session_id) else "default"
     try:
         agent = _get_or_create_agent(session_id)
         result = await agent.process_message(request.message)

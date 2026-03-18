@@ -32,7 +32,8 @@ async def list_admins():
     async with pool.acquire() as conn:
         rows = await conn.fetch(sql, client_ids, timeout=8.0)
 
-    return {"admins": [
+    return {
+        "admins": [
             {
                 "admin_id": r["admin_id"],
                 "email": r["email"],
@@ -83,12 +84,7 @@ async def get_technical_contacts():
         result = await client._request("GET", "technicalrep")
         await client.close()
         contacts = result.get("technicalcontacts", [])
-        return {
-            "contacts": [
-                {"id": c.get("contactid"), "name": c.get("contactname", "")}
-                for c in contacts
-            ]
-        }
+        return {"contacts": [{"id": c.get("contactid"), "name": c.get("contactname", "")} for c in contacts]}
     except Exception as e:
         logger.warning(f"Technical rep lookup failed: {e}")
         return {"contacts": []}

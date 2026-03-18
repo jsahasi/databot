@@ -11,7 +11,7 @@ The resulting file is stored at data/brand_voice.json (Docker volume, persists a
 import json
 import logging
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import anthropic
@@ -37,6 +37,7 @@ _QUERY_TIMEOUT = 15.0
 # ---------------------------------------------------------------------------
 # ON24 DB helpers
 # ---------------------------------------------------------------------------
+
 
 async def _fetch_articles_by_type(article_type: str, limit: int = _SAMPLE_PER_TYPE) -> list[str]:
     """Return up to `limit` most-recent article texts for a given AUTOGEN_ type."""
@@ -107,6 +108,7 @@ async def get_recent_articles(article_type: str, limit: int = 5) -> list[dict]:
 # LLM analysis helpers
 # ---------------------------------------------------------------------------
 
+
 async def _analyse_type_voice(article_type: str, samples: list[str]) -> dict:
     """Ask the LLM to characterise the brand voice for a given article type."""
     if not samples:
@@ -114,7 +116,7 @@ async def _analyse_type_voice(article_type: str, samples: list[str]) -> dict:
 
     # Truncate each sample to avoid context overflow
     truncated = [s[:1500] for s in samples]
-    combined = "\n\n---\n\n".join(f"[Sample {i+1}]\n{t}" for i, t in enumerate(truncated))
+    combined = "\n\n---\n\n".join(f"[Sample {i + 1}]\n{t}" for i, t in enumerate(truncated))
 
     prompt = f"""You are a brand strategist. Analyse the following {len(samples)} {article_type} samples written for an ON24 marketing/webinar platform client. Identify their brand voice characteristics.
 
@@ -176,6 +178,7 @@ Synthesise an overall brand voice. Return ONLY valid JSON (no markdown):
 # Web scraping helpers
 # ---------------------------------------------------------------------------
 
+
 async def _discover_blog_urls(website: str) -> list[str]:
     """Try to find blog/news post URLs on the company website."""
     candidates = []
@@ -184,8 +187,7 @@ async def _discover_blog_urls(website: str) -> list[str]:
         candidates.append(f"{base}{path}")
 
     found: list[str] = []
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True,
-                                  headers={"User-Agent": "Mozilla/5.0 (compatible; DataBot/1.0)"}) as client:
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; DataBot/1.0)"}) as client:
         for url in candidates:
             try:
                 r = await client.get(url)
@@ -200,8 +202,7 @@ async def _discover_blog_urls(website: str) -> list[str]:
 
 async def _extract_recent_posts(blog_url: str, max_posts: int = 6) -> list[str]:
     """Fetch a blog listing page and extract text excerpts from recent posts."""
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True,
-                                  headers={"User-Agent": "Mozilla/5.0 (compatible; DataBot/1.0)"}) as client:
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; DataBot/1.0)"}) as client:
         r = await client.get(blog_url)
         if r.status_code != 200:
             return []
@@ -214,10 +215,7 @@ async def _extract_recent_posts(blog_url: str, max_posts: int = 6) -> list[str]:
 
     # Heuristic: find article/post containers
     excerpts: list[str] = []
-    containers = (
-        soup.find_all("article")
-        or soup.find_all(class_=re.compile(r"post|blog|article|entry", re.I))
-    )
+    containers = soup.find_all("article") or soup.find_all(class_=re.compile(r"post|blog|article|entry", re.I))
 
     for el in containers[:max_posts]:
         text = el.get_text(separator=" ", strip=True)
@@ -234,7 +232,7 @@ async def _extract_recent_posts(blog_url: str, max_posts: int = 6) -> list[str]:
 
 async def _analyse_web_voice(excerpts: list[str]) -> dict:
     """Use LLM to extract brand voice signals from web content."""
-    combined = "\n\n---\n\n".join(f"[Post {i+1}]\n{t}" for i, t in enumerate(excerpts))
+    combined = "\n\n---\n\n".join(f"[Post {i + 1}]\n{t}" for i, t in enumerate(excerpts))
     prompt = f"""Analyse the following blog/news excerpts from a company website. Extract their brand voice.
 
 {combined}
@@ -265,6 +263,7 @@ Return ONLY valid JSON (no markdown):
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def load_brand_voice() -> dict | None:
     """Load brand_voice.json from disk. Returns None if file doesn't exist."""
     if not BRAND_VOICE_PATH.exists():
@@ -289,8 +288,8 @@ def _is_stale(data: dict, field: str = "generated_at", max_days: int = 30) -> bo
     try:
         dt = datetime.fromisoformat(ts)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return (datetime.now(timezone.utc) - dt) > timedelta(days=max_days)
+            dt = dt.replace(tzinfo=UTC)
+        return (datetime.now(UTC) - dt) > timedelta(days=max_days)
     except Exception:
         return True
 
@@ -331,7 +330,7 @@ async def analyse_from_video_library() -> dict:
 
     data = {
         **existing,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "covered_types": covered_types,
         "overall": overall,
         "by_type": type_voices,
@@ -373,7 +372,7 @@ async def update_from_web() -> dict:
 
         web_voice = await _analyse_web_voice(all_excerpts[:12])
         existing["web_voice"] = web_voice
-        existing["web_last_updated"] = datetime.now(timezone.utc).isoformat()
+        existing["web_last_updated"] = datetime.now(UTC).isoformat()
         existing["website"] = website
         _save_brand_voice(existing)
         logger.info("Brand voice: web update complete")

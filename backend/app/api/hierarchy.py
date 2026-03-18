@@ -71,5 +71,3 @@ async def get_children(client_id: int):
 
     children = await get_client_children(client_id, pool)
     return {"children": children, "db_mode": db_mode}
-
-

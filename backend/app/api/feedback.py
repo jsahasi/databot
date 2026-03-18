@@ -1,7 +1,7 @@
 """Feedback endpoint: stores user thumbs-up/down ratings on bot responses."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -17,12 +17,12 @@ DATA_DIR = Path("/app/data")
 
 
 class FeedbackRequest(BaseModel):
-    feedback_type: str          # "positive" or "negative"
-    feedback_text: str = ""     # user's explanation (thumbs-down only)
-    message_content: str        # bot response text
-    user_question: str = ""     # the question that triggered this response
-    agent_used: str = ""        # e.g. "data_agent"
-    message_timestamp: str = "" # ISO timestamp of the original message
+    feedback_type: str  # "positive" or "negative"
+    feedback_text: str = ""  # user's explanation (thumbs-down only)
+    message_content: str  # bot response text
+    user_question: str = ""  # the question that triggered this response
+    agent_used: str = ""  # e.g. "data_agent"
+    message_timestamp: str = ""  # ISO timestamp of the original message
 
 
 def _build_improvement_prompt(req: FeedbackRequest, logged_at: datetime, client_id: int | str) -> str:
@@ -58,7 +58,7 @@ def _build_improvement_prompt(req: FeedbackRequest, logged_at: datetime, client_
         "",
         "Investigate and suggest specific improvements to:",
         f"  1. backend/app/agents/prompts/{agent.replace('_agent', '')}_agent.md  (prompt rules)",
-        f"  2. backend/app/agents/tools/on24_query_tools.py  (query logic, if data issue)",
+        "  2. backend/app/agents/tools/on24_query_tools.py  (query logic, if data issue)",
         "  3. Any other relevant file based on the root cause",
         "",
         "Proposed fix:",
@@ -95,7 +95,7 @@ async def submit_feedback(req: FeedbackRequest):
     Thumbs-down entries are written to data/improvement-inbox-MM-DD-YYYY.txt
     as a structured LLM-ready prompt for later review.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if req.feedback_type == "negative":
         try:

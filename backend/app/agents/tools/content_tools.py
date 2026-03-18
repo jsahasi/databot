@@ -1,9 +1,12 @@
 """Content analysis tools for the Content Agent."""
+
 import logging
 from typing import Any
-from sqlalchemy import func, select, desc, case
+
+from sqlalchemy import case, desc, func, select
+
 from app.db.session import async_session_factory
-from app.models import Attendee, Event, PollResponse, SurveyResponse, Registrant
+from app.models import Event
 
 logger = logging.getLogger(__name__)
 
@@ -15,24 +18,23 @@ async def analyze_topic_performance(
 ) -> dict[str, Any]:
     """Analyze which event types/topics drive the highest engagement and attendance."""
     async with async_session_factory() as session:
-        stmt = select(
-            Event.event_type,
-            func.count(Event.id).label("event_count"),
-            func.avg(Event.total_attendees).label("avg_attendees"),
-            func.avg(Event.engagement_score).label("avg_engagement"),
-            func.avg(
-                case(
-                    (Event.total_registrants > 0,
-                     Event.total_attendees * 100.0 / Event.total_registrants),
-                    else_=None
-                )
-            ).label("avg_conversion_rate"),
-        ).where(
-            Event.event_type.isnot(None),
-            Event.total_registrants > 0,
-        ).group_by(Event.event_type).having(
-            func.count(Event.id) >= min_events
-        ).order_by(desc("avg_engagement")).limit(limit)
+        stmt = (
+            select(
+                Event.event_type,
+                func.count(Event.id).label("event_count"),
+                func.avg(Event.total_attendees).label("avg_attendees"),
+                func.avg(Event.engagement_score).label("avg_engagement"),
+                func.avg(case((Event.total_registrants > 0, Event.total_attendees * 100.0 / Event.total_registrants), else_=None)).label("avg_conversion_rate"),
+            )
+            .where(
+                Event.event_type.isnot(None),
+                Event.total_registrants > 0,
+            )
+            .group_by(Event.event_type)
+            .having(func.count(Event.id) >= min_events)
+            .order_by(desc("avg_engagement"))
+            .limit(limit)
+        )
 
         result = await session.execute(stmt)
         rows = result.fetchall()
@@ -63,40 +65,43 @@ async def compare_event_performance(
 
         comparisons = []
         for e in events:
-            conv = (
-                round(e.total_attendees / e.total_registrants * 100, 1)
-                if e.total_registrants > 0 else None
+            conv = round(e.total_attendees / e.total_registrants * 100, 1) if e.total_registrants > 0 else None
+            comparisons.append(
+                {
+                    "event_id": e.on24_event_id,
+                    "title": e.title,
+                    "date": e.live_start.isoformat() if e.live_start else None,
+                    "registrants": e.total_registrants,
+                    "attendees": e.total_attendees,
+                    "no_shows": e.no_show_count,
+                    "engagement_score": float(e.engagement_score) if e.engagement_score else None,
+                    "conversion_rate": conv,
+                }
             )
-            comparisons.append({
-                "event_id": e.on24_event_id,
-                "title": e.title,
-                "date": e.live_start.isoformat() if e.live_start else None,
-                "registrants": e.total_registrants,
-                "attendees": e.total_attendees,
-                "no_shows": e.no_show_count,
-                "engagement_score": float(e.engagement_score) if e.engagement_score else None,
-                "conversion_rate": conv,
-            })
 
         # Sort by engagement score desc
         comparisons.sort(key=lambda x: x["engagement_score"] or 0, reverse=True)
         return {"comparisons": comparisons, "count": len(comparisons)}
 
 
-async def analyze_scheduling_patterns(
-) -> dict[str, Any]:
+async def analyze_scheduling_patterns() -> dict[str, Any]:
     """Find the best day of week and time of day for scheduling events."""
     async with async_session_factory() as session:
         # Group by day of week
-        dow_stmt = select(
-            func.extract("dow", Event.live_start).label("day_of_week"),
-            func.count(Event.id).label("event_count"),
-            func.avg(Event.total_attendees).label("avg_attendees"),
-            func.avg(Event.engagement_score).label("avg_engagement"),
-        ).where(
-            Event.live_start.isnot(None),
-            Event.total_registrants > 0,
-        ).group_by("day_of_week").order_by("day_of_week")
+        dow_stmt = (
+            select(
+                func.extract("dow", Event.live_start).label("day_of_week"),
+                func.count(Event.id).label("event_count"),
+                func.avg(Event.total_attendees).label("avg_attendees"),
+                func.avg(Event.engagement_score).label("avg_engagement"),
+            )
+            .where(
+                Event.live_start.isnot(None),
+                Event.total_registrants > 0,
+            )
+            .group_by("day_of_week")
+            .order_by("day_of_week")
+        )
 
         dow_result = await session.execute(dow_stmt)
         dow_rows = dow_result.fetchall()
@@ -113,15 +118,20 @@ async def analyze_scheduling_patterns(
         ]
 
         # Group by hour of day
-        hour_stmt = select(
-            func.extract("hour", Event.live_start).label("hour"),
-            func.count(Event.id).label("event_count"),
-            func.avg(Event.total_attendees).label("avg_attendees"),
-            func.avg(Event.engagement_score).label("avg_engagement"),
-        ).where(
-            Event.live_start.isnot(None),
-            Event.total_registrants > 0,
-        ).group_by("hour").order_by("hour")
+        hour_stmt = (
+            select(
+                func.extract("hour", Event.live_start).label("hour"),
+                func.count(Event.id).label("event_count"),
+                func.avg(Event.total_attendees).label("avg_attendees"),
+                func.avg(Event.engagement_score).label("avg_engagement"),
+            )
+            .where(
+                Event.live_start.isnot(None),
+                Event.total_registrants > 0,
+            )
+            .group_by("hour")
+            .order_by("hour")
+        )
 
         hour_result = await session.execute(hour_stmt)
         hour_rows = hour_result.fetchall()
@@ -158,23 +168,30 @@ async def suggest_topics(
     async with async_session_factory() as session:
         # Get top performing events as seed
         sort_col = Event.engagement_score if based_on == "engagement" else Event.total_attendees
-        stmt = select(Event).where(
-            Event.title.isnot(None),
-            Event.engagement_score.isnot(None),
-        ).order_by(desc(sort_col)).limit(limit * 3)
+        stmt = (
+            select(Event)
+            .where(
+                Event.title.isnot(None),
+                Event.engagement_score.isnot(None),
+            )
+            .order_by(desc(sort_col))
+            .limit(limit * 3)
+        )
 
         result = await session.execute(stmt)
         top_events = result.scalars().all()
 
         suggestions = []
         for e in top_events[:limit]:
-            suggestions.append({
-                "based_on_event": e.title,
-                "event_id": e.on24_event_id,
-                "engagement_score": float(e.engagement_score) if e.engagement_score else None,
-                "attendees": e.total_attendees,
-                "recommendation": f"Consider a follow-up or series based on '{e.title}' — it achieved {float(e.engagement_score or 0):.1f} engagement",
-            })
+            suggestions.append(
+                {
+                    "based_on_event": e.title,
+                    "event_id": e.on24_event_id,
+                    "engagement_score": float(e.engagement_score) if e.engagement_score else None,
+                    "attendees": e.total_attendees,
+                    "recommendation": f"Consider a follow-up or series based on '{e.title}' — it achieved {float(e.engagement_score or 0):.1f} engagement",
+                }
+            )
 
         return {
             "suggestions": suggestions,

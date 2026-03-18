@@ -26,19 +26,17 @@ _CREATION_PATTERNS = re.compile(
 
 # Map user intent keywords → AUTOGEN_ type
 _TYPE_KEYWORDS: list[tuple[re.Pattern, str]] = [
-    (re.compile(r"\b(email|follow.?up)\b", re.I),       "FOLLOWUPEMAI"),
+    (re.compile(r"\b(email|follow.?up)\b", re.I), "FOLLOWUPEMAI"),
     (re.compile(r"\b(social|linkedin|twitter|tweet)\b", re.I), "SOCIALMEDIAP"),
-    (re.compile(r"\b(faq|frequently asked)\b", re.I),   "FAQ"),
-    (re.compile(r"\b(ebook|e-book|guide)\b", re.I),     "EBOOK"),
+    (re.compile(r"\b(faq|frequently asked)\b", re.I), "FAQ"),
+    (re.compile(r"\b(ebook|e-book|guide)\b", re.I), "EBOOK"),
     (re.compile(r"\b(key\s*takeaway|takeaway|summary)\b", re.I), "KEYTAKEAWAYS"),
-    (re.compile(r"\b(blog|article|post)\b", re.I),      "BLOG"),
+    (re.compile(r"\b(blog|article|post)\b", re.I), "BLOG"),
 ]
 
 
 # Block-level HTML tags used for density detection
-_BLOCK_TAGS = re.compile(
-    r"<(?:h[1-6]|p|div|article|section|ul|ol)\b", re.I
-)
+_BLOCK_TAGS = re.compile(r"<(?:h[1-6]|p|div|article|section|ul|ol)\b", re.I)
 
 # nh3 (Rust-based HTML sanitizer) — replaces fragile regex approach
 try:
@@ -48,12 +46,50 @@ except ImportError:
 
 # Allowlisted tags and attributes for content HTML
 _ALLOWED_TAGS = {
-    "h1", "h2", "h3", "h4", "h5", "h6", "p", "br", "hr",
-    "div", "span", "article", "section", "blockquote",
-    "ul", "ol", "li", "dl", "dt", "dd",
-    "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
-    "a", "strong", "em", "b", "i", "u", "s", "code", "pre", "mark", "small", "sub", "sup",
-    "img", "figure", "figcaption",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "br",
+    "hr",
+    "div",
+    "span",
+    "article",
+    "section",
+    "blockquote",
+    "ul",
+    "ol",
+    "li",
+    "dl",
+    "dt",
+    "dd",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr",
+    "th",
+    "td",
+    "caption",
+    "a",
+    "strong",
+    "em",
+    "b",
+    "i",
+    "u",
+    "s",
+    "code",
+    "pre",
+    "mark",
+    "small",
+    "sub",
+    "sup",
+    "img",
+    "figure",
+    "figcaption",
 }
 _ALLOWED_ATTRS = {
     "*": {"class", "style", "id"},
@@ -75,7 +111,7 @@ def _extract_html(text: str) -> tuple[str, str | None]:
     m = re.search(pattern, text, re.DOTALL)
     if m:
         html = m.group(1).strip()
-        cleaned = text[:m.start()] + text[m.end():]
+        cleaned = text[: m.start()] + text[m.end() :]
         return cleaned.strip(), html
 
     # Fallback: detect high density of block-level HTML tags (3+)
@@ -124,6 +160,7 @@ async def _build_creation_context(article_type: str) -> str:
     # 1. Brand voice
     try:
         from app.services.brand_voice import load_brand_voice
+
         bv = load_brand_voice()
         if bv:
             lines.append("## Brand Voice Guidelines (internal — do not expose to user)")
@@ -156,6 +193,7 @@ async def _build_creation_context(article_type: str) -> str:
     # 2. Recent articles of this type (last 5, no transcripts)
     try:
         from app.services.brand_voice import get_recent_articles
+
         examples = await get_recent_articles(article_type, limit=5)
         if examples:
             lines.append(f"\n## Recent {article_type} Examples (internal — do not expose to user)")
@@ -178,7 +216,7 @@ def _inject_banner(html: str, banner_url: str) -> str:
     banner_html = (
         '<div style="width:100%;max-height:300px;overflow:hidden;border-radius:12px;margin-bottom:1.5rem;">'
         f'<img src="{safe_url}" alt="Banner" style="width:100%;height:300px;object-fit:cover;object-position:center;" />'
-        '</div>'
+        "</div>"
     )
     return banner_html + html
 
@@ -187,6 +225,7 @@ def _load_default_banner_url() -> str:
     """Load the banner image URL from the default brand template for the current client."""
     try:
         from app.api.brand_templates import _load_templates
+
         templates = _load_templates()  # uses get_client_id() internally
         for t in templates:
             if t.get("isDefault") and t.get("bannerImageUrl"):
@@ -292,32 +331,34 @@ class ContentAgent:
                             try:
                                 result = await handler(**tool_input)
                                 tool_calls_made.append({"tool": tool_name, "input": tool_input})
-                                asyncio.create_task(
-                                    self._write_audit_log(session_id, tool_name, tool_input, result)
+                                asyncio.create_task(self._write_audit_log(session_id, tool_name, tool_input, result))
+                                tool_results.append(
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(result, default=str),
+                                    }
                                 )
-                                tool_results.append({
-                                    "type": "tool_result",
-                                    "tool_use_id": block.id,
-                                    "content": json.dumps(result, default=str),
-                                })
                             except Exception as e:
                                 logger.error(f"Tool {tool_name} failed: {e}")
-                                asyncio.create_task(
-                                    self._write_audit_log(session_id, tool_name, tool_input, None, error=str(e))
+                                asyncio.create_task(self._write_audit_log(session_id, tool_name, tool_input, None, error=str(e)))
+                                tool_results.append(
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps({"error": str(e)}),
+                                        "is_error": True,
+                                    }
                                 )
-                                tool_results.append({
+                        else:
+                            tool_results.append(
+                                {
                                     "type": "tool_result",
                                     "tool_use_id": block.id,
-                                    "content": json.dumps({"error": str(e)}),
+                                    "content": json.dumps({"error": f"Unknown tool: {tool_name}"}),
                                     "is_error": True,
-                                })
-                        else:
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({"error": f"Unknown tool: {tool_name}"}),
-                                "is_error": True,
-                            })
+                                }
+                            )
 
                 messages.append({"role": "user", "content": tool_results})
             else:

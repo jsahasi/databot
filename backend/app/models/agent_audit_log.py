@@ -1,5 +1,6 @@
 """Agent audit log — records every tool call made by any agent."""
-from typing import Any, Optional
+
+from typing import Any
 
 from sqlalchemy import Boolean, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -15,10 +16,10 @@ class AgentAuditLog(Base, TimestampMixin):
     session_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     agent_name: Mapped[str] = mapped_column(String(50), nullable=False)
     tool_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    tool_input: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    tool_result: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    tool_input: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    tool_result: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     def to_dict(self) -> dict:
         return {

@@ -78,13 +78,15 @@ async def ingest_zendesk_articles() -> int:
         if not body_text or len(body_text) < 50:
             continue
         for i, chunk in enumerate(_chunk_text(f"{title}\n\n{body_text}")):
-            rows.append({
-                "article_id": str(article["id"]),
-                "title": title,
-                "url": article.get("html_url", ""),
-                "chunk_index": i,
-                "content": chunk,
-            })
+            rows.append(
+                {
+                    "article_id": str(article["id"]),
+                    "title": title,
+                    "url": article.get("html_url", ""),
+                    "chunk_index": i,
+                    "content": chunk,
+                }
+            )
 
     if not rows:
         logger.warning("No articles to ingest")
@@ -141,8 +143,8 @@ async def ingest_api_reference() -> int:
     # Build a preamble chunk for general API info
     preamble = (
         f"ON24 REST API v2 Overview\n\n"
-        f"Base URLs: NA={base_urls.get('na','')}, EU={base_urls.get('eu','')}, "
-        f"QA={base_urls.get('qa','')}\n"
+        f"Base URLs: NA={base_urls.get('na', '')}, EU={base_urls.get('eu', '')}, "
+        f"QA={base_urls.get('qa', '')}\n"
         f"Authentication: {auth.get('description', '')}\n"
         f"Headers: {', '.join(auth.get('headers', []))}\n"
         f"Total endpoints: {len(endpoints)}"
@@ -150,13 +152,15 @@ async def ingest_api_reference() -> int:
 
     rows: list[dict] = []
     # Preamble chunk
-    rows.append({
-        "article_id": "api_ref_overview",
-        "title": "ON24 REST API v2 Overview",
-        "url": "",
-        "chunk_index": 0,
-        "content": preamble,
-    })
+    rows.append(
+        {
+            "article_id": "api_ref_overview",
+            "title": "ON24 REST API v2 Overview",
+            "url": "",
+            "chunk_index": 0,
+            "content": preamble,
+        }
+    )
 
     for ep in endpoints:
         ep_id = ep.get("id", "unknown")
@@ -185,13 +189,15 @@ async def ingest_api_reference() -> int:
 
         body_text = "\n".join(parts)
         for i, chunk in enumerate(_chunk_text(body_text)):
-            rows.append({
-                "article_id": f"api_{ep_id}",
-                "title": title,
-                "url": "",
-                "chunk_index": i,
-                "content": chunk,
-            })
+            rows.append(
+                {
+                    "article_id": f"api_{ep_id}",
+                    "title": title,
+                    "url": "",
+                    "chunk_index": i,
+                    "content": chunk,
+                }
+            )
 
     if not rows:
         logger.warning("No API endpoints to ingest")
@@ -209,9 +215,7 @@ async def ingest_api_reference() -> int:
 
     async with async_session_factory() as session:
         # Remove old API ref rows only (keep Zendesk rows)
-        await session.execute(
-            text("DELETE FROM knowledge_base_articles WHERE article_id LIKE 'api_%'")
-        )
+        await session.execute(text("DELETE FROM knowledge_base_articles WHERE article_id LIKE 'api_%'"))
         for start in range(0, len(rows), 500):
             batch = rows[start : start + 500]
             await session.execute(
@@ -239,9 +243,7 @@ async def query_knowledge(query: str, n_results: int = 5) -> list[dict]:
     query_vec = np.array(resp.data[0].embedding, dtype=np.float32)
 
     async with async_session_factory() as session:
-        result = await session.execute(
-            text("SELECT article_id, title, url, chunk_index, content, embedding FROM knowledge_base_articles")
-        )
+        result = await session.execute(text("SELECT article_id, title, url, chunk_index, content, embedding FROM knowledge_base_articles"))
         rows = result.fetchall()
 
     if not rows:
@@ -250,9 +252,7 @@ async def query_knowledge(query: str, n_results: int = 5) -> list[dict]:
         await ingest_zendesk_articles()
         await ingest_api_reference()
         async with async_session_factory() as session:
-            result = await session.execute(
-                text("SELECT article_id, title, url, chunk_index, content, embedding FROM knowledge_base_articles")
-            )
+            result = await session.execute(text("SELECT article_id, title, url, chunk_index, content, embedding FROM knowledge_base_articles"))
             rows = result.fetchall()
         if not rows:
             return []
@@ -266,7 +266,7 @@ async def query_knowledge(query: str, n_results: int = 5) -> list[dict]:
         scores.append((sim, i))
 
     scores.sort(reverse=True)
-    top = scores[:n_results * 3]  # over-fetch to deduplicate by title
+    top = scores[: n_results * 3]  # over-fetch to deduplicate by title
 
     seen_titles: set[str] = set()
     output: list[dict] = []
@@ -276,11 +276,13 @@ async def query_knowledge(query: str, n_results: int = 5) -> list[dict]:
         if title in seen_titles:
             continue
         seen_titles.add(title)
-        output.append({
-            "title": title,
-            "url": row.url or "",
-            "excerpt": row.content[:300],
-        })
+        output.append(
+            {
+                "title": title,
+                "url": row.url or "",
+                "excerpt": row.content[:300],
+            }
+        )
         if len(output) >= n_results:
             break
 

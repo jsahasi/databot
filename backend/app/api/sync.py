@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
@@ -21,7 +20,8 @@ router = APIRouter()
 # Background sync runner
 # ---------------------------------------------------------------------------
 
-async def _run_sync(entity_type: Optional[str] = None) -> None:
+
+async def _run_sync(entity_type: str | None = None) -> None:
     """Run a sync in the background.
 
     Imports SyncService lazily to avoid circular imports and to allow the
@@ -45,6 +45,7 @@ async def _run_sync(entity_type: Optional[str] = None) -> None:
 # POST /sync/trigger – trigger a full sync
 # ---------------------------------------------------------------------------
 
+
 @router.post("/trigger", response_model=SyncTriggerResponse)
 async def trigger_sync():
     """Trigger a full sync of all entities from ON24.
@@ -61,6 +62,7 @@ async def trigger_sync():
 # ---------------------------------------------------------------------------
 # POST /sync/trigger/{entity_type} – trigger sync for specific entity
 # ---------------------------------------------------------------------------
+
 
 @router.post("/trigger/{entity_type}", response_model=SyncTriggerResponse)
 async def trigger_entity_sync(entity_type: str):
@@ -83,16 +85,13 @@ async def trigger_entity_sync(entity_type: str):
 # GET /sync/status – latest sync logs
 # ---------------------------------------------------------------------------
 
+
 @router.get("/status", response_model=list[SyncLogSchema])
 async def sync_status(
     limit: int = Query(20, ge=1, le=100, description="Number of recent sync logs to return"),
     db: AsyncSession = Depends(get_db),
 ):
     """Return the most recent sync logs showing current sync state."""
-    result = await db.execute(
-        select(SyncLog)
-        .order_by(SyncLog.started_at.desc())
-        .limit(limit)
-    )
+    result = await db.execute(select(SyncLog).order_by(SyncLog.started_at.desc()).limit(limit))
     logs = result.scalars().all()
     return [SyncLogSchema.model_validate(log) for log in logs]

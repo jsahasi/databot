@@ -6,7 +6,7 @@ import logging
 import re
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -40,17 +40,13 @@ def _get_share_secret() -> str:
     return settings.share_secret
 
 
-def _generate_token(
-    share_id: str, email: str, admin_id: int, created_at: str, secret: str
-) -> str:
+def _generate_token(share_id: str, email: str, admin_id: int, created_at: str, secret: str) -> str:
     """Generate a deterministic token for a share recipient."""
     payload = f"{secret}:{share_id}:{email}:{admin_id}:{created_at}"
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-async def _validate_share_access(
-    share_id: str, key: str, email: str, session
-) -> tuple[ContentShare, ShareRecipient]:
+async def _validate_share_access(share_id: str, key: str, email: str, session) -> tuple[ContentShare, ShareRecipient]:
     """Load and validate share + recipient access.
 
     Raises HTTPException(404) if not found, 410 if expired, 403 if invalid token.
@@ -59,7 +55,7 @@ async def _validate_share_access(
     if not share:
         raise HTTPException(status_code=404, detail="Share not found")
 
-    if share.expires_at < datetime.now(timezone.utc):
+    if share.expires_at < datetime.now(UTC):
         raise HTTPException(status_code=410, detail="Share link has expired")
 
     result = await session.execute(
@@ -129,7 +125,7 @@ async def create_share(req: CreateShareRequest):
         raise HTTPException(status_code=400, detail="title is required")
 
     share_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expires_at = now + timedelta(days=7)
     secret = _get_share_secret()
 
@@ -214,21 +210,15 @@ async def get_share(share_id: str, key: str, email: str):
 
         # Mark first view
         if not recipient.viewed_at:
-            recipient.viewed_at = datetime.now(timezone.utc)
+            recipient.viewed_at = datetime.now(UTC)
             await session.commit()
 
         # Load all recipients
-        result = await session.execute(
-            select(ShareRecipient).where(ShareRecipient.share_id == share_id)
-        )
+        result = await session.execute(select(ShareRecipient).where(ShareRecipient.share_id == share_id))
         recipients = result.scalars().all()
 
         # Load all comments
-        result = await session.execute(
-            select(ShareComment)
-            .where(ShareComment.share_id == share_id)
-            .order_by(ShareComment.created_at.asc())
-        )
+        result = await session.execute(select(ShareComment).where(ShareComment.share_id == share_id).order_by(ShareComment.created_at.asc()))
         comments = result.scalars().all()
 
         all_responded = all(r.approved is not None for r in recipients)
@@ -254,7 +244,7 @@ async def respond_to_share(share_id: str, key: str, email: str, req: RespondRequ
 
         recipient.approved = req.approved
         recipient.rating = req.rating
-        recipient.responded_at = datetime.now(timezone.utc)
+        recipient.responded_at = datetime.now(UTC)
         await session.commit()
 
     return {"status": "ok", "approved": req.approved, "rating": req.rating}

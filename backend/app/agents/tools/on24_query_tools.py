@@ -36,6 +36,7 @@ def _serialize(obj: Any) -> Any:
         return obj.isoformat()
     return obj
 
+
 logger = logging.getLogger(__name__)
 
 _QUERY_TIMEOUT = 8.0
@@ -95,8 +96,7 @@ async def query_events(
         LIMIT $6 OFFSET $7
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, event_type, is_active, search, past_only, limit, offset,
-                                timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, client_ids, event_type, is_active, search, past_only, limit, offset, timeout=_QUERY_TIMEOUT)
     return [_serialize(dict(row)) for row in rows]
 
 
@@ -146,8 +146,7 @@ async def query_attendees(
         LIMIT $3 OFFSET $4
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, event_id, client_ids, limit, offset,
-                                timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, event_id, client_ids, limit, offset, timeout=_QUERY_TIMEOUT)
     return [_serialize(dict(row)) for row in rows]
 
 
@@ -371,11 +370,13 @@ async def query_polls(event_id: int) -> list[dict]:
                 "question_type_cd": r["question_type_cd"],
                 "answers": [],
             }
-        questions[qid]["answers"].append({
-            "answer_cd": r["answer_cd"],
-            "answer_text": r["answer_text"],
-            "response_count": int(r["response_count"]),
-        })
+        questions[qid]["answers"].append(
+            {
+                "answer_cd": r["answer_cd"],
+                "answer_text": r["answer_text"],
+                "response_count": int(r["response_count"]),
+            }
+        )
 
     # Open-text questions
     for r in text_rows:
@@ -727,7 +728,7 @@ async def query_audience_sources(
     pool = await get_pool()
 
     if event_id is not None:
-        sql = f"""
+        sql = """
             SELECT
                 eu.partnerref       AS source,
                 COUNT(eu.event_user_id)             AS registrant_count,
@@ -749,7 +750,7 @@ async def query_audience_sources(
         async with pool.acquire() as conn:
             rows = await conn.fetch(sql, client_ids, limit, event_id, timeout=_QUERY_TIMEOUT)
     else:
-        sql = f"""
+        sql = """
             SELECT
                 eu.partnerref       AS source,
                 COUNT(eu.event_user_id)             AS registrant_count,
@@ -968,11 +969,7 @@ async def generate_chart_data(
 
     # Pie charts use {name, value} pairs — first y_key only
     if chart_type == "pie":
-        chart_rows = [
-            {"name": str(row.get(x_key, "")), "value": row.get(y_keys[0], 0)}
-            for row in data
-            if row.get(y_keys[0]) is not None
-        ]
+        chart_rows = [{"name": str(row.get(x_key, "")), "value": row.get(y_keys[0], 0)} for row in data if row.get(y_keys[0]) is not None]
         return {"type": "pie", "data": chart_rows, "title": title}
 
     chart_rows = []
@@ -1036,8 +1033,7 @@ async def query_leads(
         LIMIT $5
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, client_ids, str(months), company, job_title, limit,
-                                timeout=_QUERY_TIMEOUT)
+        rows = await conn.fetch(sql, client_ids, str(months), company, job_title, limit, timeout=_QUERY_TIMEOUT)
     return [_serialize(dict(row)) for row in rows]
 
 
@@ -1099,33 +1095,35 @@ async def query_lead_stats(months: int = 3) -> dict:
     total = sum(r["period_leads"] for r in trend_rows) if trend_rows else 0
     unique_cos = max((r["unique_companies"] for r in trend_rows), default=0) if trend_rows else 0
 
-    return _serialize({
-        "total_leads": total,
-        "unique_companies": unique_cos,
-        "monthly_trend": [{"period": r["period"], "leads": r["period_leads"]} for r in trend_rows],
-        "top_companies": [{"company": r["company_name"], "lead_count": r["lead_count"]} for r in company_rows],
-        "top_sources": [{"source": r["source"], "lead_count": r["lead_count"]} for r in source_rows],
-    })
+    return _serialize(
+        {
+            "total_leads": total,
+            "unique_companies": unique_cos,
+            "monthly_trend": [{"period": r["period"], "leads": r["period_leads"]} for r in trend_rows],
+            "top_companies": [{"company": r["company_name"], "lead_count": r["lead_count"]} for r in company_rows],
+            "top_sources": [{"source": r["source"], "lead_count": r["lead_count"]} for r in source_rows],
+        }
+    )
 
 
 _AI_CONTENT_TYPES = {
-    "BLOG":              "AUTOGEN_BLOG",
-    "EBOOK":             "AUTOGEN_EBOOK",
-    "FAQ":               "AUTOGEN_FAQ",
-    "KEYTAKEAWAYS":      "AUTOGEN_KEYTAKEAWAYS",
-    "KEY_TAKEAWAYS":     "AUTOGEN_KEYTAKEAWAYS",
-    "KEY TAKEAWAYS":     "AUTOGEN_KEYTAKEAWAYS",
-    "FOLLOWUPEMAIL":     "AUTOGEN_FOLLOWUPEMAI",
-    "FOLLOWUPEMAI":      "AUTOGEN_FOLLOWUPEMAI",
-    "FOLLOW_UP_EMAIL":   "AUTOGEN_FOLLOWUPEMAI",
-    "FOLLOW UP EMAIL":   "AUTOGEN_FOLLOWUPEMAI",
-    "SOCIALMEDIA":       "AUTOGEN_SOCIALMEDIAP",
-    "SOCIALMEDIAP":      "AUTOGEN_SOCIALMEDIAP",
-    "SOCIAL_MEDIA":      "AUTOGEN_SOCIALMEDIAP",
-    "SOCIAL MEDIA":      "AUTOGEN_SOCIALMEDIAP",
+    "BLOG": "AUTOGEN_BLOG",
+    "EBOOK": "AUTOGEN_EBOOK",
+    "FAQ": "AUTOGEN_FAQ",
+    "KEYTAKEAWAYS": "AUTOGEN_KEYTAKEAWAYS",
+    "KEY_TAKEAWAYS": "AUTOGEN_KEYTAKEAWAYS",
+    "KEY TAKEAWAYS": "AUTOGEN_KEYTAKEAWAYS",
+    "FOLLOWUPEMAIL": "AUTOGEN_FOLLOWUPEMAI",
+    "FOLLOWUPEMAI": "AUTOGEN_FOLLOWUPEMAI",
+    "FOLLOW_UP_EMAIL": "AUTOGEN_FOLLOWUPEMAI",
+    "FOLLOW UP EMAIL": "AUTOGEN_FOLLOWUPEMAI",
+    "SOCIALMEDIA": "AUTOGEN_SOCIALMEDIAP",
+    "SOCIALMEDIAP": "AUTOGEN_SOCIALMEDIAP",
+    "SOCIAL_MEDIA": "AUTOGEN_SOCIALMEDIAP",
+    "SOCIAL MEDIA": "AUTOGEN_SOCIALMEDIAP",
     "SOCIAL MEDIA POST": "AUTOGEN_SOCIALMEDIAP",
-    "SOCIAL MEDIA POSTS":"AUTOGEN_SOCIALMEDIAP",
-    "TRANSCRIPT":        "AUTOGEN_TRANSCRIPT",
+    "SOCIAL MEDIA POSTS": "AUTOGEN_SOCIALMEDIAP",
+    "TRANSCRIPT": "AUTOGEN_TRANSCRIPT",
 }
 
 
@@ -1148,8 +1146,10 @@ async def query_ai_content(
     if content_type:
         ct_upper = content_type.strip().upper()
         # Normalize: try exact match, then without hyphens/underscores
-        source_filter = _AI_CONTENT_TYPES.get(ct_upper) or _AI_CONTENT_TYPES.get(ct_upper.replace("-", " ").replace("_", " ")) or (
-            f"AUTOGEN_{ct_upper}" if not ct_upper.startswith("AUTOGEN_") else ct_upper
+        source_filter = (
+            _AI_CONTENT_TYPES.get(ct_upper)
+            or _AI_CONTENT_TYPES.get(ct_upper.replace("-", " ").replace("_", " "))
+            or (f"AUTOGEN_{ct_upper}" if not ct_upper.startswith("AUTOGEN_") else ct_upper)
         )
         source_clause = "AND vl.source = $2"
         params: list = [client_ids, source_filter, limit]

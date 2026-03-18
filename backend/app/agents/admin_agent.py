@@ -94,11 +94,13 @@ class AdminAgent:
                 # Gate: destructive tools need confirmation
                 if tool_name in self.DESTRUCTIVE_TOOLS and not confirmed:
                     # Collect all destructive blocks; we will NOT execute any
-                    held_for_confirmation.append({
-                        "tool": tool_name,
-                        "input": tool_input,
-                        "tool_use_id": block.id,
-                    })
+                    held_for_confirmation.append(
+                        {
+                            "tool": tool_name,
+                            "input": tool_input,
+                            "tool_use_id": block.id,
+                        }
+                    )
                     continue
 
                 # Execute the tool (safe or confirmed)
@@ -107,26 +109,32 @@ class AdminAgent:
                     try:
                         result = await handler(**tool_input)
                         tool_calls_made.append({"tool": tool_name, "input": tool_input})
-                        tool_results.append({
-                            "type": "tool_result",
-                            "tool_use_id": block.id,
-                            "content": json.dumps(result, default=str),
-                        })
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps(result, default=str),
+                            }
+                        )
                     except Exception as e:
                         logger.error(f"Tool {tool_name} failed: {e}")
-                        tool_results.append({
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps({"error": str(e)}),
+                                "is_error": True,
+                            }
+                        )
+                else:
+                    tool_results.append(
+                        {
                             "type": "tool_result",
                             "tool_use_id": block.id,
-                            "content": json.dumps({"error": str(e)}),
+                            "content": json.dumps({"error": f"Unknown tool: {tool_name}"}),
                             "is_error": True,
-                        })
-                else:
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": json.dumps({"error": f"Unknown tool: {tool_name}"}),
-                        "is_error": True,
-                    })
+                        }
+                    )
 
             # If we held back any destructive tools, return a confirmation request
             if held_for_confirmation:
@@ -161,8 +169,7 @@ def _build_confirmation_summary(tool_name: str, tool_input: dict) -> str:
             f"- Title: {tool_input.get('title')}\n"
             f"- Type: {tool_input.get('event_type')}\n"
             f"- Start: {tool_input.get('start_time')}\n"
-            f"- End: {tool_input.get('end_time')}\n"
-            + (f"- Description: {tool_input.get('description')}\n" if tool_input.get("description") else "")
+            f"- End: {tool_input.get('end_time')}\n" + (f"- Description: {tool_input.get('description')}\n" if tool_input.get("description") else "")
         )
     elif tool_name == "update_event":
         changes = {k: v for k, v in tool_input.items() if k != "on24_event_id" and v is not None}
@@ -179,10 +186,6 @@ def _build_confirmation_summary(tool_name: str, tool_input: dict) -> str:
             + (f"- Job Title: {tool_input.get('job_title')}\n" if tool_input.get("job_title") else "")
         )
     elif tool_name == "remove_registrant":
-        return (
-            f"**Remove Registrant** from event {tool_input.get('on24_event_id')}\n"
-            f"- Email: {tool_input.get('email')}\n"
-            f"\nThis action cannot be undone."
-        )
+        return f"**Remove Registrant** from event {tool_input.get('on24_event_id')}\n- Email: {tool_input.get('email')}\n\nThis action cannot be undone."
     else:
         return f"**{tool_name}**\nParameters: {json.dumps(tool_input, indent=2)}"

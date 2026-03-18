@@ -1,6 +1,19 @@
 from fastapi import APIRouter
 
-from app.api import admins, analytics, brand_templates, calendar, chat, events, feedback, hierarchy, prefetch, shares, sync, upload
+from app.api import (
+    admins,
+    analytics,
+    brand_templates,
+    calendar,
+    chat,
+    events,
+    feedback,
+    hierarchy,
+    prefetch,
+    shares,
+    sync,
+    upload,
+)
 
 api_router = APIRouter()
 api_router.include_router(events.router, prefix="/events", tags=["events"])

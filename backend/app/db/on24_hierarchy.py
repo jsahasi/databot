@@ -61,9 +61,15 @@ def _parse_url(url: str) -> tuple[str, str, str, int, str]:
 async def _make_pool(db_url: str, ssl_ctx: ssl.SSLContext | None) -> asyncpg.Pool:
     user, password, host, port, database = _parse_url(db_url)
     return await asyncpg.create_pool(
-        host=host, port=port, database=database,
-        user=user, password=password, ssl=ssl_ctx,
-        min_size=1, max_size=5, command_timeout=30,
+        host=host,
+        port=port,
+        database=database,
+        user=user,
+        password=password,
+        ssl=ssl_ctx,
+        min_size=1,
+        max_size=5,
+        command_timeout=30,
     )
 
 
@@ -74,6 +80,7 @@ async def get_hierarchy_pool() -> tuple[asyncpg.Pool, str]:
     # Try PROD
     try:
         from app.db.on24_db import get_pool  # shared PROD pool
+
         pool = await asyncio.wait_for(get_pool(), timeout=5.0)
         async with pool.acquire() as conn:
             await conn.fetchval("SELECT 1", timeout=3)
@@ -104,7 +111,8 @@ async def get_client_info(client_id: int, pool: asyncpg.Pool) -> dict | None:
     try:
         row = await pool.fetchrow(
             "SELECT client_id, company_name FROM on24master.client WHERE client_id = $1",
-            client_id, timeout=5,
+            client_id,
+            timeout=5,
         )
         return {"client_id": row["client_id"], "company_name": row["company_name"]} if row else None
     except Exception as e:
@@ -123,7 +131,8 @@ async def get_client_children(client_id: int, pool: asyncpg.Pool) -> list[dict]:
               AND ch.sub_client_id != ch.client_id
             ORDER BY c.company_name
             """,
-            client_id, timeout=8,
+            client_id,
+            timeout=8,
         )
         return [{"client_id": r["client_id"], "company_name": r["company_name"]} for r in rows]
     except Exception as e:
@@ -152,7 +161,9 @@ async def get_client_path(client_id: int, root_id: int, pool: asyncpg.Pool) -> l
                 ORDER BY (client_id = $2) DESC, client_id ASC
                 LIMIT 1
                 """,
-                current, root_id, timeout=5,
+                current,
+                root_id,
+                timeout=5,
             )
         except Exception as e:
             logger.warning(f"Path walk at {current}: {e}")
@@ -181,16 +192,14 @@ async def get_client_path(client_id: int, root_id: int, pool: asyncpg.Pool) -> l
     try:
         rows = await pool.fetch(
             "SELECT client_id, company_name FROM on24master.client WHERE client_id = ANY($1::bigint[])",
-            path_ids, timeout=8,
+            path_ids,
+            timeout=8,
         )
         name_map = {r["client_id"]: r["company_name"] for r in rows}
     except Exception:
         name_map = {}
 
-    return [
-        {"client_id": cid, "company_name": name_map.get(cid, f"Client {cid}")}
-        for cid in path_ids
-    ]
+    return [{"client_id": cid, "company_name": name_map.get(cid, f"Client {cid}")} for cid in path_ids]
 
 
 async def get_allowed_client_ids(pool: asyncpg.Pool, root_id: int) -> set[int]:
@@ -207,7 +216,8 @@ async def get_allowed_client_ids(pool: asyncpg.Pool, root_id: int) -> set[int]:
             )
             SELECT DISTINCT cid FROM h
             """,
-            root_id, timeout=8,
+            root_id,
+            timeout=8,
         )
         return {root_id} | {r["cid"] for r in rows}
     except Exception:

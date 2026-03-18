@@ -6,7 +6,7 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ async def upload_file(file: UploadFile = File(...)):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"File type not allowed. Accepted: PDF, PNG, JPEG, GIF, WEBP",
+            detail="File type not allowed. Accepted: PDF, PNG, JPEG, GIF, WEBP",
         )
 
     # Read and validate size

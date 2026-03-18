@@ -117,9 +117,7 @@ class ON24Client:
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make a rate-limited form-urlencoded request."""
-        return await self._request(
-            method, endpoint, params=params, form_data=form_data
-        )
+        return await self._request(method, endpoint, params=params, form_data=form_data)
 
     async def _multipart_request(
         self,
@@ -130,13 +128,9 @@ class ON24Client:
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make a rate-limited multipart/form-data request."""
-        return await self._request(
-            method, endpoint, params=params, form_data=form_data, files=files
-        )
+        return await self._request(method, endpoint, params=params, form_data=form_data, files=files)
 
-    async def get(
-        self, endpoint: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def get(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("GET", endpoint, params=params)
 
     async def post(
@@ -161,13 +155,9 @@ class ON24Client:
         json_body: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return await self._request(
-            "PATCH", endpoint, params=params, json_body=json_body
-        )
+        return await self._request("PATCH", endpoint, params=params, json_body=json_body)
 
-    async def delete(
-        self, endpoint: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def delete(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request("DELETE", endpoint, params=params)
 
     # ── Client-Level Analytics ──
@@ -247,9 +237,7 @@ class ON24Client:
             params["eventId"] = event_id
         if partnerref is not None:
             params["partnerref"] = partnerref
-        return await self.get(
-            f"registrant/{email}", params=params or None
-        )
+        return await self.get(f"registrant/{email}", params=params or None)
 
     async def get_registrant_all_events(
         self,
@@ -298,9 +286,7 @@ class ON24Client:
         """Get most recent attendance for an email."""
         return await self.get(f"attendee/{email}")
 
-    async def get_attendee_all_events(
-        self, email: str, page_offset: int = 0, items_per_page: int = 100
-    ) -> dict[str, Any]:
+    async def get_attendee_all_events(self, email: str, page_offset: int = 0, items_per_page: int = 100) -> dict[str, Any]:
         """Get all attendance across events for an email."""
         return await self.get(
             f"attendee/{email}/allevents",
@@ -522,9 +508,7 @@ class ON24Client:
         if jobtitle is not None:
             form["jobtitle"] = jobtitle
         form.update(extra_fields)
-        return await self._form_request(
-            "PATCH", f"registrant/{email}", form_data=form
-        )
+        return await self._form_request("PATCH", f"registrant/{email}", form_data=form)
 
     async def forget_registrant(
         self,
@@ -666,9 +650,7 @@ class ON24Client:
             form["promotionalSummary"] = promotional_summary
         if country_cd is not None:
             form["countryCd"] = country_cd
-        return await self._form_request(
-            "POST", "event", form_data=form, params={"eventsource": source_event_id}
-        )
+        return await self._form_request("POST", "event", form_data=form, params={"eventsource": source_event_id})
 
     async def create_webinar(
         self,
@@ -787,9 +769,7 @@ class ON24Client:
         survey_questions: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Create survey questions for an event."""
-        body: dict[str, Any] = {
-            "metadata": {"surveyquestions": survey_questions}
-        }
+        body: dict[str, Any] = {"metadata": {"surveyquestions": survey_questions}}
         return await self.post(f"event/{event_id}/surveyquestions", json_body=body)
 
     async def delete_speaker_bios(self, event_id: int) -> dict[str, Any]:
@@ -953,9 +933,7 @@ class ON24Client:
             form["location"] = location
         if body is not None:
             form["body"] = body
-        return await self._form_request(
-            "PUT", f"event/{event_id}/calendarreminder", form_data=form
-        )
+        return await self._form_request("PUT", f"event/{event_id}/calendarreminder", form_data=form)
 
     async def update_email_notification(
         self,
@@ -985,9 +963,7 @@ class ON24Client:
             form["subject"] = subject
         if body is not None:
             form["body"] = body
-        return await self._form_request(
-            "PUT", f"event/{event_id}/email/{email_id}", form_data=form
-        )
+        return await self._form_request("PUT", f"event/{event_id}/email/{email_id}", form_data=form)
 
     async def update_text_with_banner(
         self,
@@ -1008,9 +984,7 @@ class ON24Client:
 
     # ── Content Listings ──
 
-    async def get_ehub_content(
-        self, gateway_id: int
-    ) -> dict[str, Any]:
+    async def get_ehub_content(self, gateway_id: int) -> dict[str, Any]:
         """Get Engagement Hub content listing."""
         return await self.get(f"ehub/{gateway_id}/content")
 
@@ -1066,9 +1040,7 @@ class ON24Client:
         """Get registration fields for an event."""
         return await self.get(f"event/{event_id}/regfield")
 
-    async def get_replacement_tokens(
-        self, context: str | None = None
-    ) -> dict[str, Any]:
+    async def get_replacement_tokens(self, context: str | None = None) -> dict[str, Any]:
         """Get replacement tokens."""
         params = {"context": context} if context else None
         return await self.get("tokens", params=params)
@@ -1134,10 +1106,7 @@ class ON24Client:
             all_items.extend(items)
             page_count += 1
 
-            logger.debug(
-                f"Paginate {endpoint}: page {page_offset}, got {len(items)} items, "
-                f"total so far: {len(all_items)}"
-            )
+            logger.debug(f"Paginate {endpoint}: page {page_offset}, got {len(items)} items, total so far: {len(all_items)}")
 
             # Stop conditions
             if len(items) < items_per_page:

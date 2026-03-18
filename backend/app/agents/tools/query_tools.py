@@ -1,15 +1,12 @@
 """Database query tools for the Data Agent."""
 
-import json
 import logging
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import func, select, desc, asc
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import asc, desc, func, select
 
 from app.db.session import async_session_factory
-from app.models import Attendee, Event, Registrant, PollResponse, SurveyResponse
+from app.models import Attendee, Event, Registrant
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +159,7 @@ async def generate_chart_data(
         if group_by == "month" and chart_type in ("line", "bar"):
             # Time-series data grouped by month
             stmt = select(
-                func.to_char(Event.live_start, 'YYYY-MM').label("period"),
+                func.to_char(Event.live_start, "YYYY-MM").label("period"),
                 func.count(Event.id).label("event_count"),
                 func.sum(Event.total_attendees).label("total_attendees"),
                 func.sum(Event.total_registrants).label("total_registrants"),
@@ -198,10 +195,15 @@ async def generate_chart_data(
             }
 
         elif group_by == "event_type" and chart_type == "pie":
-            stmt = select(
-                Event.event_type,
-                func.count(Event.id).label("count"),
-            ).where(Event.event_type.isnot(None)).group_by(Event.event_type).limit(limit)
+            stmt = (
+                select(
+                    Event.event_type,
+                    func.count(Event.id).label("count"),
+                )
+                .where(Event.event_type.isnot(None))
+                .group_by(Event.event_type)
+                .limit(limit)
+            )
 
             result = await session.execute(stmt)
             rows = result.fetchall()
@@ -213,24 +215,24 @@ async def generate_chart_data(
             }
 
         elif group_by == "company":
-            stmt = select(
-                Attendee.company,
-                func.count(Attendee.id).label("attendee_count"),
-                func.avg(Attendee.engagement_score).label("avg_engagement"),
-            ).where(Attendee.company.isnot(None)).group_by(
-                Attendee.company
-            ).order_by(desc("attendee_count")).limit(limit)
+            stmt = (
+                select(
+                    Attendee.company,
+                    func.count(Attendee.id).label("attendee_count"),
+                    func.avg(Attendee.engagement_score).label("avg_engagement"),
+                )
+                .where(Attendee.company.isnot(None))
+                .group_by(Attendee.company)
+                .order_by(desc("attendee_count"))
+                .limit(limit)
+            )
 
             result = await session.execute(stmt)
             rows = result.fetchall()
 
             return {
                 "chart_type": chart_type,
-                "data": [
-                    {"company": row.company, "attendees": row.attendee_count,
-                     "avg_engagement": round(float(row.avg_engagement or 0), 2)}
-                    for row in rows
-                ],
+                "data": [{"company": row.company, "attendees": row.attendee_count, "avg_engagement": round(float(row.avg_engagement or 0), 2)} for row in rows],
                 "x_key": "company",
                 "y_key": "attendees",
                 "title": "Top Companies by Attendance",
@@ -263,9 +265,12 @@ async def run_analytics_query(description: str, event_id: int | None = None) -> 
             return {
                 "query": "top_companies",
                 "results": [
-                    {"company": r.company, "events_attended": r.events_attended,
-                     "total_attendances": r.total_attendances,
-                     "avg_engagement": round(float(r.avg_engagement or 0), 2)}
+                    {
+                        "company": r.company,
+                        "events_attended": r.events_attended,
+                        "total_attendances": r.total_attendances,
+                        "avg_engagement": round(float(r.avg_engagement or 0), 2),
+                    }
                     for r in rows
                 ],
             }
@@ -296,9 +301,13 @@ async def run_analytics_query(description: str, event_id: int | None = None) -> 
             return {
                 "query": "no_show_analysis",
                 "results": [
-                    {"event": e.title, "registrants": e.total_registrants,
-                     "attendees": e.total_attendees, "no_shows": e.no_show_count,
-                     "no_show_rate": round(e.no_show_count / e.total_registrants * 100, 1) if e.total_registrants > 0 else 0}
+                    {
+                        "event": e.title,
+                        "registrants": e.total_registrants,
+                        "attendees": e.total_attendees,
+                        "no_shows": e.no_show_count,
+                        "no_show_rate": round(e.no_show_count / e.total_registrants * 100, 1) if e.total_registrants > 0 else 0,
+                    }
                     for e in events
                 ],
             }

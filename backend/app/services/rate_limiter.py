@@ -1,16 +1,15 @@
 import asyncio
 import time
 
-
 # ON24 rate limits per endpoint category (requests per minute)
 RATE_LIMITS = {
-    "event_detail": 1000,     # GET /event/{eventId}
-    "registrant_write": 1000, # POST registrant
-    "analytics_high": 100,    # attendee/registrant queries
-    "analytics_medium": 60,   # polls, surveys, resources, group chat
-    "analytics_low": 30,      # events list, presenters, survey library
-    "management": 10,         # event creation/modification
-    "default": 30,            # fallback
+    "event_detail": 1000,  # GET /event/{eventId}
+    "registrant_write": 1000,  # POST registrant
+    "analytics_high": 100,  # attendee/registrant queries
+    "analytics_medium": 60,  # polls, surveys, resources, group chat
+    "analytics_low": 30,  # events list, presenters, survey library
+    "management": 10,  # event creation/modification
+    "default": 30,  # fallback
 }
 
 
@@ -67,17 +66,11 @@ class RateLimiter:
             return "analytics_high"
 
         # Medium-rate analytics
-        if any(
-            kw in path
-            for kw in ["poll", "survey", "resource", "groupchat", "cta", "contentactivity"]
-        ):
+        if any(kw in path for kw in ["poll", "survey", "resource", "groupchat", "cta", "contentactivity"]):
             return "analytics_medium"
 
         # Low-rate analytics
-        if any(
-            kw in path
-            for kw in ["event", "presenter", "surveylibrary", "lead", "engagedaccount"]
-        ):
+        if any(kw in path for kw in ["event", "presenter", "surveylibrary", "lead", "engagedaccount"]):
             return "analytics_low"
 
         # Management operations

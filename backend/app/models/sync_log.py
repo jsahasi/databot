@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import BigInteger, DateTime, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -13,21 +13,13 @@ class SyncLog(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     entity_type: Mapped[str] = mapped_column(String(50), index=True)
-    on24_event_id: Mapped[Optional[int]] = mapped_column(
-        BigInteger, nullable=True, index=True
-    )
+    on24_event_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(20), index=True)
     records_synced: Mapped[int] = mapped_column(Integer, default=0)
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    metadata_json: Mapped[Optional[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=True
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    metadata_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {

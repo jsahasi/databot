@@ -87,6 +87,7 @@ async def _send_via_sendgrid(
     """Send via SendGrid API."""
     try:
         import base64
+
         from sendgrid import SendGridAPIClient
         from sendgrid.helpers.mail import (
             Attachment,

@@ -1,14 +1,21 @@
 """Event endpoints with filtering, pagination, sorting, and sub-entity access."""
 
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db
-from app.models import Attendee, CTAClick, Event, PollResponse, Registrant, ResourceViewed, SurveyResponse
+from app.models import (
+    Attendee,
+    CTAClick,
+    Event,
+    PollResponse,
+    Registrant,
+    ResourceViewed,
+    SurveyResponse,
+)
 from app.schemas.event import (
     AttendeeSummary,
     CTAClickSchema,
@@ -28,6 +35,7 @@ router = APIRouter()
 # Helper – validate event exists and return on24_event_id
 # ---------------------------------------------------------------------------
 
+
 async def _get_event_or_404(event_id: int, db: AsyncSession) -> Event:
     result = await db.execute(select(Event).where(Event.on24_event_id == event_id))
     event = result.scalar_one_or_none()
@@ -40,19 +48,16 @@ async def _get_event_or_404(event_id: int, db: AsyncSession) -> Event:
 # GET /events – list with filtering, pagination, sorting
 # ---------------------------------------------------------------------------
 
+
 @router.get("", response_model=PaginatedResponse[EventSummary])
 async def list_events(
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(50, ge=1, le=200, description="Items per page"),
-    status: Optional[str] = Query(
-        None, description="Filter by status: active, inactive, all"
-    ),
-    date_from: Optional[datetime] = Query(None, description="Events starting after this date"),
-    date_to: Optional[datetime] = Query(None, description="Events starting before this date"),
-    search: Optional[str] = Query(None, description="Search by event title"),
-    sort_by: str = Query(
-        "live_start", description="Sort field: live_start, title, total_attendees, engagement_score"
-    ),
+    status: str | None = Query(None, description="Filter by status: active, inactive, all"),
+    date_from: datetime | None = Query(None, description="Events starting after this date"),
+    date_to: datetime | None = Query(None, description="Events starting before this date"),
+    search: str | None = Query(None, description="Search by event title"),
+    sort_by: str = Query("live_start", description="Sort field: live_start, title, total_attendees, engagement_score"),
     sort_order: str = Query("desc", description="Sort direction: asc or desc"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -110,6 +115,7 @@ async def list_events(
 # GET /events/{event_id} – event detail with summary stats
 # ---------------------------------------------------------------------------
 
+
 @router.get("/{event_id}", response_model=EventDetail)
 async def get_event(event_id: int, db: AsyncSession = Depends(get_db)):
     """Return full event detail including summary statistics."""
@@ -121,12 +127,13 @@ async def get_event(event_id: int, db: AsyncSession = Depends(get_db)):
 # GET /events/{event_id}/attendees
 # ---------------------------------------------------------------------------
 
+
 @router.get("/{event_id}/attendees", response_model=PaginatedResponse[AttendeeSummary])
 async def list_event_attendees(
     event_id: int,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
-    search: Optional[str] = Query(None, description="Search by email or company"),
+    search: str | None = Query(None, description="Search by email or company"),
     db: AsyncSession = Depends(get_db),
 ):
     """List attendees for a specific event with pagination."""
@@ -135,9 +142,7 @@ async def list_event_attendees(
     query = select(Attendee).where(Attendee.on24_event_id == event_id)
 
     if search:
-        query = query.where(
-            Attendee.email.ilike(f"%{search}%") | Attendee.company.ilike(f"%{search}%")
-        )
+        query = query.where(Attendee.email.ilike(f"%{search}%") | Attendee.company.ilike(f"%{search}%"))
 
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
@@ -161,12 +166,13 @@ async def list_event_attendees(
 # GET /events/{event_id}/registrants
 # ---------------------------------------------------------------------------
 
+
 @router.get("/{event_id}/registrants", response_model=PaginatedResponse[RegistrantSummary])
 async def list_event_registrants(
     event_id: int,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
-    search: Optional[str] = Query(None, description="Search by email or company"),
+    search: str | None = Query(None, description="Search by email or company"),
     db: AsyncSession = Depends(get_db),
 ):
     """List registrants for a specific event with pagination."""
@@ -175,9 +181,7 @@ async def list_event_registrants(
     query = select(Registrant).where(Registrant.on24_event_id == event_id)
 
     if search:
-        query = query.where(
-            Registrant.email.ilike(f"%{search}%") | Registrant.company.ilike(f"%{search}%")
-        )
+        query = query.where(Registrant.email.ilike(f"%{search}%") | Registrant.company.ilike(f"%{search}%"))
 
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
@@ -201,6 +205,7 @@ async def list_event_registrants(
 # GET /events/{event_id}/polls
 # ---------------------------------------------------------------------------
 
+
 @router.get("/{event_id}/polls", response_model=PaginatedResponse[PollResponseSchema])
 async def list_event_polls(
     event_id: int,
@@ -216,12 +221,7 @@ async def list_event_polls(
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
 
-    query = (
-        query
-        .order_by(PollResponse.responded_at.desc().nullslast())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-    )
+    query = query.order_by(PollResponse.responded_at.desc().nullslast()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
 
     return PaginatedResponse[PollResponseSchema](
@@ -235,6 +235,7 @@ async def list_event_polls(
 # ---------------------------------------------------------------------------
 # GET /events/{event_id}/surveys
 # ---------------------------------------------------------------------------
+
 
 @router.get("/{event_id}/surveys", response_model=PaginatedResponse[SurveyResponseSchema])
 async def list_event_surveys(
@@ -251,12 +252,7 @@ async def list_event_surveys(
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
 
-    query = (
-        query
-        .order_by(SurveyResponse.responded_at.desc().nullslast())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-    )
+    query = query.order_by(SurveyResponse.responded_at.desc().nullslast()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
 
     return PaginatedResponse[SurveyResponseSchema](
@@ -270,6 +266,7 @@ async def list_event_surveys(
 # ---------------------------------------------------------------------------
 # GET /events/{event_id}/resources
 # ---------------------------------------------------------------------------
+
 
 @router.get("/{event_id}/resources", response_model=PaginatedResponse[ResourceViewedSchema])
 async def list_event_resources(
@@ -286,12 +283,7 @@ async def list_event_resources(
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
 
-    query = (
-        query
-        .order_by(ResourceViewed.viewed_at.desc().nullslast())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-    )
+    query = query.order_by(ResourceViewed.viewed_at.desc().nullslast()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
 
     return PaginatedResponse[ResourceViewedSchema](
@@ -305,6 +297,7 @@ async def list_event_resources(
 # ---------------------------------------------------------------------------
 # GET /events/{event_id}/ctas
 # ---------------------------------------------------------------------------
+
 
 @router.get("/{event_id}/ctas", response_model=PaginatedResponse[CTAClickSchema])
 async def list_event_ctas(
@@ -321,12 +314,7 @@ async def list_event_ctas(
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
 
-    query = (
-        query
-        .order_by(CTAClick.clicked_at.desc().nullslast())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-    )
+    query = query.order_by(CTAClick.clicked_at.desc().nullslast()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
 
     return PaginatedResponse[CTAClickSchema](

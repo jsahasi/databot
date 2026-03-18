@@ -5,39 +5,39 @@ Each tool is defined as:
 2. An async handler function (for execution)
 """
 
-from app.agents.tools.on24_query_tools import (
-    query_events,
-    get_event_detail,
-    query_attendees,
-    compute_event_kpis,
-    compute_client_kpis,
-    query_polls,
-    query_questions,
-    query_top_events,
-    query_top_events_by_polls,
-    query_poll_overview,
-    query_attendance_trends,
-    query_audience_companies,
-    query_audience_sources,
-    query_events_by_tag,
-    query_resources,
-    generate_chart_data,
-    query_ai_content,
-    query_leads,
-    query_lead_stats,
+from app.agents.tools.admin_tools import (
+    add_registrant,
+    create_event,
+    get_event_summary,
+    remove_registrant,
+    update_event,
 )
 from app.agents.tools.content_tools import (
+    analyze_scheduling_patterns,
     analyze_topic_performance,
     compare_event_performance,
-    analyze_scheduling_patterns,
     suggest_topics,
 )
-from app.agents.tools.admin_tools import (
-    create_event,
-    update_event,
-    add_registrant,
-    remove_registrant,
-    get_event_summary,
+from app.agents.tools.on24_query_tools import (
+    compute_client_kpis,
+    compute_event_kpis,
+    generate_chart_data,
+    get_event_detail,
+    query_ai_content,
+    query_attendance_trends,
+    query_attendees,
+    query_audience_companies,
+    query_audience_sources,
+    query_events,
+    query_events_by_tag,
+    query_lead_stats,
+    query_leads,
+    query_poll_overview,
+    query_polls,
+    query_questions,
+    query_resources,
+    query_top_events,
+    query_top_events_by_polls,
 )
 
 # Tool schemas for Anthropic API
@@ -57,16 +57,16 @@ DATA_AGENT_TOOLS = [
                 "is_active": {"type": "string", "enum": ["Y", "N"], "description": "Filter by active status"},
                 "limit": {"type": "integer", "description": "Max results to return (default 20)"},
                 "offset": {"type": "integer", "description": "Pagination offset (default 0)"},
-                "past_only": {"type": "boolean", "description": "If true, only return events with a date in the past (goodafter <= now). Use for 'last event' queries."},
+                "past_only": {
+                    "type": "boolean",
+                    "description": "If true, only return events with a date in the past (goodafter <= now). Use for 'last event' queries.",
+                },
             },
         },
     },
     {
         "name": "get_event_detail",
-        "description": (
-            "Fetch full details for a single ON24 event by its event_id. "
-            "Automatically verifies the event belongs to the current client."
-        ),
+        "description": ("Fetch full details for a single ON24 event by its event_id. Automatically verifies the event belongs to the current client."),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -151,10 +151,7 @@ DATA_AGENT_TOOLS = [
     },
     {
         "name": "get_top_events",
-        "description": (
-            "Retrieve the top-performing events for the current client, ranked by attendees, "
-            "engagement score, or registrants."
-        ),
+        "description": ("Retrieve the top-performing events for the current client, ranked by attendees, engagement score, or registrants."),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -196,10 +193,7 @@ DATA_AGENT_TOOLS = [
     },
     {
         "name": "get_attendance_trends",
-        "description": (
-            "Return monthly attendance and registration trend data for the current client "
-            "over the past N months. Useful for time-series charts."
-        ),
+        "description": ("Return monthly attendance and registration trend data for the current client over the past N months. Useful for time-series charts."),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -219,7 +213,10 @@ DATA_AGENT_TOOLS = [
             "type": "object",
             "properties": {
                 "limit": {"type": "integer", "description": "Number of top companies to return (default 20)"},
-                "months": {"type": "integer", "description": "Look-back window in months for cross-event queries (default 1 = last 30 days). Ignored when event_id is provided."},
+                "months": {
+                    "type": "integer",
+                    "description": "Look-back window in months for cross-event queries (default 1 = last 30 days). Ignored when event_id is provided.",
+                },
                 "event_id": {"type": "integer", "description": "Scope to a single event (omit for cross-event)"},
                 "exclude": {
                     "type": "array",

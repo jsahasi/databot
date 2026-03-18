@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -13,22 +13,14 @@ class ViewingSession(Base, TimestampMixin, SyncedMixin):
     __tablename__ = "viewing_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    attendee_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("attendees.id"), nullable=True, index=True
-    )
-    on24_event_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("events.on24_event_id"), index=True
-    )
+    attendee_id: Mapped[int | None] = mapped_column(ForeignKey("attendees.id"), nullable=True, index=True)
+    on24_event_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("events.on24_event_id"), index=True)
     email: Mapped[str] = mapped_column(String(255), index=True)
-    session_type: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
-    session_start: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    session_end: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    duration_seconds: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    raw_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    session_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    session_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    session_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {
@@ -46,16 +38,12 @@ class ResourceViewed(Base, TimestampMixin, SyncedMixin):
     __tablename__ = "resources_viewed"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    on24_event_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("events.on24_event_id"), index=True
-    )
+    on24_event_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("events.on24_event_id"), index=True)
     attendee_email: Mapped[str] = mapped_column(String(255), index=True)
-    resource_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    resource_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    viewed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    raw_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    resource_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resource_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    viewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {
@@ -72,16 +60,12 @@ class CTAClick(Base, TimestampMixin, SyncedMixin):
     __tablename__ = "cta_clicks"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    on24_event_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("events.on24_event_id"), index=True
-    )
+    on24_event_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("events.on24_event_id"), index=True)
     attendee_email: Mapped[str] = mapped_column(String(255), index=True)
-    cta_name: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    cta_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    clicked_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    raw_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    cta_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cta_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {
@@ -101,15 +85,11 @@ class EngagementProfile(Base, TimestampMixin, SyncedMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    company: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    company: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     total_events_attended: Mapped[int] = mapped_column(Integer, default=0)
-    total_engagement_score: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(10, 2), nullable=True
-    )
-    last_event_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    pep_data: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    total_engagement_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    last_event_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pep_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {
@@ -117,10 +97,6 @@ class EngagementProfile(Base, TimestampMixin, SyncedMixin):
             "email": self.email,
             "company": self.company,
             "total_events_attended": self.total_events_attended,
-            "total_engagement_score": (
-                float(self.total_engagement_score) if self.total_engagement_score else None
-            ),
-            "last_event_date": (
-                self.last_event_date.isoformat() if self.last_event_date else None
-            ),
+            "total_engagement_score": (float(self.total_engagement_score) if self.total_engagement_score else None),
+            "last_event_date": (self.last_event_date.isoformat() if self.last_event_date else None),
         }

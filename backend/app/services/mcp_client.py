@@ -1,4 +1,5 @@
 """Thin async helper for calling the ON24 MCP server from the backend."""
+
 import json
 import logging
 from typing import Any
@@ -19,8 +20,8 @@ async def call_mcp_tool(tool_name: str, arguments: dict[str, Any]) -> dict[str, 
     if tool_name in settings.mcp_blocklist:
         raise RuntimeError(f"Tool '{tool_name}' is in USE_MCP_BLOCKLIST")
 
-    from mcp.client.streamable_http import streamablehttp_client
     from mcp import ClientSession
+    from mcp.client.streamable_http import streamablehttp_client
 
     url = f"{settings.mcp_server_url.rstrip('/')}/mcp"
     logger.info(f"Calling MCP tool '{tool_name}' at {url}")

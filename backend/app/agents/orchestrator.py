@@ -2,15 +2,15 @@
 
 import json
 import logging
-from datetime import date
+from datetime import UTC, date
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 import anthropic
 
 from app.agents.admin_agent import AdminAgent
-from app.agents.data_agent import DataAgent
 from app.agents.content_agent import ContentAgent
+from app.agents.data_agent import DataAgent
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -29,19 +29,14 @@ def _is_timeout(exc: Exception) -> bool:
 def _log_error_to_inbox(context: str, user_query: str, error_detail: str) -> None:
     """Append a structured error entry to today's improvement-inbox file."""
     try:
-        from datetime import datetime, timezone
+        from datetime import datetime
         from pathlib import Path
-        now = datetime.now(timezone.utc)
+
+        now = datetime.now(UTC)
         data_dir = Path("/app/data")
         data_dir.mkdir(parents=True, exist_ok=True)
         filename = data_dir / f"improvement-inbox-{now.strftime('%m-%d-%Y')}.txt"
-        entry = (
-            f"\n{'='*60}\n"
-            f"[AUTO-ERROR] {now.isoformat()}\n"
-            f"Context: {context}\n"
-            f"User query: {user_query[:300]}\n"
-            f"Error: {error_detail[:500]}\n"
-        )
+        entry = f"\n{'=' * 60}\n[AUTO-ERROR] {now.isoformat()}\nContext: {context}\nUser query: {user_query[:300]}\nError: {error_detail[:500]}\n"
         with open(filename, "a", encoding="utf-8") as f:
             f.write(entry)
     except Exception:
@@ -220,39 +215,32 @@ class OrchestratorAgent:
         # If the user typed just a number (or ordinal word), check whether the last assistant
         # message contained a numbered list of options — and if so, expand the selection.
         _num_match = _re.fullmatch(
-            r'\s*(?:(\d+)|one|first|two|second|three|third|four|fourth|five|fifth)\s*[.)]?\s*',
+            r"\s*(?:(\d+)|one|first|two|second|three|third|four|fourth|five|fifth)\s*[.)]?\s*",
             user_message,
             _re.IGNORECASE,
         )
         if _num_match:
-            _word_map = {"one": 1, "first": 1, "two": 2, "second": 2,
-                         "three": 3, "third": 3, "four": 4, "fourth": 4, "five": 5, "fifth": 5}
-            _n = int(_num_match.group(1)) if _num_match.group(1) else _word_map.get(user_message.strip().lower().rstrip('.'), 0)
+            _word_map = {"one": 1, "first": 1, "two": 2, "second": 2, "three": 3, "third": 3, "four": 4, "fourth": 4, "five": 5, "fifth": 5}
+            _n = int(_num_match.group(1)) if _num_match.group(1) else _word_map.get(user_message.strip().lower().rstrip("."), 0)
             # Find the last plain-text assistant turn
             _last_text = next(
-                (m["content"] for m in reversed(self.conversation_history)
-                 if m["role"] == "assistant" and isinstance(m["content"], str)),
+                (m["content"] for m in reversed(self.conversation_history) if m["role"] == "assistant" and isinstance(m["content"], str)),
                 "",
             )
             # Extract numbered options from that turn
             _opts: list[str] = []
             for _line in _last_text.splitlines():
-                _om = _re.match(r'^\s*(\d+)[.)]\s*(?:\*{1,2})?(.+?)(?:\*{1,2})?(?:\s*[—–-].*)?$', _line.strip())
+                _om = _re.match(r"^\s*(\d+)[.)]\s*(?:\*{1,2})?(.+?)(?:\*{1,2})?(?:\s*[—–-].*)?$", _line.strip())
                 if _om:
                     _opts.append((_om.group(1), _om.group(2).strip()))
             if _opts and 1 <= _n <= len(_opts):
                 _selected_label = _opts[_n - 1][1]
-                user_message = (
-                    f"Option {_n}: {_selected_label}"
-                )
+                user_message = f"Option {_n}: {_selected_label}"
 
         # Detect references to proposed-calendar events:
         #   "Tell me about event -1 — Title"  (old chip format, still handle for safety)
         #   "Tell me about this proposed event — Title"  (new chip format)
-        _proposed_match = _re.search(
-            r'(?:\bevent\s+-\d+|this proposed event)\s*(?:[—\-]+\s*(.+))?',
-            user_message, _re.IGNORECASE
-        )
+        _proposed_match = _re.search(r"(?:\bevent\s+-\d+|this proposed event)\s*(?:[—\-]+\s*(.+))?", user_message, _re.IGNORECASE)
         if _proposed_match:
             title = (_proposed_match.group(1) or "").strip() or "this proposed event"
             enriched_query = (
@@ -320,6 +308,7 @@ class OrchestratorAgent:
                         logger.info(f"Searching knowledge base: {query}")
                         try:
                             from app.db.knowledge_base import query_knowledge
+
                             articles = await query_knowledge(query, n_results=5)
                         except Exception:
                             self.conversation_history.pop()
@@ -327,17 +316,24 @@ class OrchestratorAgent:
                             raise
 
                         # Feed results back to orchestrator for a grounded response
-                        self.conversation_history.append({
-                            "role": "user",
-                            "content": [{
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({
-                                    "articles": articles,
-                                    "note": "ONLY use information from these articles. If none are relevant, say you don't have information about that and suggest contacting ON24 support or checking the ON24 Help Center.",
-                                }, default=str),
-                            }],
-                        })
+                        self.conversation_history.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(
+                                            {
+                                                "articles": articles,
+                                                "note": "ONLY use information from these articles. If none are relevant, say you don't have information about that and suggest contacting ON24 support or checking the ON24 Help Center.",
+                                            },
+                                            default=str,
+                                        ),
+                                    }
+                                ],
+                            }
+                        )
 
                         # Let the orchestrator generate a grounded text response (no tools — prevents recursion)
                         # Use Haiku for synthesis: KB articles are already retrieved; simple text composition
@@ -379,24 +375,33 @@ class OrchestratorAgent:
                             raise
 
                         # Feed result back into conversation history for context
-                        self.conversation_history.append({
-                            "role": "user",
-                            "content": [{
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({
-                                    "agent": "data_agent",
-                                    "response": result["text"],
-                                    "has_chart": result["chart_data"] is not None,
-                                }, default=str),
-                            }],
-                        })
+                        self.conversation_history.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(
+                                            {
+                                                "agent": "data_agent",
+                                                "response": result["text"],
+                                                "has_chart": result["chart_data"] is not None,
+                                            },
+                                            default=str,
+                                        ),
+                                    }
+                                ],
+                            }
+                        )
 
                         text = result["text"]
-                        self.conversation_history.append({
-                            "role": "assistant",
-                            "content": text,
-                        })
+                        self.conversation_history.append(
+                            {
+                                "role": "assistant",
+                                "content": text,
+                            }
+                        )
 
                         return {
                             "text": text,
@@ -423,17 +428,24 @@ class OrchestratorAgent:
                             self.conversation_history.pop()
                             raise
 
-                        self.conversation_history.append({
-                            "role": "user",
-                            "content": [{
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({
-                                    "agent": "content_agent",
-                                    "response": result["text"],
-                                }, default=str),
-                            }],
-                        })
+                        self.conversation_history.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(
+                                            {
+                                                "agent": "content_agent",
+                                                "response": result["text"],
+                                            },
+                                            default=str,
+                                        ),
+                                    }
+                                ],
+                            }
+                        )
 
                         text = result["text"]
                         self.conversation_history.append({"role": "assistant", "content": text})
@@ -449,7 +461,7 @@ class OrchestratorAgent:
 
                     elif tool_name == "propose_content_calendar":
                         months = block.input.get("months", 3)
-                        logger.info(f"Two-step content calendar: gathering data then routing to Content Agent")
+                        logger.info("Two-step content calendar: gathering data then routing to Content Agent")
 
                         # Step 1: Try cache first — skip data agent call if analytics already warmed
                         data_text: str = ""
@@ -457,24 +469,27 @@ class OrchestratorAgent:
                         try:
                             from app.db.on24_db import get_client_id as _get_cid
                             from app.services.data_prefetch import get_prefetched_calendar_data
+
                             cached = await get_prefetched_calendar_data(_get_cid())
                             if cached:
                                 trends = cached.get("attendance_trends", [])
                                 top_events = cached.get("top_events", [])
-                                trend_lines = "\n".join(
-                                    f"- {t.get('month', '')}: {t.get('total_registrants', 0)} registrants, "
-                                    f"{t.get('total_attendees', 0)} attendees"
-                                    for t in trends
-                                ) or "No trend data available."
-                                event_lines = "\n".join(
-                                    f"- {e.get('description', 'Unknown')} (ID {e.get('event_id')}): "
-                                    f"{e.get('avg_engagement', 0):.1f} avg engagement, {e.get('total_attendees', 0)} attendees"
-                                    for e in top_events
-                                ) or "No top events available."
-                                data_text = (
-                                    f"## Attendance Trends (Last 3 Months)\n{trend_lines}\n\n"
-                                    f"## Top Events by Engagement\n{event_lines}"
+                                trend_lines = (
+                                    "\n".join(
+                                        f"- {t.get('month', '')}: {t.get('total_registrants', 0)} registrants, {t.get('total_attendees', 0)} attendees"
+                                        for t in trends
+                                    )
+                                    or "No trend data available."
                                 )
+                                event_lines = (
+                                    "\n".join(
+                                        f"- {e.get('description', 'Unknown')} (ID {e.get('event_id')}): "
+                                        f"{e.get('avg_engagement', 0):.1f} avg engagement, {e.get('total_attendees', 0)} attendees"
+                                        for e in top_events
+                                    )
+                                    or "No top events available."
+                                )
+                                data_text = f"## Attendance Trends (Last 3 Months)\n{trend_lines}\n\n## Top Events by Engagement\n{event_lines}"
                                 cache_hit = True
                                 logger.info("Calendar analytics: cache HIT — skipping data agent call")
                         except Exception as e:
@@ -482,9 +497,7 @@ class OrchestratorAgent:
 
                         if not cache_hit:
                             # Fallback: gather analytics from data agent
-                            data_query = (
-                                f"Get attendance trends for the last {months} months and the top 20 events by engagement score."
-                            )
+                            data_query = f"Get attendance trends for the last {months} months and the top 20 events by engagement score."
                             try:
                                 data_result = await self.data_agent.run(
                                     data_query,
@@ -494,9 +507,11 @@ class OrchestratorAgent:
                                 data_text = data_result["text"]
                                 # Warm cache in background for next time
                                 try:
+                                    import asyncio as _asyncio
+
                                     from app.db.on24_db import get_client_id as _get_cid2
                                     from app.services.data_prefetch import prefetch_calendar_data
-                                    import asyncio as _asyncio
+
                                     _asyncio.create_task(prefetch_calendar_data(_get_cid2()))
                                 except Exception:
                                     pass
@@ -507,10 +522,7 @@ class OrchestratorAgent:
                                 _log_error_to_inbox("propose_content_calendar/data_agent", query, str(e))
                                 _err = "network timeout" if _is_timeout(e) else "an error"
                                 return {
-                                    "text": (
-                                        f"I couldn't retrieve your analytics data ({_err}). "
-                                        "Please try again — the next attempt may be faster."
-                                    ),
+                                    "text": (f"I couldn't retrieve your analytics data ({_err}). Please try again — the next attempt may be faster."),
                                     "agent_used": "content_agent",
                                     "chart_data": None,
                                     "content_html": None,
@@ -520,11 +532,7 @@ class OrchestratorAgent:
                                 }
 
                         # Step 2: Pass data + original query to content agent
-                        enriched_query = (
-                            f"{query}\n\n"
-                            f"Here is the analytics data you need to build this calendar:\n\n"
-                            f"{data_text}"
-                        )
+                        enriched_query = f"{query}\n\nHere is the analytics data you need to build this calendar:\n\n{data_text}"
                         try:
                             result = await self.content_agent.run(
                                 enriched_query,
@@ -538,10 +546,7 @@ class OrchestratorAgent:
                             _log_error_to_inbox("propose_content_calendar/content_agent", query, str(e))
                             _err = "network timeout" if _is_timeout(e) else "an error"
                             return {
-                                "text": (
-                                    f"I gathered your analytics but couldn't generate the calendar ({_err}). "
-                                    "Your data is now cached — please try again."
-                                ),
+                                "text": (f"I gathered your analytics but couldn't generate the calendar ({_err}). Your data is now cached — please try again."),
                                 "agent_used": "content_agent",
                                 "chart_data": None,
                                 "content_html": None,
@@ -550,17 +555,24 @@ class OrchestratorAgent:
                                 "proposed_events": None,
                             }
 
-                        self.conversation_history.append({
-                            "role": "user",
-                            "content": [{
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({
-                                    "agent": "content_agent",
-                                    "response": result["text"],
-                                }, default=str),
-                            }],
-                        })
+                        self.conversation_history.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(
+                                            {
+                                                "agent": "content_agent",
+                                                "response": result["text"],
+                                            },
+                                            default=str,
+                                        ),
+                                    }
+                                ],
+                            }
+                        )
 
                         text = result["text"]
 
@@ -599,18 +611,25 @@ class OrchestratorAgent:
                             self.conversation_history.pop()
                             raise
 
-                        self.conversation_history.append({
-                            "role": "user",
-                            "content": [{
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps({
-                                    "agent": "admin_agent",
-                                    "response": result["text"],
-                                    "requires_confirmation": result.get("requires_confirmation", False),
-                                }, default=str),
-                            }],
-                        })
+                        self.conversation_history.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "tool_result",
+                                        "tool_use_id": block.id,
+                                        "content": json.dumps(
+                                            {
+                                                "agent": "admin_agent",
+                                                "response": result["text"],
+                                                "requires_confirmation": result.get("requires_confirmation", False),
+                                            },
+                                            default=str,
+                                        ),
+                                    }
+                                ],
+                            }
+                        )
 
                         text = result["text"]
                         self.conversation_history.append({"role": "assistant", "content": text})

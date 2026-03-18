@@ -73,7 +73,7 @@ async def get_cached_response(prompt: str, client_id: int) -> dict[str, Any] | N
     try:
         cached = await r.get(_cache_key(prompt, client_id))
         if cached:
-            logger.debug(f"Cache HIT for prompt hash")
+            logger.debug("Cache HIT for prompt hash")
             return json.loads(cached)
     except Exception as exc:
         logger.warning(f"Redis get failed: {exc}")

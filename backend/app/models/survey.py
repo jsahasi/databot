@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -12,17 +12,13 @@ class SurveyResponse(Base, TimestampMixin, SyncedMixin):
     __tablename__ = "survey_responses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    on24_event_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("events.on24_event_id"), index=True
-    )
-    survey_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    on24_event_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("events.on24_event_id"), index=True)
+    survey_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     attendee_email: Mapped[str] = mapped_column(String(255), index=True)
-    question: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    answer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    responded_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    raw_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    question: Mapped[str | None] = mapped_column(Text, nullable=True)
+    answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     def to_dict(self) -> dict:
         return {

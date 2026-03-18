@@ -24,6 +24,7 @@ router = APIRouter()
 # GET /analytics/dashboard – KPI summary
 # ---------------------------------------------------------------------------
 
+
 @router.get("/dashboard", response_model=DashboardKPI)
 async def dashboard(db: AsyncSession = Depends(get_db)):
     """Return high-level KPI metrics for the analytics dashboard."""
@@ -39,29 +40,21 @@ async def dashboard(db: AsyncSession = Depends(get_db)):
 
     total_registrants = int(row.total_registrants)
     total_attendees = int(row.total_attendees)
-    conversion_rate = (
-        round((total_attendees / total_registrants) * 100, 2)
-        if total_registrants > 0
-        else None
-    )
+    conversion_rate = round((total_attendees / total_registrants) * 100, 2) if total_registrants > 0 else None
 
     return DashboardKPI(
         total_events=row.total_events,
         total_attendees=total_attendees,
         total_registrants=total_registrants,
-        avg_engagement_score=(
-            round(float(row.avg_engagement_score), 2)
-            if row.avg_engagement_score is not None
-            else None
-        ),
+        avg_engagement_score=(round(float(row.avg_engagement_score), 2) if row.avg_engagement_score is not None else None),
         conversion_rate=conversion_rate,
     )
-
 
 
 # ---------------------------------------------------------------------------
 # GET /analytics/trends – time-series data
 # ---------------------------------------------------------------------------
+
 
 @router.get("/trends", response_model=list[TrendPoint])
 async def trends(
@@ -94,11 +87,7 @@ async def trends(
             period=row.period,
             events=row.events,
             attendees=int(row.attendees),
-            avg_engagement=(
-                round(float(row.avg_engagement), 2)
-                if row.avg_engagement is not None
-                else None
-            ),
+            avg_engagement=(round(float(row.avg_engagement), 2) if row.avg_engagement is not None else None),
         )
         for row in reversed(rows)
     ]
@@ -107,6 +96,7 @@ async def trends(
 # ---------------------------------------------------------------------------
 # GET /analytics/top-events – top events by attendance or engagement
 # ---------------------------------------------------------------------------
+
 
 @router.get("/top-events", response_model=list[TopEvent])
 async def top_events(
@@ -124,11 +114,7 @@ async def top_events(
     }
     sort_col = sort_column_map.get(sort_by, Event.total_attendees)
 
-    query = (
-        select(Event)
-        .order_by(sort_col.desc().nullslast())
-        .limit(limit)
-    )
+    query = select(Event).order_by(sort_col.desc().nullslast()).limit(limit)
 
     result = await db.execute(query)
     events = result.scalars().all()
@@ -138,9 +124,7 @@ async def top_events(
             on24_event_id=e.on24_event_id,
             title=e.title,
             total_attendees=e.total_attendees,
-            engagement_score=(
-                float(e.engagement_score) if e.engagement_score is not None else None
-            ),
+            engagement_score=(float(e.engagement_score) if e.engagement_score is not None else None),
             live_start=e.live_start,
         )
         for e in events
@@ -150,6 +134,7 @@ async def top_events(
 # ---------------------------------------------------------------------------
 # GET /analytics/audiences – cross-event audience analytics
 # ---------------------------------------------------------------------------
+
 
 @router.get("/audiences", response_model=AudienceAnalytics)
 async def audiences(db: AsyncSession = Depends(get_db)):
@@ -177,11 +162,7 @@ async def audiences(db: AsyncSession = Depends(get_db)):
             company=row.company,
             events_attended=row.events_attended,
             total_attendances=row.total_attendances,
-            avg_engagement=(
-                round(float(row.avg_engagement), 2)
-                if row.avg_engagement is not None
-                else None
-            ),
+            avg_engagement=(round(float(row.avg_engagement), 2) if row.avg_engagement is not None else None),
         )
         for row in company_rows
     ]
@@ -197,10 +178,7 @@ async def audiences(db: AsyncSession = Depends(get_db)):
         .limit(20)
     )
     utm_result = await db.execute(utm_query)
-    registration_sources = [
-        {"utm_source": row.utm_source, "count": row.count}
-        for row in utm_result.all()
-    ]
+    registration_sources = [{"utm_source": row.utm_source, "count": row.count} for row in utm_result.all()]
 
     # Country distribution
     country_query = (
@@ -213,10 +191,7 @@ async def audiences(db: AsyncSession = Depends(get_db)):
         .limit(30)
     )
     country_result = await db.execute(country_query)
-    country_distribution = [
-        {"country": row.country, "count": row.count}
-        for row in country_result.all()
-    ]
+    country_distribution = [{"country": row.country, "count": row.count} for row in country_result.all()]
 
     return AudienceAnalytics(
         top_companies=top_companies,
@@ -228,6 +203,7 @@ async def audiences(db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 # GET /analytics/content-performance – content metrics by type and top events
 # ---------------------------------------------------------------------------
+
 
 @router.get("/content-performance", response_model=ContentPerformance)
 async def content_performance(db: AsyncSession = Depends(get_db)):
@@ -241,11 +217,7 @@ async def content_performance(db: AsyncSession = Depends(get_db)):
             func.count(Event.id).label("event_count"),
             func.avg(Event.total_attendees).label("avg_attendees"),
             func.avg(Event.engagement_score).label("avg_engagement"),
-            func.avg(
-                cast(Event.total_attendees, Float)
-                / func.nullif(cast(Event.total_registrants, Float), 0)
-                * 100
-            ).label("avg_conversion_rate"),
+            func.avg(cast(Event.total_attendees, Float) / func.nullif(cast(Event.total_registrants, Float), 0) * 100).label("avg_conversion_rate"),
         )
         .group_by(func.coalesce(Event.event_type, "Unknown"))
         .order_by(func.count(Event.id).desc())
@@ -257,27 +229,14 @@ async def content_performance(db: AsyncSession = Depends(get_db)):
             event_type=row.event_type,
             event_count=row.event_count,
             avg_attendees=round(float(row.avg_attendees), 1) if row.avg_attendees is not None else 0.0,
-            avg_engagement=(
-                round(float(row.avg_engagement), 2)
-                if row.avg_engagement is not None
-                else None
-            ),
-            avg_conversion_rate=(
-                round(float(row.avg_conversion_rate), 2)
-                if row.avg_conversion_rate is not None
-                else None
-            ),
+            avg_engagement=(round(float(row.avg_engagement), 2) if row.avg_engagement is not None else None),
+            avg_conversion_rate=(round(float(row.avg_conversion_rate), 2) if row.avg_conversion_rate is not None else None),
         )
         for row in type_result.all()
     ]
 
     # Top 10 events by engagement score
-    top_query = (
-        select(Event)
-        .where(Event.engagement_score.isnot(None))
-        .order_by(Event.engagement_score.desc())
-        .limit(10)
-    )
+    top_query = select(Event).where(Event.engagement_score.isnot(None)).order_by(Event.engagement_score.desc()).limit(10)
     top_result = await db.execute(top_query)
     top_events_list = [
         TopEvent(
@@ -299,6 +258,7 @@ async def content_performance(db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 # GET /analytics/engagement-heatmap – engagement by day-of-week × hour-of-day
 # ---------------------------------------------------------------------------
+
 
 @router.get("/engagement-heatmap", response_model=list[HeatmapPoint])
 async def engagement_heatmap(db: AsyncSession = Depends(get_db)):

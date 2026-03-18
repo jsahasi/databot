@@ -6,8 +6,8 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.api.chat import websocket_chat
 from app.api.router import api_router
@@ -33,6 +33,7 @@ async def lifespan(app: FastAPI):
     bv_task.add_done_callback(_background_tasks.discard)
     # Startup: clean up expired uploads (>24h)
     from app.api.upload import cleanup_old_uploads
+
     cleanup_old_uploads()
     # Startup: prefetch common data into Redis cache (non-blocking)
     prefetch_task = asyncio.create_task(_prefetch_data())
@@ -55,6 +56,7 @@ async def _prefetch_data():
         # Wait a few seconds for DB pool to initialize
         await asyncio.sleep(3)
         from app.services.data_prefetch import prefetch_common_data
+
         await prefetch_common_data()
     except Exception:
         logger.exception("Data prefetch failed")
@@ -64,6 +66,7 @@ async def _daily_improvement_email_loop():
     """Send daily improvement-inbox email at 11:59 PM server time."""
     from datetime import datetime, time, timedelta
     from pathlib import Path
+
     from app.services.email_service import send_email
 
     logger.info(f"Daily improvement email scheduled → {settings.send_improvement_email_to}")
@@ -100,7 +103,7 @@ async def _daily_improvement_email_loop():
                 Each entry contains the user's question, the bot's response,
                 the user's complaint, and a structured investigation prompt.</p>
                 <p style="color:#6b7280;font-size:0.85rem;">
-                    Sent automatically by ON24 Nexus at {datetime.now().strftime('%Y-%m-%d %I:%M %p')}
+                    Sent automatically by ON24 Nexus at {datetime.now().strftime("%Y-%m-%d %I:%M %p")}
                 </p>
             </div>
             """
@@ -126,6 +129,7 @@ async def _refresh_brand_voice():
     """Refresh brand voice document if stale (runs as background task)."""
     try:
         from app.services.brand_voice import refresh_if_stale
+
         await refresh_if_stale()
     except Exception as e:
         logger.warning(f"Brand voice refresh failed (non-fatal): {e}")
@@ -134,7 +138,8 @@ async def _refresh_brand_voice():
 async def _ingest_knowledge_base():
     """Ingest Zendesk articles and API reference into Postgres (runs as background task)."""
     try:
-        from app.db.knowledge_base import ingest_zendesk_articles, ingest_api_reference
+        from app.db.knowledge_base import ingest_api_reference, ingest_zendesk_articles
+
         count = await ingest_zendesk_articles()
         logger.info(f"Knowledge base: {count} Zendesk articles ingested")
         api_count = await ingest_api_reference()
@@ -218,6 +223,7 @@ async def security_headers(request: Request, call_next) -> Response:
 
 # SEC-02: Apply rate limiting to all /api/* routes
 from slowapi.middleware import SlowAPIMiddleware
+
 app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(api_router, prefix="/api")
@@ -233,6 +239,7 @@ async def health():
 async def app_status():
     """Return app status including which ON24 DB environment is active."""
     from app.db.on24_db import get_active_env, get_pool
+
     env = get_active_env()
     # If no pool exists yet, try to create one so we can report the actual state
     if not env:
@@ -251,9 +258,11 @@ async def app_status():
 async def switch_db(target: str = "PROD"):
     """Switch the ON24 DB connection to PROD or QA."""
     from app.db.on24_db import switch_environment
+
     target = target.upper()
     if target not in ("PROD", "QA"):
         from fastapi import HTTPException
+
         raise HTTPException(status_code=400, detail="target must be PROD or QA")
     env = await switch_environment(target)
     return {"on24_db": env}

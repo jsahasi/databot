@@ -14,9 +14,9 @@ Prefetched data:
 import asyncio
 import json
 import logging
+from datetime import UTC
 from typing import Any
 
-from app.config import settings
 from app.services.response_cache import get_redis
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ async def prefetch_common_data() -> None:
     Called on app startup as a background task. Safe to fail — all queries
     have try/except so a single failure doesn't block others.
     """
-    from app.db.on24_db import get_client_id, get_tenant_client_ids, get_pool
+    from app.db.on24_db import get_client_id, get_pool, get_tenant_client_ids
 
     try:
         client_id = get_client_id()
@@ -77,23 +77,25 @@ async def prefetch_common_data() -> None:
     # 1. Recent events — all events back to first of previous month, min 10, max 25
     try:
         from app.agents.tools.on24_query_tools import query_events
+
         events = await query_events(limit=25, past_only=True)
         # Keep at least 10, but trim to events from first of previous month onward
         if len(events) > 10:
-            from datetime import datetime, timezone
-            now = datetime.now(timezone.utc)
+            from datetime import datetime
+
+            now = datetime.now(UTC)
             if now.month == 1:
                 cutoff_year, cutoff_month = now.year - 1, 12
             else:
                 cutoff_year, cutoff_month = now.year, now.month - 1
-            cutoff = datetime(cutoff_year, cutoff_month, 1, tzinfo=timezone.utc)
+            cutoff = datetime(cutoff_year, cutoff_month, 1, tzinfo=UTC)
             recent = [e for e in events if e.get("goodafter") and e["goodafter"] >= cutoff.isoformat()]
-            events = recent if len(recent) >= 10 else events[:max(10, len(recent))]
+            events = recent if len(recent) >= 10 else events[: max(10, len(recent))]
         await _store("recent_events", events, client_id)
         logger.info(f"Prefetch: {len(events)} recent events cached")
 
         # 2. Event details + KPIs for each (parallel)
-        from app.agents.tools.on24_query_tools import get_event_detail, compute_event_kpis
+        from app.agents.tools.on24_query_tools import compute_event_kpis, get_event_detail
 
         async def _fetch_event(ev: dict) -> dict | None:
             eid = ev.get("event_id")
@@ -172,6 +174,7 @@ async def prefetch_common_data() -> None:
     # 5. Attendance trends (12 months)
     try:
         from app.agents.tools.on24_query_tools import query_attendance_trends
+
         trends = await query_attendance_trends(months=12)
         await _store("attendance_trends", trends, client_id)
         logger.info(f"Prefetch: attendance trends cached ({len(trends)} months)")
@@ -217,6 +220,7 @@ async def prefetch_calendar_data(client_id: int | None = None) -> bool:
 
     try:
         from app.agents.tools.on24_query_tools import query_attendance_trends, query_top_events
+
         trends, top_events = await asyncio.gather(
             query_attendance_trends(months=3),
             query_top_events(limit=20, sort_by="engagement", months=3),
@@ -237,23 +241,44 @@ async def get_prefetched_calendar_data(client_id: int) -> dict | None:
 # Fixed Tier-2 chip prompts that are candidates for pre-warming.
 # Key = display label used in the UI, value = prompt sent to the agent.
 TRENDS_CHIP_PROMPTS: list[tuple[str, str]] = [
-    ("Attendance over time",       "Show me attendance trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"attendees\"]. Title: \"Attendance Over Time\"."),
-    ("Registrations over time",    "Show me registration trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"registrants\"]. Title: \"Registrations Over Time\"."),
-    ("Engagement scores over time","Show me average engagement score trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type=\"line\", x_key=\"period\", y_keys=[\"avg_engagement\"]. Title: \"Avg Engagement Score Over Time\"."),
-    ("Show funnel",                "Show me events by funnel stage for the last month. Use get_events_by_tag with tag_type=\"funnel\", aggregate=true, months=1. Then show a bar chart with the funnel stages on the x-axis and total attendees on the y-axis. Title it \"Leads by Funnel Stage — Last 30 Days\"."),
-    ("Show campaigns",             "Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type=\"campaign\", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it \"Leads by Campaign — Last 30 Days\"."),
-    ("Performance by tags",        "Show me performance by all tags used in the last month. Use get_events_by_tag with aggregate=true, months=1. List all tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag."),
-    ("Top events by engagement",   "Show me the top 10 events by engagement score as a bar chart."),
-    ("Poll trends",                "Show me poll participation trends over the last 12 months. For each month, show how many poll responses were collected across all events. Use generate_chart_data with chart_type=\"line\" to show the trend over time. Title: \"Poll Participation Trends — Last 12 Months\"."),
+    (
+        "Attendance over time",
+        'Show me attendance trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type="line", x_key="period", y_keys=["attendees"]. Title: "Attendance Over Time".',
+    ),
+    (
+        "Registrations over time",
+        'Show me registration trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type="line", x_key="period", y_keys=["registrants"]. Title: "Registrations Over Time".',
+    ),
+    (
+        "Engagement scores over time",
+        'Show me average engagement score trends over the last 12 months as a line chart. Use get_attendance_trends with months=12, then generate_chart_data with chart_type="line", x_key="period", y_keys=["avg_engagement"]. Title: "Avg Engagement Score Over Time".',
+    ),
+    (
+        "Show funnel",
+        'Show me events by funnel stage for the last month. Use get_events_by_tag with tag_type="funnel", aggregate=true, months=1. Then show a bar chart with the funnel stages on the x-axis and total attendees on the y-axis. Title it "Leads by Funnel Stage — Last 30 Days".',
+    ),
+    (
+        "Show campaigns",
+        'Show me events by campaign tag for the last month. Use get_events_by_tag with tag_type="campaign", aggregate=true, months=1. Then show a pie chart of total attendees per campaign tag. Title it "Leads by Campaign — Last 30 Days".',
+    ),
+    (
+        "Performance by tags",
+        "Show me performance by all tags used in the last month. Use get_events_by_tag with aggregate=true, months=1. List all tags with their event count, average engagement score, total registrants, and total attendees. Then show a bar chart of avg engagement by tag.",
+    ),
+    ("Top events by engagement", "Show me the top 10 events by engagement score as a bar chart."),
+    (
+        "Poll trends",
+        'Show me poll participation trends over the last 12 months. For each month, show how many poll responses were collected across all events. Use generate_chart_data with chart_type="line" to show the trend over time. Title: "Poll Participation Trends — Last 12 Months".',
+    ),
 ]
 
 EXPLORE_CONTENT_PROMPTS: list[tuple[str, str]] = [
-    ("Key Takeaways",    "Show me the most recent AI-generated Key Takeaways articles"),
-    ("Blog Posts",       "Show me the most recent AI-generated blog posts"),
-    ("eBooks",           "Show me the most recent AI-generated eBooks"),
-    ("FAQs",             "Show me the most recent AI-generated FAQ articles"),
+    ("Key Takeaways", "Show me the most recent AI-generated Key Takeaways articles"),
+    ("Blog Posts", "Show me the most recent AI-generated blog posts"),
+    ("eBooks", "Show me the most recent AI-generated eBooks"),
+    ("FAQs", "Show me the most recent AI-generated FAQ articles"),
     ("Follow-up Emails", "Show me the most recent AI-generated follow-up emails"),
-    ("Social Media",     "Show me the most recent AI-generated social media posts"),
+    ("Social Media", "Show me the most recent AI-generated social media posts"),
 ]
 
 HOW_DO_I_PROMPTS: list[str] = [
@@ -277,9 +302,9 @@ async def prewarm_chip_responses(client_id: int) -> None:
 
     Only warms if the cache entry is missing — safe to call repeatedly.
     """
-    from app.services.response_cache import get_cached_response, cache_response
     from app.agents.data_agent import DataAgent
     from app.agents.orchestrator import OrchestratorAgent
+    from app.services.response_cache import cache_response, get_cached_response
 
     data_agent = DataAgent()
     orch = OrchestratorAgent()

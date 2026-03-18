@@ -6,11 +6,10 @@ No client shares templates with any other client.
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-
 from pydantic import BaseModel
 
 from app.db.on24_db import get_client_id
@@ -20,11 +19,31 @@ router = APIRouter()
 DATA_DIR = Path("/app/data")
 
 GOOGLE_FONTS = [
-    "Inter", "Roboto", "Open Sans", "Lato", "Montserrat", "Poppins",
-    "Raleway", "Nunito", "Playfair Display", "Merriweather",
-    "Source Sans 3", "PT Sans", "Oswald", "Rubik", "Work Sans",
-    "Fira Sans", "Barlow", "DM Sans", "Outfit", "Space Grotesk",
-    "Plus Jakarta Sans", "Sora", "Manrope", "Lexend", "Geist",
+    "Inter",
+    "Roboto",
+    "Open Sans",
+    "Lato",
+    "Montserrat",
+    "Poppins",
+    "Raleway",
+    "Nunito",
+    "Playfair Display",
+    "Merriweather",
+    "Source Sans 3",
+    "PT Sans",
+    "Oswald",
+    "Rubik",
+    "Work Sans",
+    "Fira Sans",
+    "Barlow",
+    "DM Sans",
+    "Outfit",
+    "Space Grotesk",
+    "Plus Jakarta Sans",
+    "Sora",
+    "Manrope",
+    "Lexend",
+    "Geist",
 ]
 
 DEFAULT_TEMPLATE: dict = {
@@ -131,7 +150,7 @@ def create_template(body: BrandTemplateCreate):
         "logoUrl": body.logoUrl,
         "bannerImageUrl": body.bannerImageUrl,
         "isDefault": body.isDefault,
-        "createdAt": datetime.now(timezone.utc).isoformat(),
+        "createdAt": datetime.now(UTC).isoformat(),
     }
     templates.append(template)
     _save_templates(templates)

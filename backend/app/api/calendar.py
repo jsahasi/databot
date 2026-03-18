@@ -1,7 +1,7 @@
 """Calendar API — returns events grouped by month for the calendar UI."""
 
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
 
 from bs4 import BeautifulSoup, Tag
 from fastapi import APIRouter, HTTPException, Query
@@ -43,15 +43,16 @@ def _parse_kt_sections(html: str) -> dict[str, str]:
 
     return {k: "".join(v) for k, v in sections.items() if "".join(v).strip()}
 
+
 _QUERY_TIMEOUT = 10.0
 
 
 def _is_future(start_time) -> bool:
     if start_time is None:
         return False
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if hasattr(start_time, "tzinfo") and start_time.tzinfo is None:
-        start_time = start_time.replace(tzinfo=timezone.utc)
+        start_time = start_time.replace(tzinfo=UTC)
     return start_time > now
 
 

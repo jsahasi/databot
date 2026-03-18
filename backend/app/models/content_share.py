@@ -1,7 +1,6 @@
 """Content sharing and approval models."""
 
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -37,19 +36,13 @@ class ShareRecipient(Base, TimestampMixin):
     __tablename__ = "share_recipients"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    share_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("content_shares.id"), nullable=False, index=True
-    )
+    share_id: Mapped[str] = mapped_column(String(36), ForeignKey("content_shares.id"), nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     token_hash: Mapped[str] = mapped_column(String(128), nullable=False)
-    approved: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)  # None=pending
-    rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 1-5
-    viewed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    responded_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # None=pending
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1-5
+    viewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def to_dict(self) -> dict:
         return {
@@ -68,9 +61,7 @@ class ShareComment(Base, TimestampMixin):
     __tablename__ = "share_comments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    share_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("content_shares.id"), nullable=False, index=True
-    )
+    share_id: Mapped[str] = mapped_column(String(36), ForeignKey("content_shares.id"), nullable=False, index=True)
     author_email: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
