@@ -99,12 +99,18 @@ build:backend:
 
 build:frontend:
   <<: *build-common
+  needs:
+    - job: build:backend
+      optional: true
   script:
     - docker build -t $IMAGE_FRONTEND:$CI_COMMIT_SHORT_SHA ./frontend
     - docker push $IMAGE_FRONTEND:$CI_COMMIT_SHORT_SHA
 
 build:mcp:
   <<: *build-common
+  needs:
+    - job: build:frontend
+      optional: true
   script:
     - docker build -t $IMAGE_MCP:$CI_COMMIT_SHORT_SHA ./on24-mcp
     - docker push $IMAGE_MCP:$CI_COMMIT_SHORT_SHA
