@@ -237,6 +237,150 @@ function EngagementSection({ kpis, defaultOpen }: { kpis: { label: string; value
   )
 }
 
+const AI_TYPE_LABELS: Record<string, string> = {
+  KEYTAKEAWAYS: 'Key Takeaways', BLOG: 'Blog Post', EBOOK: 'eBook',
+  FAQ: 'FAQ', FOLLOWUPEMAIL: 'Follow-up Email', SOCIALMEDIAPOST: 'Social Media', TRANSCRIPT: 'Transcript',
+}
+const KT_TAB_LABELS: Record<string, string> = {
+  summary: 'Summary', takeaways: 'Takeaways', quote: 'Key Quote', other: 'Details',
+}
+const KT_TAB_ORDER = ['summary', 'takeaways', 'quote', 'other']
+
+function AiAceSection({ eventId, aiContent }: { eventId: number; aiContent: { count: number; client_id?: number } }) {
+  const [open, setOpen] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [articles, setArticles] = useState<Record<string, string>>({})
+  const [ktSections, setKtSections] = useState<Record<string, string>>({})
+  const [types, setTypes] = useState<string[]>([])
+  const [selectedType, setSelectedType] = useState('')
+  const [activeTab, setActiveTab] = useState('')
+
+  const handleToggle = () => {
+    const next = !open
+    setOpen(next)
+    if (next && !loaded && !loading) {
+      setLoading(true)
+      fetch(`/api/calendar/event/${eventId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d?.ai_content) {
+            const ai = d.ai_content
+            const arts = ai.articles ?? {}
+            const kts = ai.kt_sections ?? {}
+            const ts = (ai.types ?? []).filter((t: string) => arts[t])
+            setArticles(arts)
+            setKtSections(kts)
+            setTypes(ts)
+            const defaultType = ts.includes('KEYTAKEAWAYS') ? 'KEYTAKEAWAYS' : (ts[0] ?? '')
+            setSelectedType(defaultType)
+            const tabs = KT_TAB_ORDER.filter(k => kts[k])
+            setActiveTab(tabs.includes('takeaways') ? 'takeaways' : (tabs[0] ?? ''))
+          }
+          setLoaded(true)
+        })
+        .catch(() => setLoaded(true))
+        .finally(() => setLoading(false))
+    }
+  }
+
+  const mmUrl = aiContent.client_id
+    ? `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${aiContent.client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${eventId}`
+    : null
+
+  const availableTabs = KT_TAB_ORDER.filter(k => ktSections[k])
+  const content = selectedType === 'KEYTAKEAWAYS'
+    ? (ktSections[activeTab] ?? articles['KEYTAKEAWAYS'])
+    : articles[selectedType]
+
+  return (
+    <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button
+          onClick={handleToggle}
+          aria-expanded={open}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          }}
+        >
+          <span style={{ fontSize: '0.6rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            AI-ACE Content {loading ? '· loading…' : `· ${aiContent.count} article${aiContent.count !== 1 ? 's' : ''}`}
+          </span>
+          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s', marginTop: 1 }}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {mmUrl && (
+          <a href={mmUrl} target="_blank" rel="noreferrer"
+            style={{ fontSize: '0.58rem', fontWeight: 600, color: 'var(--color-success)', textDecoration: 'none' }}>
+            Media Manager {'\u2197'}
+          </a>
+        )}
+      </div>
+
+      {open && loaded && types.length > 0 && (
+        <div style={{ marginTop: '0.4rem' }}>
+          <select
+            value={selectedType}
+            onChange={e => {
+              setSelectedType(e.target.value)
+              if (e.target.value === 'KEYTAKEAWAYS') {
+                const tabs = KT_TAB_ORDER.filter(k => ktSections[k])
+                setActiveTab(tabs.includes('takeaways') ? 'takeaways' : (tabs[0] ?? ''))
+              }
+            }}
+            style={{
+              width: '100%', marginBottom: '0.4rem',
+              fontSize: '0.72rem', fontWeight: 500,
+              padding: '0.25rem 0.45rem', borderRadius: 'var(--radius-sm)',
+              border: '1px solid rgba(5,150,105,0.4)',
+              background: 'rgba(5,150,105,0.08)', color: 'var(--color-success)',
+              cursor: 'pointer', outline: 'none',
+            }}
+          >
+            {types.map(t => <option key={t} value={t}>{AI_TYPE_LABELS[t] ?? t}</option>)}
+          </select>
+
+          {selectedType === 'KEYTAKEAWAYS' && availableTabs.length > 0 && (
+            <div style={{ display: 'flex', borderBottom: '2px solid var(--color-border)', marginBottom: '0.4rem', gap: 0 }}>
+              {availableTabs.map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                  fontSize: '0.65rem', fontWeight: activeTab === tab ? 600 : 400,
+                  padding: '0.25rem 0.5rem',
+                  border: 'none', borderBottom: activeTab === tab ? '2px solid var(--color-success)' : '2px solid transparent',
+                  marginBottom: -2, background: 'transparent',
+                  color: activeTab === tab ? 'var(--color-success)' : 'var(--color-text-secondary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                }}>{KT_TAB_LABELS[tab] ?? tab}</button>
+              ))}
+            </div>
+          )}
+
+          {content && (
+            <div
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+              style={{
+                maxHeight: 180, overflowY: 'auto',
+                background: 'var(--color-bg)', border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-sm)', padding: '0.5rem 0.65rem',
+                fontSize: '0.72rem', color: 'var(--color-text)', lineHeight: 1.6,
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {open && loaded && types.length === 0 && (
+        <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', fontStyle: 'italic', marginTop: '0.3rem' }}>
+          No AI-ACE articles found for this event.
+        </p>
+      )}
+    </div>
+  )
+}
+
 function EventCardInline({ card }: { card: any }) {
   if (!card) return null
   const kpis: { label: string; value: string }[] = []
@@ -291,28 +435,9 @@ function EventCardInline({ card }: { card: any }) {
           <EngagementSection kpis={kpis} defaultOpen={hasEngagement} />
         )}
 
-        {card.ai_content && (() => {
-          const { count, client_id, event_id: eid } = card.ai_content
-          const mmUrl = `https://wccv.on24.com/webcast/mediamanager?date_range=all&client_ids=${client_id}&types=article&sub_types=autogen_blog,autogen_ebook,autogen_faq,autogen_keytakeaways,autogen_followupemail,autogen_socialmediapost,autogen_transcript&search=${eid ?? card.event_id}`
-          return (
-            <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
-              <div style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
-                AI-ACE Content
-              </div>
-              <a
-                href={mmUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-success)', textDecoration: 'none' }}
-              >
-                Key Takeaways ↗
-              </a>
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginLeft: '0.4rem' }}>
-                {count} article{count !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )
-        })()}
+        {card.ai_content && (
+          <AiAceSection eventId={card.event_id} aiContent={card.ai_content} />
+        )}
 
         {/* Elite deep link action chips */}
         {card.event_id && (

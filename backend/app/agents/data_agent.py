@@ -201,6 +201,9 @@ class DataAgent:
                                         "qa_count": _num(eng_counts.get("qa_count")),
                                         "chat_message_count": _num(eng_counts.get("chat_message_count")),
                                     }
+                                    if kpi_data.get("ai_content"):
+                                        event_card["ai_content"] = kpi_data["ai_content"]
+                                        event_card["ai_content"]["event_id"] = eid_detail
 
                                 if tool_name == "compute_event_kpis" and isinstance(result, dict) and result.get("event_id"):
                                     eid = result["event_id"]
@@ -237,6 +240,9 @@ class DataAgent:
                                                 "qa_count": _num(eng_counts2.get("qa_count")),
                                                 "chat_message_count": _num(eng_counts2.get("chat_message_count")),
                                             }
+                                            if result.get("ai_content"):
+                                                event_card["ai_content"] = result["ai_content"]
+                                                event_card["ai_content"]["event_id"] = eid
                                     except Exception:
                                         pass  # event card is best-effort
 
