@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir hatchling && pip install --no-cache-dir -e .
 COPY alembic.ini .
 COPY alembic/ alembic/
 COPY app/ app/
+COPY data/ data/
 
 EXPOSE 8000
 

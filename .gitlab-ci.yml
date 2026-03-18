@@ -94,6 +94,7 @@ test:frontend:
 build:backend:
   <<: *build-common
   script:
+    - cp -n data/zendesk_articles.json data/on24_api_reference.json backend/data/ 2>/dev/null || true
     - docker build -t $IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA ./backend
     - docker push $IMAGE_BACKEND:$CI_COMMIT_SHORT_SHA
 
