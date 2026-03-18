@@ -264,21 +264,11 @@ function EventCardInline({ card }: { card: any }) {
     }}>
       <div style={{ height: 4, background: 'var(--color-primary)' }} />
       <div style={{ padding: '0.75rem 1rem' }}>
-        {/* Type badges + delivery chip */}
+        {/* Type badge + delivery chip */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.58rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Event {card.event_id}
           </span>
-          {card.event_type && (
-            <span style={{
-              padding: '0.1rem 0.45rem', borderRadius: 999,
-              fontSize: '0.58rem', fontWeight: 700,
-              background: 'var(--color-primary-light)', color: 'var(--color-primary)',
-              border: '1px solid var(--color-chip-border)',
-            }}>
-              {card.event_type}
-            </span>
-          )}
           <DeliveryChip eventType={card.event_type} />
         </div>
         <div style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35, marginBottom: '0.4rem' }}>
