@@ -920,8 +920,12 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
         </span>
       )}
 
-      {/* Message bubble */}
+      {/* Event Card — shown BEFORE text when present */}
       <div style={{ maxWidth: '90%' }}>
+        {!isUser && message.eventCard && !message.eventCards && <EventCardInline card={message.eventCard} />}
+        {!isUser && message.eventCards && <EventCardsGrid cards={message.eventCards} />}
+
+        {/* Message bubble */}
         <div style={{
           padding: '0.625rem 0.875rem',
           borderRadius: isUser ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
@@ -929,6 +933,7 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
           color: isUser ? 'var(--color-card)' : 'var(--color-text)',
           fontSize: '0.85rem', lineHeight: 1.5,
           wordBreak: 'break-word',
+          marginTop: (!isUser && (message.eventCard || message.eventCards)) ? '0.5rem' : undefined,
         }}>
           {message.isLoading ? (
             <span role="status" aria-live="polite" aria-label="Loading response" style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem 0' }}>
@@ -1009,12 +1014,6 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
 
       {/* Chart */}
       {message.chartData && <SmartChart data={message.chartData} />}
-
-      {/* Event Card */}
-      {message.eventCard && !message.eventCards && <EventCardInline card={message.eventCard} />}
-
-      {/* Event Cards Grid (2–4 events) */}
-      {message.eventCards && <EventCardsGrid cards={message.eventCards} />}
 
       {/* Poll Cards */}
       {message.pollCards && <PollCardsInline polls={message.pollCards} />}
