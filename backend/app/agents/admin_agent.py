@@ -25,7 +25,7 @@ class AdminAgent:
     """
 
     # Tools that mutate state on ON24 — require user confirmation
-    DESTRUCTIVE_TOOLS = {"create_event", "update_event", "add_registrant", "remove_registrant"}
+    DESTRUCTIVE_TOOLS = {"create_event", "create_event_from_copy", "update_event", "add_registrant", "remove_registrant"}
 
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)

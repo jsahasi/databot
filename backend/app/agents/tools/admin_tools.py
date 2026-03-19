@@ -195,6 +195,41 @@ async def remove_registrant(
         await client.close()
 
 
+async def create_event_from_copy(
+    source_event_id: int,
+    title: str,
+    start_time: str,
+    duration_minutes: int = 60,
+    time_zone: str = "America/New_York",
+    campaign_code: str | None = None,
+) -> dict[str, Any]:
+    """Create a new ON24 event by copying a template/source event."""
+    client = _get_on24_client()
+    try:
+        response = await client.copy_webinar(
+            source_event_id=source_event_id,
+            title=title,
+            live_start=start_time,
+            live_duration=duration_minutes,
+            time_zone=time_zone,
+            campaign_code=campaign_code,
+        )
+        logger.info(f"Created ON24 event from template {source_event_id}: {response}")
+        on24_event_id = response.get("eventId") or response.get("on24EventId") or response.get("id")
+        return {
+            "success": True,
+            "on24_event_id": on24_event_id,
+            "source_template_id": source_event_id,
+            "message": f"Event '{title}' created from template {source_event_id}.",
+            "raw_response": response,
+        }
+    except Exception as e:
+        logger.error(f"create_event_from_copy failed: {e}")
+        return {"success": False, "error": str(e)}
+    finally:
+        await client.close()
+
+
 async def get_event_summary(on24_event_id: int) -> dict[str, Any]:
     """Return a summary of an event from the local DB for confirmation display."""
     async with async_session_factory() as session:

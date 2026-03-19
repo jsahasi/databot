@@ -153,7 +153,7 @@ def _extract_inline_options(text: str) -> list[str] | None:
             # Blank line or new section heading — stop scanning upward
             if items:
                 break
-    return items if 2 <= len(items) <= 5 else None
+    return items if 2 <= len(items) <= 9 else None
 
 
 async def generate_suggestions(

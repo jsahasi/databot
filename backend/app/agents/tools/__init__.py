@@ -8,6 +8,7 @@ Each tool is defined as:
 from app.agents.tools.admin_tools import (
     add_registrant,
     create_event,
+    create_event_from_copy,
     get_event_summary,
     remove_registrant,
     update_event,
@@ -653,11 +654,28 @@ ADMIN_AGENT_TOOLS = [
             "required": ["on24_event_id", "email"],
         },
     },
+    {
+        "name": "create_event_from_copy",
+        "description": "Create a new ON24 event by copying a template/source event. Clones console layout, widgets, branding from the source. Requires confirmation.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "source_event_id": {"type": "integer", "description": "ON24 event ID of the template to copy from"},
+                "title": {"type": "string", "description": "Title for the new event"},
+                "start_time": {"type": "string", "description": "Start time in ISO 8601 format"},
+                "duration_minutes": {"type": "integer", "description": "Event duration in minutes (default 60)"},
+                "time_zone": {"type": "string", "description": "IANA timezone (default America/New_York)"},
+                "campaign_code": {"type": "string", "description": "Optional campaign code"},
+            },
+            "required": ["source_event_id", "title", "start_time"],
+        },
+    },
 ]
 
 ADMIN_TOOL_HANDLERS = {
     "get_event_summary": get_event_summary,
     "create_event": create_event,
+    "create_event_from_copy": create_event_from_copy,
     "update_event": update_event,
     "add_registrant": add_registrant,
     "remove_registrant": remove_registrant,
