@@ -421,8 +421,8 @@ export default function ChatPanel() {
                 <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.75rem' }}>
                   Which ON24 experience?
                 </p>
-                {/* Create Event button — shown only with create-event permission */}
-                {(storedPerms.length === 0 || storedPerms.includes('create-event')) && (
+                {/* Create Event button — shown only with create-event permission and admin selected */}
+                {storedPerms.length > 0 && storedPerms.includes('create-event') && (
                   <button
                     onClick={() => { sendMessage('Create a new event'); setInput(''); setShowExperiences(false) }}
                     style={{
