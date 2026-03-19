@@ -421,6 +421,31 @@ export default function ChatPanel() {
                 <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.75rem' }}>
                   Which ON24 experience?
                 </p>
+                {/* Create Event button — shown only with create-event permission */}
+                {(storedPerms.length === 0 || storedPerms.includes('create-event')) && (
+                  <button
+                    onClick={() => { sendMessage('Create a new event'); setInput(''); setShowExperiences(false) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                      width: '100%', padding: '0.75rem 1rem', marginBottom: '0.75rem',
+                      background: 'var(--color-primary)',
+                      color: 'var(--color-card)',
+                      border: 'none', borderRadius: 10,
+                      fontSize: '0.85rem', fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                      transition: 'background 0.15s, box-shadow 0.15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-primary-hover)'; e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,0.18)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)' }}
+                  >
+                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Create Event
+                  </button>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
                   {filteredExperiences.map(({ label, url }) => (
                     <a
