@@ -266,3 +266,30 @@ async def switch_db(target: str = "PROD"):
         raise HTTPException(status_code=400, detail="target must be PROD or QA")
     env = await switch_environment(target)
     return {"on24_db": env}
+
+
+@app.get("/api/client-properties")
+async def get_client_properties(client_id: int | None = None):
+    """Return all client_property_info rows as a JSON object for the given client."""
+    from app.db.on24_db import get_client_id, get_pool
+
+    cid = client_id or get_client_id()
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT prop_code, value, prop_label
+            FROM on24master.client_property_info
+            WHERE client_id = $1
+            ORDER BY prop_code
+            """,
+            cid,
+            timeout=10,
+        )
+    props = {}
+    for r in rows:
+        props[r["prop_code"]] = {
+            "value": r["value"],
+            "label": r["prop_label"] or None,
+        }
+    return {"client_id": cid, "property_count": len(props), "properties": props}
