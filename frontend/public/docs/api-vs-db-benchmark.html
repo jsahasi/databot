@@ -80,7 +80,7 @@
   <h2>1. Summary</h2>
   <p>ON24 Nexus has three ways to access data:</p>
   <ul>
-    <li><strong>ON24 REST API</strong> — HTTP calls to <code>apiqa.on24.com</code> (direct client-to-API)</li>
+    <li><strong>ON24 REST API</strong> — HTTP calls to the ON24 REST API v2 (PROD: <code>api.on24.com</code>, QA: <code>apiqa.on24.com</code>). Benchmark ran against QA.</li>
     <li><strong>MCP Server</strong> — FastMCP on port 8001 (<code>on24-mcp/server.py</code>, 67 tools) wrapping the REST API with standardized tool-calling protocol for AI agents</li>
     <li><strong>Direct DB</strong> — asyncpg connection to ON24 master PostgreSQL (<code>10.3.7.233:5458/on24master</code>)</li>
   </ul>
@@ -377,7 +377,8 @@
 # .env.local must contain:
 ON24_DB_URL=postgresql+asyncpg://ON24_RO:&lt;pass&gt;@10.3.7.233:5458/on24master
 ON24_CLIENT_ID=10710
-ON24_BASE_URL=https://apiqa.on24.com
+ON24_BASE_URL=https://api.on24.com       # PROD
+# ON24_BASE_URL=https://apiqa.on24.com   # QA (used for this benchmark)
 ON24_ACCESS_TOKEN_KEY=&lt;key&gt;
 ON24_ACCESS_TOKEN_SECRET=&lt;secret&gt;
 MCP_SERVER_URL=http://localhost:8001
