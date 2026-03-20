@@ -7,6 +7,7 @@ import EventDetail from './pages/EventDetail'
 import Audiences from './pages/Audiences'
 import ContentInsights from './pages/ContentInsights'
 import Settings from './pages/Settings'
+import DesignSystem from './pages/DesignSystem'
 import ShareReview from './pages/ShareReview'
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/audiences" element={<Audiences />} />
         <Route path="/content" element={<ContentInsights />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/design-system" element={<DesignSystem />} />
       </Route>
     </Routes>
   )
