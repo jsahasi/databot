@@ -155,9 +155,74 @@ def get_layout_variant(event_type: str, slides: str | None, nav: str | None, lay
     return "EDITABLE_SLIDES"  # fallback
 
 
-# ── Elite templates (same 54 paths, different event IDs) ──
-# TODO: populate when Elite template events are created under client 65000
-ELITE_TEMPLATES: dict[tuple[str, str], dict] = {}
+# ── Elite templates (client_id=66000) ──
+
+ELITE_TEMPLATES: dict[tuple[str, str], dict] = {
+    # ── Demand Generation ──
+    ("DEMAND_GEN", "LOCKED_SLIDES"):      {"event_id": 4883291, "thumb": "DemandGenLockedSlides"},
+    ("DEMAND_GEN", "EDITABLE_SLIDES"):    {"event_id": 4891470, "thumb": "DemandGenEditableSlides"},
+    ("DEMAND_GEN", "LOCKED_NO_SLIDES"):   {"event_id": 4894419, "thumb": "DemandGenLockedNoSlides"},
+    ("DEMAND_GEN", "EDITABLE_NO_SLIDES"): {"event_id": 4891469, "thumb": "DemandGenEditableNoSlides"},
+    ("DEMAND_GEN", "EDITABLE_MENU_DOCK"): {"event_id": 4883233, "thumb": "DemandGenEditableMenuDock"},
+    ("DEMAND_GEN", "OTHER_TYPE"):         {"event_id": 4891474, "thumb": "DemandGenOtherType"},
+    # ── Partner Enablement ──
+    ("PARTNER_ENABLEMENT", "LOCKED_SLIDES"):      {"event_id": 4891462, "thumb": "PartnerEnablementLockedSlides"},
+    ("PARTNER_ENABLEMENT", "EDITABLE_SLIDES"):    {"event_id": 4891422, "thumb": "PartnerEnablementEditableSlides"},
+    ("PARTNER_ENABLEMENT", "LOCKED_NO_SLIDES"):   {"event_id": 4893203, "thumb": "PartnerEnablementLockedNoSlides"},
+    ("PARTNER_ENABLEMENT", "EDITABLE_NO_SLIDES"): {"event_id": 4891421, "thumb": "PartnerEnablementEditableNoSlides"},
+    ("PARTNER_ENABLEMENT", "EDITABLE_MENU_DOCK"): {"event_id": 4891424, "thumb": "PartnerEnablementEditableMenuDock"},
+    ("PARTNER_ENABLEMENT", "OTHER_TYPE"):         {"event_id": 4891464, "thumb": "PartnerEnablementOtherType"},
+    # ── Member Enrollment ──
+    ("MEMBER_ENROLLMENT", "LOCKED_SLIDES"):      {"event_id": 4891414, "thumb": "MemberEnrollmentLockedSlides"},
+    ("MEMBER_ENROLLMENT", "EDITABLE_SLIDES"):    {"event_id": 4891403, "thumb": "MemberEnrollmentEditableSlides"},
+    ("MEMBER_ENROLLMENT", "LOCKED_NO_SLIDES"):   {"event_id": 4893196, "thumb": "MemberEnrollmentLockedNoSlides"},
+    ("MEMBER_ENROLLMENT", "EDITABLE_NO_SLIDES"): {"event_id": 4891395, "thumb": "MemberEnrollmentEditableNoSlides"},
+    ("MEMBER_ENROLLMENT", "EDITABLE_MENU_DOCK"): {"event_id": 4891408, "thumb": "MemberEnrollmentEditableMenuDock"},
+    ("MEMBER_ENROLLMENT", "OTHER_TYPE"):         {"event_id": 4891415, "thumb": "MemberEnrollmentOtherType"},
+    # ── Product Feedback ──
+    ("PRODUCT_FEEDBACK", "LOCKED_SLIDES"):      {"event_id": 4891388, "thumb": "ProductFeedbackLockedSlides"},
+    ("PRODUCT_FEEDBACK", "EDITABLE_SLIDES"):    {"event_id": 4891379, "thumb": "ProductFeedbackEditableSlides"},
+    ("PRODUCT_FEEDBACK", "LOCKED_NO_SLIDES"):   {"event_id": 4893195, "thumb": "ProductFeedbackLockedNoSlides"},
+    ("PRODUCT_FEEDBACK", "EDITABLE_NO_SLIDES"): {"event_id": 4891376, "thumb": "ProductFeedbackEditableNoSlides"},
+    ("PRODUCT_FEEDBACK", "EDITABLE_MENU_DOCK"): {"event_id": 4891385, "thumb": "ProductFeedbackEditableMenuDock"},
+    ("PRODUCT_FEEDBACK", "OTHER_TYPE"):         {"event_id": 4891390, "thumb": "ProductFeedbackOtherType"},
+    # ── HCP Engagement ──
+    ("HCP_ENGAGEMENT", "LOCKED_SLIDES"):      {"event_id": 4891351, "thumb": "HCPLockedSlides"},
+    ("HCP_ENGAGEMENT", "EDITABLE_SLIDES"):    {"event_id": 4891332, "thumb": "HCPEditableSlides"},
+    ("HCP_ENGAGEMENT", "LOCKED_NO_SLIDES"):   {"event_id": 4893193, "thumb": "HCPLockedNoSlides"},
+    ("HCP_ENGAGEMENT", "EDITABLE_NO_SLIDES"): {"event_id": 4891330, "thumb": "HCPEditableNoSlides"},
+    ("HCP_ENGAGEMENT", "EDITABLE_MENU_DOCK"): {"event_id": 4891346, "thumb": "HCPEditableMenuDock"},
+    ("HCP_ENGAGEMENT", "OTHER_TYPE"):         {"event_id": 4891353, "thumb": "HCPOtherType"},
+    # ── KOL Engagement ──
+    ("KOL_ENGAGEMENT", "LOCKED_SLIDES"):      {"event_id": 4891315, "thumb": "KOLLockedSlides"},
+    ("KOL_ENGAGEMENT", "EDITABLE_SLIDES"):    {"event_id": 4891306, "thumb": "KOLEditableSlides"},
+    ("KOL_ENGAGEMENT", "LOCKED_NO_SLIDES"):   {"event_id": 4893190, "thumb": "KOLLockedNoSlides"},
+    ("KOL_ENGAGEMENT", "EDITABLE_NO_SLIDES"): {"event_id": 4891305, "thumb": "KOLEditableNoSlides"},
+    ("KOL_ENGAGEMENT", "EDITABLE_MENU_DOCK"): {"event_id": 4891309, "thumb": "KOLEditableMenuDock"},
+    ("KOL_ENGAGEMENT", "OTHER_TYPE"):         {"event_id": 4891317, "thumb": "KOLOtherType"},
+    # ── Certification / Training ──
+    ("CERTIFICATION_TRAINING", "LOCKED_SLIDES"):      {"event_id": 4891300, "thumb": "CertificationLockedSlides"},
+    ("CERTIFICATION_TRAINING", "EDITABLE_SLIDES"):    {"event_id": 4891294, "thumb": "CertificationEditableSlides"},
+    ("CERTIFICATION_TRAINING", "LOCKED_NO_SLIDES"):   {"event_id": 4893188, "thumb": "CertificationLockedNoSlides"},
+    ("CERTIFICATION_TRAINING", "EDITABLE_NO_SLIDES"): {"event_id": 4891275, "thumb": "CertificationEditableNoSlides"},
+    ("CERTIFICATION_TRAINING", "EDITABLE_MENU_DOCK"): {"event_id": 4891295, "thumb": "CertificationEditableMenuDock"},
+    ("CERTIFICATION_TRAINING", "OTHER_TYPE"):         {"event_id": 4891303, "thumb": "CertificationOtherType"},
+    # ── Asset Management / Financial Services ──
+    ("ASSET_SERVICES", "LOCKED_SLIDES"):      {"event_id": 4891234, "thumb": "AssetManagementLockedSlides"},
+    ("ASSET_SERVICES", "EDITABLE_SLIDES"):    {"event_id": 4891219, "thumb": "AssetManagementEditableSlides"},
+    ("ASSET_SERVICES", "LOCKED_NO_SLIDES"):   {"event_id": 4893183, "thumb": "AssetManagementLockedNoSlides"},
+    ("ASSET_SERVICES", "EDITABLE_NO_SLIDES"): {"event_id": 4891215, "thumb": "AssetManagementEditableNoSlides"},
+    ("ASSET_SERVICES", "EDITABLE_MENU_DOCK"): {"event_id": 4891229, "thumb": "AssetManagementEditableMenuDock"},
+    ("ASSET_SERVICES", "OTHER_TYPE"):         {"event_id": 4891237, "thumb": "AssetManagementOtherType"},
+    # ── Insurance ──
+    ("INSURANCE", "LOCKED_SLIDES"):      {"event_id": 4891206, "thumb": "InsuranceLockedSlides"},
+    ("INSURANCE", "EDITABLE_SLIDES"):    {"event_id": 4891188, "thumb": "InsuranceEditableSlides"},
+    ("INSURANCE", "LOCKED_NO_SLIDES"):   {"event_id": 4893181, "thumb": "InsuranceLockedNoSlides"},
+    ("INSURANCE", "EDITABLE_NO_SLIDES"): {"event_id": 4891185, "thumb": "InsuranceEditableNoSlides"},
+    ("INSURANCE", "EDITABLE_MENU_DOCK"): {"event_id": 4891193, "thumb": "InsuranceEditableMenuDock"},
+    ("INSURANCE", "OTHER_TYPE"):         {"event_id": 4891211, "thumb": "InsuranceOtherType"},
+}
+
 ELITE_LOCKED_OTHER_TEMPLATES: dict[str, dict] = {}
 
 
