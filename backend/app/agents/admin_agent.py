@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,12 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "admin_agent.md").read_text()
+_ADMIN_PROMPT_TEMPLATE = (Path(__file__).parent / "prompts" / "admin_agent.md").read_text()
+
+
+def _build_admin_prompt() -> str:
+    today = date.today().strftime("%B %d, %Y")
+    return f"Today's date is {today}.\n\n{_ADMIN_PROMPT_TEMPLATE}"
 
 
 class AdminAgent:
@@ -60,7 +66,7 @@ class AdminAgent:
 
         tool_calls_made: list[dict] = []
 
-        system_cached = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+        system_cached = [{"type": "text", "text": _build_admin_prompt(), "cache_control": {"type": "ephemeral"}}]
         if restriction_context:
             system_cached.append({"type": "text", "text": restriction_context})
 
