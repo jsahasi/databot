@@ -301,16 +301,16 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }, [sessionId, connect])
 
-  const sendConfirmation = useCallback((originalContent: string) => {
+  const sendConfirmation = useCallback((_summary: string) => {
     setMessages(prev => [
       ...prev,
-      { id: `user-${Date.now()}`, role: 'user', content: 'Confirmed', timestamp: new Date() },
+      { id: `user-${Date.now()}`, role: 'user', content: 'Confirmed — proceed', timestamp: new Date() },
       { id: `loading-${Date.now()}`, role: 'assistant', content: '', isLoading: true, timestamp: new Date() },
     ])
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'message',
-        content: originalContent,
+        content: 'Confirmed — proceed with the operation',
         session_id: sessionId,
         client_id: selectedClientId,
         confirmed: true,

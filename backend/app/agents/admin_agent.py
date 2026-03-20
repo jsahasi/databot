@@ -168,16 +168,36 @@ class AdminAgent:
         }
 
 
+_EVENT_TYPE_LABELS = {
+    "fav": "Live Video",
+    "simulive": "Simulive",
+    "ondemand": "On Demand",
+    "encodeonsite": "Broadcast",
+    "sim2live": "Sim-2-Live",
+    "meetups": "Forums",
+}
+
+
 def _build_confirmation_summary(tool_name: str, tool_input: dict) -> str:
     """Build a human-readable summary of a pending destructive operation."""
-    if tool_name == "create_event":
-        return (
-            f"**Create Event**\n"
-            f"- Title: {tool_input.get('title')}\n"
-            f"- Type: {tool_input.get('event_type')}\n"
-            f"- Start: {tool_input.get('start_time')}\n"
-            f"- End: {tool_input.get('end_time')}\n" + (f"- Description: {tool_input.get('description')}\n" if tool_input.get("description") else "")
-        )
+    if tool_name in ("create_event", "create_event_from_copy"):
+        etype = tool_input.get("event_type", "")
+        etype_label = _EVENT_TYPE_LABELS.get(etype, etype)
+        title = tool_input.get("title", "")
+        start = tool_input.get("start_time", "")
+        end = tool_input.get("end_time", "")
+        lines = [
+            f"Create Event: {title}",
+            f"Type: {etype_label}",
+            f"Start: {start}",
+        ]
+        if end:
+            lines.append(f"End: {end}")
+        if tool_input.get("description"):
+            lines.append(f"Description: {tool_input['description']}")
+        if tool_input.get("source_event_id"):
+            lines.append(f"Template: {tool_input['source_event_id']}")
+        return "\n".join(lines)
     elif tool_name == "update_event":
         changes = {k: v for k, v in tool_input.items() if k != "on24_event_id" and v is not None}
         lines = [f"**Update Event** (ID: {tool_input.get('on24_event_id')})"]
