@@ -8,9 +8,9 @@ import BrandTemplateManager from './BrandTemplateManager'
 type AgentKey = 'data' | 'concierge' | 'config' | 'calendar' | 'content' | 'neutral'
 
 const AGENT_COLORS: Record<AgentKey, { border: string; bg: string; hoverBg: string; hoverBorder: string; accent: string; label: string }> = {
-  data:      { border: '#2563EB', bg: '#EFF6FF', hoverBg: '#DBEAFE', hoverBorder: '#2563EB', accent: '#2563EB', label: 'Analytics' },
-  concierge: { border: '#D97706', bg: '#FFFBEB', hoverBg: '#FEF3C7', hoverBorder: '#D97706', accent: '#D97706', label: 'Help' },
-  config:    { border: '#059669', bg: '#ECFDF5', hoverBg: '#D1FAE5', hoverBorder: '#059669', accent: '#059669', label: 'Configure' },
+  data:      { border: '#4A50DD', bg: '#F2F2FD', hoverBg: '#F8F8FE', hoverBorder: '#4A50DD', accent: '#4A50DD', label: 'Analytics' },
+  concierge: { border: '#F6881F', bg: '#FDDFC4', hoverBg: '#FEF0DD', hoverBorder: '#F6881F', accent: '#F6881F', label: 'Help' },
+  config:    { border: '#008556', bg: '#D6F3E2', hoverBg: '#E8F8EF', hoverBorder: '#008556', accent: '#008556', label: 'Configure' },
   calendar:  { border: '#7C3AED', bg: '#F5F3FF', hoverBg: '#EDE9FE', hoverBorder: '#7C3AED', accent: '#7C3AED', label: 'Calendar' },
   content:   { border: '#DB2777', bg: '#FDF2F8', hoverBg: '#FCE7F3', hoverBorder: '#DB2777', accent: '#DB2777', label: 'Content' },
   neutral:   { border: 'var(--color-border)', bg: 'var(--color-card)', hoverBg: 'var(--color-chip-hover-bg)', hoverBorder: 'var(--color-border)', accent: 'var(--color-text-secondary)', label: '' },

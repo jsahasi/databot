@@ -1,79 +1,80 @@
 /* ═══════════════════════════════════════════════════════════════
    ON24 Nexus — Design System Tokens
-   Analytics Dashboard palette: deep navy + bright blue primary,
-   amber CTA, semantic status colors. Fira Sans/Code typography.
+   Aligned with ON24 Admin 2025 Figma design system.
+   Primary: #4A50DD (indigo-purple), Accent: #F6881F (orange),
+   Neutral gray scale, Open Sans + Fira Code typography.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Core brand ── */
-  --color-primary: #1E40AF;
-  --color-primary-hover: #1e3a8a;
-  --color-primary-light: #DBEAFE;
-  --color-cta: #EA580C;
-  --color-cta-hover: #c2410c;
+  /* ── Core brand (from ON24 Figma: Primary scale) ── */
+  --color-primary: #4A50DD;
+  --color-primary-hover: #2C348C;
+  --color-primary-light: #F2F2FD;
+  --color-cta: #F6881F;
+  --color-cta-hover: #DD6C16;
 
-  /* ── Surfaces ── */
-  --color-sidebar: #0F172A;
-  --color-sidebar-text: #94a3b8;
+  /* ── Surfaces (from ON24 Figma: Gray scale + Base) ── */
+  --color-sidebar: #1A1A1A;
+  --color-sidebar-text: #A1A1A1;
   --color-sidebar-active: #ffffff;
-  --color-bg: #F1F5F9;
+  --color-bg: #FCFCFC;
   --color-card: #ffffff;
-  --color-muted: #E9EEF6;
+  --color-muted: #F8F8FE;
 
-  /* ── Text ── */
-  --color-text: #0F172A;
-  --color-text-secondary: #64748b;
+  /* ── Text (from ON24 Figma: Gray 100/80/60) ── */
+  --color-text: #1A1A1A;
+  --color-text-secondary: #656565;
 
-  /* ── Borders ── */
-  --color-border: #CBD5E1;
+  /* ── Borders (from ON24 Figma: Gray 05/40) ── */
+  --color-border: #E4E4E4;
 
-  /* ── Status ── */
-  --color-success: #059669;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
-  --color-success-bg: #ECFDF5;
-  --color-warning-bg: #FFFBEB;
-  --color-danger-bg: #FEF2F2;
-  --color-success-light: #A7F3D0;
-  --color-success-text: #065F46;
-  --color-warning-text: #92400E;
-  --color-danger-text: #991B1B;
-  --color-info-bg: #EFF6FF;
-  --color-info-border: #BFDBFE;
+  /* ── Status (from ON24 Figma: Success/Alert scales) ── */
+  --color-success: #008556;
+  --color-warning: #F6881F;
+  --color-danger: #DE1C22;
+  --color-success-bg: #D6F3E2;
+  --color-warning-bg: #FDDFC4;
+  --color-danger-bg: #FFF5F5;
+  --color-success-light: #D6F3E2;
+  --color-success-text: #086343;
+  --color-warning-text: #DD6C16;
+  --color-danger-text: #9F1B1F;
+  --color-info-bg: #F2F2FD;
+  --color-info-border: #CCCDF5;
 
-  /* ── Chips ── */
-  --color-chip-bg: #EFF6FF;
-  --color-chip-border: #93C5FD;
-  --color-chip-text: #1E40AF;
-  --color-chip-hover-bg: #DBEAFE;
+  /* ── Chips (primary-tinted) ── */
+  --color-chip-bg: #F2F2FD;
+  --color-chip-border: #CCCDF5;
+  --color-chip-text: #2C348C;
+  --color-chip-hover-bg: #F8F8FE;
 
   /* ── Accent ── */
-  --color-accent: #6366F1;
-  --color-toggle-bg: #CBD5E1;
+  --color-accent: #4A50DD;
+  --color-toggle-bg: #C7C7C7;
 
   /* ── Agent colors (vibrant & distinct) ── */
-  --color-agent-data: #2563EB;
-  --color-agent-concierge: #D97706;
-  --color-agent-config: #059669;
+  --color-agent-data: #4A50DD;
+  --color-agent-concierge: #F6881F;
+  --color-agent-config: #008556;
   --color-agent-calendar: #7C3AED;
   --color-agent-content: #DB2777;
 
   /* ── Chart palette ── */
-  --color-chart-1: #2563EB;
-  --color-chart-2: #059669;
-  --color-chart-3: #D97706;
-  --color-chart-4: #DC2626;
+  --color-chart-1: #4A50DD;
+  --color-chart-2: #008556;
+  --color-chart-3: #F6881F;
+  --color-chart-4: #DE1C22;
   --color-chart-5: #7C3AED;
   --color-chart-6: #0284C7;
   --color-chart-7: #DB2777;
   --color-chart-8: #0D9488;
-  --color-chart-9: #EA580C;
-  --color-chart-10: #475569;
+  --color-chart-9: #DD6C16;
+  --color-chart-10: #656565;
 
-  /* ── Elevation ── */
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-elevated: 0 4px 12px rgba(15, 23, 42, 0.1), 0 1px 3px rgba(15, 23, 42, 0.06);
-  --shadow-dropdown: 0 8px 24px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
+  /* ── Elevation (neutral black base for shadows) ── */
+  --shadow-card: 0 1px 3px rgba(26, 26, 26, 0.08), 0 1px 2px rgba(26, 26, 26, 0.04);
+  --shadow-elevated: 0 4px 12px rgba(26, 26, 26, 0.1), 0 1px 3px rgba(26, 26, 26, 0.06);
+  --shadow-dropdown: 0 8px 24px rgba(26, 26, 26, 0.14), 0 2px 6px rgba(26, 26, 26, 0.08);
 
   /* ── Shape & sizing ── */
   --radius: 10px;
@@ -82,51 +83,51 @@
   --radius-pill: 999px;
   --min-touch: 44px;
 
-  /* ── Typography ── */
-  --font-sans: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* ── Typography (ON24 uses Open Sans; Fira Code for mono) ── */
+  --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Fira Code', 'Cascadia Code', monospace;
 }
 
-/* ── Dark mode ── */
+/* ── Dark mode (ON24 palette adapted for dark surfaces) ── */
 [data-theme="dark"] {
-  --color-primary: #60A5FA;
-  --color-primary-hover: #93C5FD;
-  --color-primary-light: #1E3A5F;
-  --color-cta: #FB923C;
-  --color-cta-hover: #F97316;
+  --color-primary: #8B8FEF;
+  --color-primary-hover: #CCCDF5;
+  --color-primary-light: #2A2D4D;
+  --color-cta: #F6881F;
+  --color-cta-hover: #FDDFC4;
 
-  --color-sidebar: #020617;
-  --color-sidebar-text: #94a3b8;
-  --color-sidebar-active: #F1F5F9;
-  --color-bg: #0F172A;
-  --color-card: #1E293B;
-  --color-muted: #1A2332;
+  --color-sidebar: #111111;
+  --color-sidebar-text: #A1A1A1;
+  --color-sidebar-active: #F8F8FE;
+  --color-bg: #1A1A1A;
+  --color-card: #2A2A2A;
+  --color-muted: #222222;
 
-  --color-text: #F1F5F9;
-  --color-text-secondary: #94A3B8;
+  --color-text: #F8F8FE;
+  --color-text-secondary: #A1A1A1;
 
-  --color-border: #334155;
+  --color-border: #3D3D3D;
 
   --color-success: #34D399;
   --color-warning: #FBBF24;
   --color-danger: #F87171;
-  --color-success-bg: rgba(5, 150, 105, 0.15);
-  --color-warning-bg: rgba(217, 119, 6, 0.15);
-  --color-danger-bg: rgba(220, 38, 38, 0.15);
-  --color-success-light: rgba(5, 150, 105, 0.25);
+  --color-success-bg: rgba(0, 133, 86, 0.15);
+  --color-warning-bg: rgba(246, 136, 31, 0.15);
+  --color-danger-bg: rgba(222, 28, 34, 0.15);
+  --color-success-light: rgba(0, 133, 86, 0.25);
   --color-success-text: #6EE7B7;
-  --color-warning-text: #FCD34D;
+  --color-warning-text: #FDDFC4;
   --color-danger-text: #FCA5A5;
-  --color-info-bg: rgba(37, 99, 235, 0.15);
-  --color-info-border: #1E3A5F;
+  --color-info-bg: rgba(74, 80, 221, 0.15);
+  --color-info-border: #2A2D4D;
 
-  --color-chip-bg: #1E293B;
-  --color-chip-border: #334155;
-  --color-chip-text: #93C5FD;
-  --color-chip-hover-bg: #1E3A5F;
+  --color-chip-bg: #2A2A2A;
+  --color-chip-border: #3D3D3D;
+  --color-chip-text: #CCCDF5;
+  --color-chip-hover-bg: #2A2D4D;
 
-  --color-accent: #818CF8;
-  --color-toggle-bg: #475569;
+  --color-accent: #8B8FEF;
+  --color-toggle-bg: #656565;
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
