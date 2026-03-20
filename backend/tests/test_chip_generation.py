@@ -496,12 +496,20 @@ class TestExtractInlineOptions:
         result = _extract_inline_options(text)
         assert result is None
 
-    def test_six_items_returns_none(self):
-        """Six or more items must NOT be promoted (max is 5)."""
-        lines = "\n".join(f"- Option {i}" for i in range(1, 7))
+    def test_ten_items_returns_none(self):
+        """Ten or more items must NOT be promoted (max is 9)."""
+        lines = "\n".join(f"- Option {i}" for i in range(1, 11))
         text = f"Choose one:\n{lines}"
         result = _extract_inline_options(text)
         assert result is None
+
+    def test_nine_items_returns_list(self):
+        """Nine items should be promoted (decision tree Q1 has 9 options)."""
+        lines = "\n".join(f"- Option {i}" for i in range(1, 10))
+        text = f"Choose one:\n{lines}"
+        result = _extract_inline_options(text)
+        assert result is not None
+        assert len(result) == 9
 
     def test_labels_truncated_after_dash(self):
         """Label is the short part before ' — ' separator."""
