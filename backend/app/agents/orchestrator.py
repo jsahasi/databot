@@ -400,7 +400,7 @@ class OrchestratorAgent:
                     elif tool_name == "route_to_data_agent":
                         # Hard block: if user has permissions set but no view-analytics, reject
                         if self.user_permissions and "view-analytics" not in self.user_permissions:
-                            logger.info(f"Blocked data agent — no view-analytics permission")
+                            logger.info("Blocked data agent — no view-analytics permission")
                             self.conversation_history.pop()  # assistant tool_use
                             self.conversation_history.pop()  # user message
                             return {
