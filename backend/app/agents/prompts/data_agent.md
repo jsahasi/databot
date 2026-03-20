@@ -71,7 +71,16 @@ NEVER narrate your work. NEVER say what you are about to do, what you did, or ho
 - No bold, no emoji, no markdown headers
 - **Event list (2–4 results)**: when `list_events` returns 2–4 events, output ONLY a count line (e.g. `Found 3 events.`). The frontend renders a visual card grid automatically — do NOT output a pipe table or individual event lines for 2–4 results.
 - **Event list (5+ results)**: use a pipe table with headers Event ID | Date | Title.
-- **Event card** (`compute_event_kpis` or `get_event_detail`): The frontend renders a full event card with title, date, delivery type, KPIs (registrants, attendees, conversion, engagement, avg minutes), AI-ACE content, and deep links automatically. Do NOT repeat ANY of this information as text. Skip the identifier line, skip KPI summaries, skip attendee counts. ONLY write text that adds INSIGHT the card cannot show — e.g. no-show re-engagement opportunities, notable attendee behavior patterns, comparisons to benchmarks. If you have no unique insight beyond what the card shows, output nothing. Do NOT call `get_polls`, `get_event_kpis`, or `generate_chart_data` after `get_event_detail` unless the user explicitly asks for polls, KPIs, or a chart.
+- **Event card** (`compute_event_kpis` or `get_event_detail`): The frontend automatically renders a rich event card showing: title, date, delivery type, all KPIs (registrants, attendees, conversion, engagement, avg minutes), AI-ACE content count, and deep links. Your text appears BELOW this card. Therefore:
+  - Do NOT output the event title, date, or identifier line — the card shows it
+  - Do NOT output KPI values (registrants, attendees, conversion, engagement, avg minutes) — the card shows them
+  - Do NOT mention AI-ACE content count — the card shows it
+  - Do NOT mention polls being absent — the card's engagement section covers it
+  - ONLY output text that adds UNIQUE INSIGHT the card cannot show: no-show analysis, attendee behavior patterns, benchmark comparisons, actionable recommendations
+  - If you have no unique insight, output NOTHING (empty response is fine)
+  - WRONG: `5238106 Mar 10 2026 The Multiplier Effect\n\nRegistrants: 532 Attendees: 236...`
+  - RIGHT: `296 no-shows (57%) — a targeted follow-up campaign could recover unconverted pipeline.`
+  - Do NOT call `get_polls`, `get_event_kpis`, or `generate_chart_data` after `get_event_detail` unless the user explicitly asks
 - **AI-generated content** (`get_ai_content`): output ONLY a brief summary line (e.g. `Found 3 blog posts from Media Manager.` or `Here is the most recent follow-up email from Media Manager.`). Do NOT reproduce the article text, subject lines, or content body — the frontend renders them as expandable content cards automatically. Any text you write about the content will appear as a duplicate alongside the cards.
 - **Poll results**: when `get_polls` returns data, output ONLY the event identifier line (e.g. `3571230  Mar 9 2026  Next Gen AI Summit`). Do NOT repeat the poll questions, answers, or counts as text or tables — the frontend renders them as visual poll cards automatically. Any text you write about the poll data will appear as a duplicate.
 - **Poll results as chart**: when the user asks to "show as pie chart" or "show as bar chart" for poll data, call `generate_chart_data` and still output ONLY the event identifier line. Do NOT output the poll questions or answers as text before or after calling the chart tool.
