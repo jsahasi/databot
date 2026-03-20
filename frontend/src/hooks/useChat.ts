@@ -14,6 +14,7 @@ export interface ChatMessage {
   contentHtml?: string | null
   proposedEvents?: any[] | null
   suggestions?: string[]
+  confirmationSummary?: string | null
   isLoading?: boolean
   timestamp: Date
 }
@@ -182,6 +183,19 @@ export function useChat(options: UseChatOptions = {}) {
           })
           break
 
+        case 'confirmation_required':
+          setMessages(prev => {
+            const last = prev[prev.length - 1]
+            if (last && last.role === 'assistant') {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, confirmationSummary: data.confirmation_summary },
+              ]
+            }
+            return prev
+          })
+          break
+
         case 'message_complete':
           setIsProcessing(false)
           isProcessingRef.current = false
@@ -287,6 +301,24 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }, [sessionId, connect])
 
+  const sendConfirmation = useCallback((originalContent: string) => {
+    setMessages(prev => [
+      ...prev,
+      { id: `user-${Date.now()}`, role: 'user', content: 'Confirmed', timestamp: new Date() },
+      { id: `loading-${Date.now()}`, role: 'assistant', content: '', isLoading: true, timestamp: new Date() },
+    ])
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'message',
+        content: originalContent,
+        session_id: sessionId,
+        client_id: selectedClientId,
+        confirmed: true,
+        permissions: JSON.parse(sessionStorage.getItem('adminPermissions') || '[]'),
+      }))
+    }
+  }, [sessionId, selectedClientId])
+
   const resetChat = useCallback(() => {
     setMessages([])
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -300,6 +332,7 @@ export function useChat(options: UseChatOptions = {}) {
     isProcessing,
     activeAgent,
     sendMessage,
+    sendConfirmation,
     resetChat,
   }
 }

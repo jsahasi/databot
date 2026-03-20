@@ -604,6 +604,7 @@ class OrchestratorAgent:
                                 message=query,
                                 session_id="orchestrator",
                                 confirmed=confirmed,
+                                conversation_history=self._text_history(),
                                 restriction_context=self.restriction_context,
                             )
                         except Exception:

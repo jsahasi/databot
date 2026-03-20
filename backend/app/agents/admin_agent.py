@@ -37,6 +37,7 @@ class AdminAgent:
         message: str,
         session_id: str,
         confirmed: bool = False,
+        conversation_history: list[dict] | None = None,
         restriction_context: str = "",
     ) -> dict[str, Any]:
         """Process an admin request, gating destructive tools behind confirmation.
@@ -49,7 +50,13 @@ class AdminAgent:
                 "tool_calls": list,
             }
         """
-        messages = [{"role": "user", "content": message}]
+        # Build messages from conversation history so the agent can track
+        # multi-turn flows (decision tree, confirmation re-sends, edits).
+        messages: list[dict] = []
+        if conversation_history:
+            for h in conversation_history:
+                messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+        messages.append({"role": "user", "content": message})
 
         tool_calls_made: list[dict] = []
 

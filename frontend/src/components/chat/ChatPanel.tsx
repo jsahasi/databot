@@ -71,7 +71,7 @@ function filterByPermissions<T extends { label: string }>(items: T[], perms: str
 }
 
 export default function ChatPanel() {
-  const { messages, isProcessing, activeAgent, sendMessage, openCalendar, openProposedCalendar, setProposedEvents, resetChat } = useChatContext()
+  const { messages, isProcessing, activeAgent, sendMessage, sendConfirmation, openCalendar, openProposedCalendar, setProposedEvents, resetChat } = useChatContext()
   const isMobile = useIsMobile()
   const [input, setInput] = useState('')
   const [techContacts, setTechContacts] = useState<string[]>([])
@@ -719,7 +719,39 @@ export default function ChatPanel() {
               return (
               <React.Fragment key={msg.id}>
                 <ChatMessage message={msg} userQuestion={userQuestion} />
-                {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (
+                {/* Confirmation chips — Yes/No for admin destructive actions */}
+                {msg.role === 'assistant' && msg.confirmationSummary && (
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.375rem',
+                    marginBottom: '1rem',
+                    marginLeft: '0.5rem',
+                  }}>
+                    <button
+                      onClick={() => { sendConfirmation(msg.content); }}
+                      style={{
+                        padding: '0.4rem 1.25rem', fontSize: '0.8rem', fontWeight: 700,
+                        background: 'var(--color-success)', color: '#fff',
+                        border: 'none', borderRadius: 20, cursor: 'pointer',
+                      }}
+                    >
+                      Yes, create it
+                    </button>
+                    <button
+                      onClick={() => { sendMessage('Cancel — do not create the event'); setInput('') }}
+                      style={{
+                        padding: '0.4rem 1.25rem', fontSize: '0.8rem', fontWeight: 500,
+                        background: 'var(--color-chip-bg)', color: 'var(--color-text-secondary)',
+                        border: '1px solid var(--color-border)', borderRadius: 20, cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                {/* Suggestion chips */}
+                {msg.role === 'assistant' && !msg.confirmationSummary && msg.suggestions && msg.suggestions.length > 0 && (
                   <div style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -735,30 +767,33 @@ export default function ChatPanel() {
                       const displayLabel = Object.keys(CHIP_DISPLAY).find(k => s.startsWith(k))
                         ? CHIP_DISPLAY[Object.keys(CHIP_DISPLAY).find(k => s.startsWith(k))!]
                         : s
+                      const isRecommended = s.includes('(recommended)') || s.includes('*(recommended)')
+                      const cleanLabel = displayLabel.replace(/\s*\*?\(recommended\)\*?/i, '')
                       return (
                       <button
                         key={i}
-                        aria-label={`Suggest: ${displayLabel}`}
+                        aria-label={`Suggest: ${cleanLabel}`}
                         onClick={() => {
                           if (s === 'Home') { resetChat() }
                           else if (s === 'How do I...?') { setShowHowDoI(true) }
                           else if (s === 'Recent events') { openCalendar() }
                           else if (s === 'View proposed calendar') { openProposedCalendar() }
-                          else { sendMessage(s, displayLabel !== s ? displayLabel : undefined); setInput('') }
+                          else { sendMessage(s, cleanLabel !== s ? cleanLabel : undefined); setInput('') }
                         }}
                         style={{
                           padding: '0.35rem 0.875rem',
                           fontSize: '0.775rem',
-                          background: 'var(--color-chip-bg)',
-                          border: '1px solid var(--color-chip-border)',
+                          background: isRecommended ? 'var(--color-primary)' : 'var(--color-chip-bg)',
+                          border: isRecommended ? '1.5px solid var(--color-primary)' : '1px solid var(--color-chip-border)',
                           borderRadius: 20,
-                          color: 'var(--color-chip-text)',
+                          color: isRecommended ? '#fff' : 'var(--color-chip-text)',
                           cursor: 'pointer',
                           lineHeight: 1.4,
-                          fontWeight: 500,
+                          fontWeight: isRecommended ? 700 : 500,
+                          boxShadow: isRecommended ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
                         }}
                       >
-                        {displayLabel}
+                        {cleanLabel}{isRecommended ? ' ★' : ''}
                       </button>
                       )
                     })}
