@@ -26,12 +26,12 @@ def get_platform_type(client_properties: dict) -> str:
     return "elite"
 
 
-# ── Elite templates ──
+# ── Vonage templates (client_id=65000) ──
 # Template event IDs by (use_case, layout_variant)
 # Layout variants: LOCKED_SLIDES, EDITABLE_SLIDES, LOCKED_NO_SLIDES,
 #   EDITABLE_NO_SLIDES, EDITABLE_MENU_DOCK, OTHER_TYPE
 
-ELITE_TEMPLATES: dict[tuple[str, str], dict] = {
+VONAGE_TEMPLATES: dict[tuple[str, str], dict] = {
     # ── Demand Generation ──
     ("DEMAND_GEN", "LOCKED_SLIDES"):     {"event_id": 4835925, "thumb": "DemandGenLockedSlides"},
     ("DEMAND_GEN", "EDITABLE_SLIDES"):   {"event_id": 4831659, "thumb": "DemandGenEditableSlides"},
@@ -98,7 +98,7 @@ ELITE_TEMPLATES: dict[tuple[str, str], dict] = {
 }
 
 # Locked "Other Type" templates (On Demand / Simulive — no layout questions)
-ELITE_LOCKED_OTHER_TEMPLATES: dict[str, dict] = {
+VONAGE_LOCKED_OTHER_TEMPLATES: dict[str, dict] = {
     "DEMAND_GEN":              {"event_id": 5075079, "thumb": "DemandGenOtherType"},
     "PARTNER_ENABLEMENT":      {"event_id": 5075080, "thumb": "PartnerEnablementOtherType"},
     "MEMBER_ENROLLMENT":       {"event_id": 5075081, "thumb": "MemberEnrollmentOtherType"},
@@ -155,10 +155,10 @@ def get_layout_variant(event_type: str, slides: str | None, nav: str | None, lay
     return "EDITABLE_SLIDES"  # fallback
 
 
-# ── Vonage templates (same 54 paths, different event IDs) ──
-# TODO: populate when Vonage template events are created under client 65000
-VONAGE_TEMPLATES: dict[tuple[str, str], dict] = {}
-VONAGE_LOCKED_OTHER_TEMPLATES: dict[str, dict] = {}
+# ── Elite templates (same 54 paths, different event IDs) ──
+# TODO: populate when Elite template events are created under client 65000
+ELITE_TEMPLATES: dict[tuple[str, str], dict] = {}
+ELITE_LOCKED_OTHER_TEMPLATES: dict[str, dict] = {}
 
 
 # ── Unified lookup ──
@@ -178,7 +178,7 @@ def get_template(
     Returns:
         {'event_id': int, 'thumb': str} or None
     """
-    templates = ELITE_TEMPLATES if platform == "elite" else VONAGE_TEMPLATES
+    templates = VONAGE_TEMPLATES if platform == "vonage" else ELITE_TEMPLATES
     tmpl = templates.get((use_case, layout_variant))
     if tmpl:
         return {
