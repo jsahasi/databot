@@ -81,6 +81,7 @@ class OrchestratorAgent:
         self.admin_agent = AdminAgent()
         self.conversation_history: list[dict] = []
         self.restriction_context: str = ""  # Set by chat.py per message
+        self.user_permissions: list[str] = []  # Set by chat.py per message
         self.image_block: dict | None = None  # Set by chat.py for vision
 
     # Tool for routing to sub-agents
@@ -397,6 +398,24 @@ class OrchestratorAgent:
                         }
 
                     elif tool_name == "route_to_data_agent":
+                        # Hard block: if user has permissions set but no view-analytics, reject
+                        if self.user_permissions and "view-analytics" not in self.user_permissions:
+                            logger.info(f"Blocked data agent — no view-analytics permission")
+                            self.conversation_history.pop()  # assistant tool_use
+                            self.conversation_history.pop()  # user message
+                            return {
+                                "text": "Analytics and event data require the View Analytics permission. Contact your account administrator to enable it.",
+                                "agent_used": None,
+                                "chart_data": None,
+                                "event_card": None,
+                                "event_cards": None,
+                                "poll_cards": None,
+                                "content_articles": None,
+                                "content_html": None,
+                                "requires_confirmation": False,
+                                "confirmation_summary": None,
+                                "proposed_events": None,
+                            }
                         logger.info(f"Routing to Data Agent: {query}")
                         try:
                             result = await self.data_agent.run(query, conversation_history=self._text_history(), restriction_context=self.restriction_context)

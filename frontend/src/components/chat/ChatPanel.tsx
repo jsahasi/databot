@@ -752,7 +752,10 @@ export default function ChatPanel() {
                   </div>
                 )}
                 {/* Suggestion chips */}
-                {msg.role === 'assistant' && !msg.confirmationSummary && msg.suggestions && msg.suggestions.length > 0 && (
+                {msg.role === 'assistant' && !msg.confirmationSummary && msg.suggestions && msg.suggestions.length > 0 && (() => {
+                  const DATA_AGENT_CHIPS = ['Explore my event data', 'Show me top events by attendance', 'Show attendance by source']
+                  const filteredSugs = hasAnalytics ? msg.suggestions : msg.suggestions.filter(s => !DATA_AGENT_CHIPS.some(d => s.startsWith(d)))
+                  return filteredSugs.length > 0 && (
                   <div style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -760,7 +763,7 @@ export default function ChatPanel() {
                     marginBottom: '1rem',
                     marginLeft: '0.5rem',
                   }}>
-                    {msg.suggestions.map((s, i) => {
+                    {filteredSugs.map((s, i) => {
                       // Some chips send a detailed instructional prompt but display a short label
                       const CHIP_DISPLAY: Record<string, string> = {
                         'Classify my events into TOFU': 'Analyze funnel stages anyway',
@@ -799,7 +802,7 @@ export default function ChatPanel() {
                       )
                     })}
                   </div>
-                )}
+                )})()}
               </React.Fragment>
               )
             })}

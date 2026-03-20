@@ -403,6 +403,7 @@ async def websocket_chat(websocket: WebSocket):
                 if user_permissions:
                     restriction_context = await _build_restriction_context(user_permissions)
                 agent.restriction_context = restriction_context
+                agent.user_permissions = user_permissions
 
                 # Load attached image as base64 for vision (if present)
                 image_block = None
