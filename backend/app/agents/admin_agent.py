@@ -148,10 +148,7 @@ class AdminAgent:
                 pending = held_for_confirmation[0]
                 summary = _build_confirmation_summary(pending["tool"], pending["input"])
                 return {
-                    "text": (
-                        f"I need your confirmation before proceeding.\n\n{summary}\n\n"
-                        "Please reply with **confirmed: true** to execute, or describe any changes you'd like."
-                    ),
+                    "text": summary,
                     "requires_confirmation": True,
                     "confirmation_summary": summary,
                     "tool_calls": tool_calls_made,
