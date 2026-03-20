@@ -5,6 +5,7 @@ import { useChatContext } from '../../context/ChatContext'
 import { useIsMobile } from '../../hooks/useMediaQuery'
 
 const DOC_BASES = [
+  { label: 'Design System', path: '/design-system', internal: true },
   { label: 'Market Requirements', path: '/docs/mrd.html' },
   { label: 'Product Requirements', path: '/docs/prd.html' },
   { label: 'Technical Specifications', path: '/docs/tech-spec.html' },
@@ -29,7 +30,7 @@ export default function ChatSidebar({ onClose }: ChatSidebarProps) {
   const docsRef = useRef<HTMLDivElement>(null)
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
   const themeParam = isDark ? '?theme=dark' : '?theme=light'
-  const docLinks = DOC_BASES.map(d => ({ label: d.label, href: d.path + themeParam }))
+  const docLinks = DOC_BASES.map(d => ({ label: d.label, href: (d as any).internal ? d.path : d.path + themeParam, internal: !!(d as any).internal }))
 
   // Close docs dropdown on outside click
   useEffect(() => {
@@ -174,14 +175,14 @@ export default function ChatSidebar({ onClose }: ChatSidebarProps) {
               overflowY: 'auto',
             }}
           >
-            {docLinks.map(({ label, href }) => (
+            {docLinks.map(({ label, href, internal }) => (
               <a
                 key={href}
                 href={href}
-                target="_blank"
-                rel="noreferrer"
+                target={internal ? undefined : '_blank'}
+                rel={internal ? undefined : 'noreferrer'}
                 role="menuitem"
-                onClick={() => setDocsOpen(false)}
+                onClick={(e) => { setDocsOpen(false); if (internal) { e.preventDefault(); navigate(href) } }}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') {
                     e.preventDefault()
