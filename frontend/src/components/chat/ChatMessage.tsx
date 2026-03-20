@@ -1073,7 +1073,9 @@ export default function ChatMessage({ message, userQuestion = '' }: ChatMessageP
             <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
           ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-              {message.content}
+              {message.suggestions && message.suggestions.length > 0
+                ? message.content.replace(/(\n\s*\d+\.\s+.+)+\s*$/m, '').trim()
+                : message.content}
             </ReactMarkdown>
           )}
         </div>
