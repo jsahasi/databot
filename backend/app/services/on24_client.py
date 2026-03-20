@@ -539,16 +539,16 @@ class ON24Client:
         end_time: str,
         description: str | None = None,
     ) -> dict[str, Any]:
-        """Create a new ON24 event."""
-        body: dict[str, Any] = {
+        """Create a new ON24 event (form-urlencoded)."""
+        form: dict[str, Any] = {
             "eventType": event_type,
             "title": title,
-            "startTime": start_time,
-            "endTime": end_time,
+            "liveStart": start_time,
+            "liveDuration": "60",
         }
         if description is not None:
-            body["description"] = description
-        return await self.post("event", json_body=body)
+            form["eventAbstract"] = description
+        return await self._form_request("POST", "event", form_data=form)
 
     async def update_event(
         self,
