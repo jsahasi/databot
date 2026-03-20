@@ -570,7 +570,12 @@ async def websocket_chat(websocket: WebSocket):
                             # If the response presents ≤5 inline options, promote them to chips directly
                             inline_opts = _extract_inline_options(text)
                             if inline_opts:
-                                # Always append agent-switch + Home after the inline options
+                                # Admin agent decision tree: show ONLY the options, no switch chips
+                                if agent == "admin_agent":
+                                    suggestions = inline_opts
+                                    await ws.send_json({"type": "suggestions", "suggestions": suggestions})
+                                    return
+                                # Other agents: append agent-switch + Home after the inline options
                                 _AGENT_SWITCHES_LOCAL: dict[str | None, list[str]] = {
                                     "content_agent": ["Explore my event data", "How do I...?"],
                                     "data_agent": ["How do I...?", "Content performance insights"],
