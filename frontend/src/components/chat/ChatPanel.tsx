@@ -43,6 +43,7 @@ const CONFIG_LINKS = [
   { label: 'Connect / Integrations',url: 'https://wcc.on24.com/webcast/integrations' },
   { label: 'Branding',              url: 'https://wcc.on24.com/webcast/accountdashboard?tab=branding&clientId=10710' },
   { label: 'Manage Users',          url: 'https://wcc.on24.com/webcast/manageusers' },
+  { label: 'Account Dashboard',    url: 'https://wcc.on24.com/webcast/accountdashboard' },
   { label: 'Brand Templates',       url: '__brand_templates__' },
 ]
 
@@ -54,7 +55,7 @@ const PERM_FILTER: Record<string, string[]> = {
   'manage-virtual-events':    ['GoLive — Virtual Events'],
   'manage-brand-settings':    ['Branding'],
   'manage-integrations':      ['Connect / Integrations'],
-  'manage-users':             ['Manage Users'],
+  'manage-users':             ['Manage Users', 'Account Dashboard'],
 }
 
 function filterByPermissions<T extends { label: string }>(items: T[], perms: string[]): T[] {
