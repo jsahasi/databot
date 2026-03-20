@@ -17,9 +17,11 @@ Thumbnail URL pattern:
 def get_platform_type(client_properties: dict) -> str:
     """Determine platform type from client properties.
     Returns 'elite' or 'vonage'.
+
+    Uses `enable_VCU_option_vonage` property — 'Yes' means Vonage-powered.
     """
-    acct_type = (client_properties.get("elite-account-type", {}).get("value") or "").lower()
-    if "vonage" in acct_type or "vcu" in acct_type:
+    vonage_flag = (client_properties.get("enable_VCU_option_vonage", {}).get("value") or "").strip()
+    if vonage_flag.lower() == "yes":
         return "vonage"
     return "elite"
 
