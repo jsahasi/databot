@@ -116,20 +116,68 @@ Summarize the selections in one line, then ask for the remaining details one at 
 2. Start date and time (required — default to next business day at 9:00 AM ET if not given)
 3. Duration (optional — default 60 minutes)
 
-### After Collecting Details — Create Immediately
+### After Collecting Details — Create from Template
 
-Once you have title, date/time, and event type from the decision tree, call `create_event` immediately. Do NOT ask about templates, do NOT ask for confirmation text — just call the tool. The system handles confirmation automatically.
+ALWAYS use `create_event_from_copy` with the template event ID determined by the decision tree. NEVER use `create_event` directly — it lacks required fields (timezone, language, country). The template has all defaults pre-configured.
 
-### Event Type Mapping
+To find the template ID: use the use case + layout combination from the decision tree answers, then look up the template ID from this map. The system provides a helper function but the agent must pass the correct `source_event_id`.
 
-| Q2 Answer | eventType for create_event |
-|-----------|---------------------------|
-| Live Video | fav |
-| Simulive | simulive |
-| On Demand | ondemand |
-| Broadcast | encodeonsite |
-| Sim-2-Live | sim2live |
-| Forums | meetups |
+### Template Event IDs (Vonage — client 65000)
+
+Use these template IDs based on the decision tree selections:
+
+**Demand Generation:**
+- Intelligent Layout + Slides: 4835925 | Editable + Slides: 4831659
+- Intelligent Layout + Screen Share: 4867681 | Editable + Screen Share: 4860249
+- Editable + Menu Dock: 4860283 | Other Type (Simulive/OD/etc): 4860334
+
+**Partner Enablement:**
+- Intelligent + Slides: 4836047 | Editable + Slides: 4836063
+- Intelligent + Screen Share: 4867686 | Editable + Screen Share: 4860346
+- Editable + Menu Dock: 4860358 | Other Type: 4860360
+
+**Member Enrollment:**
+- Intelligent + Slides: 4836347 | Editable + Slides: 4836357
+- Intelligent + Screen Share: 4867688 | Editable + Screen Share: 4860369
+- Editable + Menu Dock: 4860374 | Other Type: 4860381
+
+**Product Feedback:**
+- Intelligent + Slides: 4836361 | Editable + Slides: 4836363
+- Intelligent + Screen Share: 4867689 | Editable + Screen Share: 4860384
+- Editable + Menu Dock: 4860391 | Other Type: 4860400
+
+**HCP Engagement:**
+- Intelligent + Slides: 4836378 | Editable + Slides: 4836391
+- Intelligent + Screen Share: 4867692 | Editable + Screen Share: 4860421
+- Editable + Menu Dock: 4860440 | Other Type: 4860456
+
+**KOL Engagement:**
+- Intelligent + Slides: 4836395 | Editable + Slides: 4836396
+- Intelligent + Screen Share: 4867696 | Editable + Screen Share: 4860464
+- Editable + Menu Dock: 4860475 | Other Type: 4860482
+
+**Certification/Training:**
+- Intelligent + Slides: 4836398 | Editable + Slides: 4836408
+- Intelligent + Screen Share: 4867702 | Editable + Screen Share: 4860492
+- Editable + Menu Dock: 4860496 | Other Type: 4860501
+
+**Asset Management/Financial Services:**
+- Intelligent + Slides: 4837350 | Editable + Slides: 4837351
+- Intelligent + Screen Share: 4867725 | Editable + Screen Share: 4860505
+- Editable + Menu Dock: 4860511 | Other Type: 4860516
+
+**Insurance:**
+- Intelligent + Slides: 4837353 | Editable + Slides: 4837356
+- Intelligent + Screen Share: 4867710 | Editable + Screen Share: 4860522
+- Editable + Menu Dock: 4860524 | Other Type: 4860532
+
+### Layout Selection Logic
+- Live Video + Slides + Top Nav + Intelligent Layout → "Intelligent + Slides"
+- Live Video + Slides + Top Nav + Editable → "Editable + Slides"
+- Live Video + Screen Share + Intelligent Layout → "Intelligent + Screen Share"
+- Live Video + Screen Share + Editable → "Editable + Screen Share"
+- Live Video + Slides + Bottom Dock → "Editable + Menu Dock"
+- NOT Live Video (Simulive, On Demand, Broadcast, Sim2Live, Forums) → "Other Type"
 
 ### Shortcut: Quick Create
 
