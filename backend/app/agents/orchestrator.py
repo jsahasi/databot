@@ -270,6 +270,38 @@ class OrchestratorAgent:
                 "confirmation_summary": None,
             }
 
+        # If confirmed=True, skip routing — send directly to admin agent
+        # (the user clicked "Yes, create it" on a pending confirmation)
+        if confirmed:
+            logger.info("Confirmed action — routing directly to admin agent")
+            self.conversation_history.append({"role": "user", "content": user_message})
+            try:
+                result = await self.admin_agent.run(
+                    message=user_message,
+                    session_id="orchestrator",
+                    confirmed=True,
+                    conversation_history=self._text_history(),
+                    restriction_context=self.restriction_context,
+                )
+            except Exception:
+                self.conversation_history.pop()
+                raise
+            text = result.get("text", "")
+            self.conversation_history.append({"role": "assistant", "content": text})
+            return {
+                "text": text,
+                "agent_used": "admin_agent",
+                "chart_data": None,
+                "event_card": None,
+                "event_cards": None,
+                "poll_cards": None,
+                "content_articles": None,
+                "content_html": None,
+                "requires_confirmation": result.get("requires_confirmation", False),
+                "confirmation_summary": result.get("confirmation_summary"),
+                "proposed_events": None,
+            }
+
         # Build user message — include image as vision block if attached
         if self.image_block:
             user_content = [{"type": "text", "text": user_message}, self.image_block]
