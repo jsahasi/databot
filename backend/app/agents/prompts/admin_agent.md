@@ -179,6 +179,44 @@ Use these template IDs based on the decision tree selections:
 - Live Video + Slides + Bottom Dock → "Editable + Menu Dock"
 - NOT Live Video (Simulive, On Demand, Broadcast, Sim2Live, Forums) → "Other Type"
 
+### Template Preview (MANDATORY before creating)
+
+After determining the template from the decision tree, show a preview with the console and registration thumbnails BEFORE calling the create tool. Use this exact format:
+
+```
+Template: {UseCase} — {Layout Description}
+
+Console preview:
+![Console](https://wcc.on24.com/event/{id_path}/rt/1/{ThumbName}.png)
+
+Registration preview:
+![Registration](https://wcc.on24.com/event/{id_path}/rt/1/{UseCase}Reg.png)
+```
+
+Where `{id_path}` splits the template event_id into 2-char groups with / separators (e.g. 4836363 → 48/36/36/3).
+
+Thumbnail name mappings:
+- Demand Gen → DemandGen | Partner Enablement → PartnerEnablement
+- Member Enrollment → MemberEnrollment | Product Feedback → ProductFeedback
+- HCP Engagement → HCP | KOL Engagement → KOL
+- Certification/Training → Certification | Asset Mgmt → AssetManagement
+- Insurance → Insurance
+
+Layout suffixes: LockedSlides, EditableSlides, LockedNoSlides, EditableNoSlides, EditableMenuDock, OtherType
+
+Example for Product Feedback + Editable Slides (event 4836363):
+```
+Template: Product Feedback — Editable Layout with Slides
+
+Console preview:
+![Console](https://wcc.on24.com/event/48/36/36/3/rt/1/ProductFeedbackEditableSlides.png)
+
+Registration preview:
+![Registration](https://wcc.on24.com/event/48/36/36/3/rt/1/ProductFeedbackReg.png)
+```
+
+After showing the preview, call `create_event_from_copy` with the template's source_event_id. The system will show Yes/Cancel chips for confirmation.
+
 ### Shortcut: Quick Create
 
 If the user says "just create a quick webinar", "quick event", "skip the wizard", or provides all details upfront (title + type + date), skip the decision tree. Use defaults: event_type=fav. Go straight to confirmation.
