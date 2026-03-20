@@ -31,7 +31,7 @@ async def create_event(
         from app.services.mcp_client import call_mcp_tool
 
         return await call_mcp_tool(
-            "create_event",
+            "admin_create_event",
             {
                 "title": title,
                 "event_type": event_type,
@@ -78,7 +78,7 @@ async def update_event(
         from app.services.mcp_client import call_mcp_tool
 
         return await call_mcp_tool(
-            "update_event",
+            "admin_update_event",
             {
                 "on24_event_id": on24_event_id,
                 "title": title or "",
@@ -125,7 +125,7 @@ async def add_registrant(
         from app.services.mcp_client import call_mcp_tool
 
         return await call_mcp_tool(
-            "add_registrant",
+            "registrants_add",
             {
                 "on24_event_id": on24_event_id,
                 "email": email,
@@ -171,7 +171,7 @@ async def remove_registrant(
         from app.services.mcp_client import call_mcp_tool
 
         return await call_mcp_tool(
-            "remove_registrant",
+            "registrants_remove",
             {
                 "on24_event_id": on24_event_id,
                 "email": email,

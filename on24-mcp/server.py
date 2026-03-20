@@ -1846,4 +1846,7 @@ if __name__ == "__main__":
     logger.info(f"Starting ON24 MCP server. Blocklist: {BLOCKLIST or 'none'}")
     mcp.settings.host = "0.0.0.0"
     mcp.settings.port = 8001
+    # Allow Docker service hostname and any host for container-to-container calls
+    mcp.settings.transport_security.allowed_hosts.extend(["on24-mcp:*", "0.0.0.0:*", "*"])
+    mcp.settings.transport_security.allowed_origins.extend(["http://on24-mcp:*", "http://0.0.0.0:*"])
     mcp.run(transport="streamable-http")
