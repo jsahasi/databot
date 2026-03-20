@@ -210,8 +210,10 @@ def _build_confirmation_summary(tool_name: str, tool_input: dict) -> str:
             # Add thumbnail previews
             try:
                 from app.agents.agentic_templates import VONAGE_TEMPLATES, ELITE_TEMPLATES
-                all_templates = {**VONAGE_TEMPLATES, **ELITE_TEMPLATES}
-                tmpl = next((v for v in all_templates.values() if v["event_id"] == source_id), None)
+                tmpl = next(
+                    (v for v in list(VONAGE_TEMPLATES.values()) + list(ELITE_TEMPLATES.values()) if v["event_id"] == source_id),
+                    None,
+                )
                 if tmpl:
                     path = _event_id_to_path(source_id)
                     thumb = tmpl["thumb"]
