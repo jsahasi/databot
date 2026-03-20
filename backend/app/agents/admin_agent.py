@@ -181,6 +181,11 @@ _EVENT_TYPE_LABELS = {
 }
 
 
+def _event_id_to_path(eid: int) -> str:
+    s = str(eid)
+    return "/".join(s[i : i + 2] for i in range(0, len(s), 2))
+
+
 def _build_confirmation_summary(tool_name: str, tool_input: dict) -> str:
     """Build a human-readable summary of a pending destructive operation."""
     if tool_name in ("create_event", "create_event_from_copy"):
@@ -189,17 +194,33 @@ def _build_confirmation_summary(tool_name: str, tool_input: dict) -> str:
         title = tool_input.get("title", "")
         start = tool_input.get("start_time", "")
         end = tool_input.get("end_time", "")
+        source_id = tool_input.get("source_event_id")
         lines = [
             f"Create Event: {title}",
-            f"Type: {etype_label}",
-            f"Start: {start}",
         ]
+        if etype_label:
+            lines.append(f"Type: {etype_label}")
+        lines.append(f"Start: {start}")
         if end:
             lines.append(f"End: {end}")
         if tool_input.get("description"):
             lines.append(f"Description: {tool_input['description']}")
-        if tool_input.get("source_event_id"):
-            lines.append(f"Template: {tool_input['source_event_id']}")
+        if source_id:
+            lines.append(f"Template: {source_id}")
+            # Add thumbnail previews
+            try:
+                from app.agents.agentic_templates import VONAGE_TEMPLATES, ELITE_TEMPLATES
+                all_templates = {**VONAGE_TEMPLATES, **ELITE_TEMPLATES}
+                tmpl = next((v for v in all_templates.values() if v["event_id"] == source_id), None)
+                if tmpl:
+                    path = _event_id_to_path(source_id)
+                    thumb = tmpl["thumb"]
+                    base = thumb.split("Locked")[0].split("Editable")[0].split("Other")[0]
+                    lines.append("")
+                    lines.append(f"![Console](https://wcc.on24.com/event/{path}/rt/1/{thumb}.png)")
+                    lines.append(f"![Registration](https://wcc.on24.com/event/{path}/rt/1/{base}Reg.png)")
+            except Exception:
+                pass
         return "\n".join(lines)
     elif tool_name == "update_event":
         changes = {k: v for k, v in tool_input.items() if k != "on24_event_id" and v is not None}
